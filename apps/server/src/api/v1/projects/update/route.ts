@@ -10,6 +10,7 @@ import handleRequest from "./service";
 import { requestRouteSchema } from "../../routes/get-by-id/dto";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { errorSchema } from "../../../../errors/customError";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Update the project",
@@ -43,7 +44,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.put(
     "/:id",
     describeRoute(openapiRouteOptions),

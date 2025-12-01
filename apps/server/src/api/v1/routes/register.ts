@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import registerGetAllRoute from "./get-all/route";
 import registerGetByIdRoute from "./get-by-id/route";
 import registerCreateRoute from "./create/route";
@@ -7,10 +6,11 @@ import registerDeleteRoute from "./delete/route";
 import registerUpdatePartialRoute from "./update-partial/route";
 import registerGetCanvasItems from "./get-canvas-items/route";
 import registerSaveCanvasState from "./save-canvas-state/route";
+import { HonoServer } from "../../../types";
 
 export default {
   name: "routes",
-  registerHandler(app: Hono) {
+  registerHandler(app: HonoServer) {
     const router = app.basePath("/routes");
     registerGetAllRoute(router);
     registerGetByIdRoute(router);

@@ -9,8 +9,18 @@ import { loadAppConfig } from "./loaders/appconfigLoader";
 import { loadIntegrations } from "./loaders/integrationsLoader";
 import { mapVersionedAdminRoutes } from "./api/register";
 import { errorHandler } from "./middlewares/errorHandler";
+import { auth, initializeAuth } from "./lib/auth";
+import authenticationRouter from "./api/auth/register";
+import { AccessControlRole } from "./db/schema";
+import { setSession } from "./middlewares/session";
 
-const app = new Hono();
+const app = new Hono<{
+  Variables: {
+    user: typeof auth.$Infer.Session.user | null;
+    session: typeof auth.$Infer.Session.session | null;
+    acl: { projectId: string; role: AccessControlRole }[] | null;
+  };
+}>();
 
 // Global CORS middleware
 app.use(
@@ -34,11 +44,14 @@ app.use(
 async function main() {
   const adminRoutesEnabled = Boolean(process.env.ENABLE_ADMIN);
   app.onError(errorHandler);
-  await drizzleInit();
+  const db = await drizzleInit();
   await initializeRedis();
   await loadAppConfig();
   await loadIntegrations();
   if (adminRoutesEnabled) {
+    app.use("*", setSession);
+    initializeAuth(db);
+    authenticationRouter.registerHandler(app);
     mapVersionedAdminRoutes(app);
   }
   const parser = await loadRoutes();

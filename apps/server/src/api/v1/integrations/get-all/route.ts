@@ -9,6 +9,7 @@ import { requestRouteSchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Get all integrations by group",
@@ -34,7 +35,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.get(
     "/list/:group",
     describeRoute(openapiRouteOptions),

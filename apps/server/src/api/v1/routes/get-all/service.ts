@@ -28,6 +28,7 @@ export default async function handleRequest(
       method: value.method!,
       path: value.path!,
       projectId: value.projectId!,
+      projectName: value.projectName!,
       createdAt: value.createdAt.toISOString(),
       updatedAt: value.updatedAt.toISOString(),
     })),

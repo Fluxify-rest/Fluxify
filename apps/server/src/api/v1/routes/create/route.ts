@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import {
   describeRoute,
   DescribeRouteOptions,
@@ -11,6 +10,7 @@ import { errorSchema } from "../../../../errors/customError";
 import handleRequest from "./service";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { generateID } from "@fluxify/lib";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description:
@@ -45,7 +45,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.post(
     "/",
     describeRoute(openapiRouteOptions),

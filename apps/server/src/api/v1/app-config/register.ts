@@ -6,10 +6,11 @@ import registerUpdateRoute from "./update/route";
 import registerDeleteRoute from "./delete/route";
 import registerDeleteBulkRoute from "./delete-bulk/route";
 import registerGetKeysListRoute from "./get-keys-list/route";
+import { HonoServer } from "../../../types";
 
 export default {
   name: "app-config",
-  registerHandler(app: Hono) {
+  registerHandler(app: HonoServer) {
     const router = app.basePath("/app-config");
     registerGetAllRoute(router);
     registerGetKeysListRoute(router);

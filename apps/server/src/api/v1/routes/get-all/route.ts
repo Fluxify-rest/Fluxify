@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import handleRequest from "./service";
 import { requestQuerySchema, responseSchema } from "./dto";
 import {
@@ -10,6 +9,7 @@ import {
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { errorSchema } from "../../../../errors/customError";
+import { HonoServer } from "../../../../types";
 
 const openApiOptions: DescribeRouteOptions = {
   operationId: "get-routes-list",
@@ -44,7 +44,7 @@ const openApiOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.get(
     "/list",
     describeRoute(openApiOptions),

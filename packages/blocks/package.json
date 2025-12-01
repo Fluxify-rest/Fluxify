@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@fluxify/adapters": "../adapters",
-    "@fluxify/lib": "file:../lib",
+    "@fluxify/lib": "../lib",
     "zod": "^4.0.17"
   }
 }

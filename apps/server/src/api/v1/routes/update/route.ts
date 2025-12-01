@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import {
   describeRoute,
   DescribeRouteOptions,
@@ -10,6 +9,7 @@ import handleRequest from "./service";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Updates the existing route and returns the object",
@@ -51,7 +51,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.put(
     "/:id",
     describeRoute(openapiRouteOptions),

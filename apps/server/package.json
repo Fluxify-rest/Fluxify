@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "tsx watch deployments/standalone.ts",
     "test": "vitest run",
-    "build:standalone": "tsc -p tsconfig.json"
+    "build:standalone": "tsc -p tsconfig.json",
+    "db:generate": "npx drizzle-kit generate",
+    "db:push": "npx drizzle-kit push"
   },
   "keywords": [
     "configurable-backend-engine"
@@ -31,6 +33,7 @@
     "@hono/node-server": "^1.19.0",
     "@hono/standard-validator": "^0.1.5",
     "@hono/zod-validator": "^0.7.2",
+    "better-auth": "^1.4.3",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.4",
     "drizzle-zod": "^0.8.3",

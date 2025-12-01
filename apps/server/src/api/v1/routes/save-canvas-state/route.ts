@@ -11,6 +11,7 @@ import { errorSchema } from "../../../../errors/customError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { requestBodyValidator } from "./middleware";
 import handleRequest from "./service";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description:
@@ -48,7 +49,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.put(
     "/:id/save-canvas",
     describeRoute(openapiRouteOptions),

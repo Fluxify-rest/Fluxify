@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const baseErrorSchema = z.object({
-  type: z.enum(["regular", "validation"]),
+  type: z.enum(["regular", "validation", "auth"]),
 });
 
 export const errorSchema = baseErrorSchema.extend({
@@ -19,6 +19,10 @@ type CustomErrorType =
         field: string;
         message: string;
       }[];
+    }
+  | {
+      type: "auth";
+      message: string;
     };
 
 export abstract class CustomError extends Error {

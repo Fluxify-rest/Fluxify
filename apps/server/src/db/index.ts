@@ -15,6 +15,7 @@ export async function drizzleInit() {
   } else {
     await initializePostgres();
   }
+  return db;
 }
 
 async function initializePostgres() {

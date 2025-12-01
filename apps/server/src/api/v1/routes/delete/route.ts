@@ -10,6 +10,7 @@ import handleRequest from "./service";
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description:
@@ -44,7 +45,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.delete(
     "/:id",
     describeRoute(openapiRouteOptions),

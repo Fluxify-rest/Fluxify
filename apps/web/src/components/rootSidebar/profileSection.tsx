@@ -2,6 +2,8 @@
 import { ActionIcon, Avatar, Group, Menu, Text } from "@mantine/core";
 import React from "react";
 import { TbDots, TbLogout, TbSettings } from "react-icons/tb";
+import { authClient } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 const menuItems = [
   {
@@ -17,7 +19,16 @@ const menuItems = [
 ];
 
 const ProfileSection = () => {
-  function onMenuItemClick(action: string) {}
+  function onMenuItemClick(action: string) {
+    if (action === "logout-btn") {
+      logout();
+    }
+  }
+
+  const logout = async () => {
+    await authClient.signOut();
+    redirect("/login");
+  };
 
   return (
     <Group pt={"xs"} justify="space-between" align="center">

@@ -28,6 +28,7 @@ const RootAppShell = ({
   }, [path]);
 
   if (path.startsWith("/editor")) return children;
+  if (path.startsWith("/login")) return children;
 
   return (
     <AppShell
