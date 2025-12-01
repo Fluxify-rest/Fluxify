@@ -19,7 +19,7 @@ export async function requireSystemAdmin(ctx: Context, next: Next) {
   throw new UnauthorizedError("Only system admins can access");
 }
 
-export async function canAccessRoute(
+export async function requireAccess(
   requiredRole: AccessControlRole,
   projectId: string
 ) {

@@ -1,16 +1,16 @@
 import { httpClient } from "@/lib/http";
-import { responseSchema as getByIdResponseSchema } from "@fluxify/backend-engine/src/api/v1/integrations/get-by-id/dto";
-import { responseSchema as getAllResponseSchema } from "@fluxify/backend-engine/src/api/v1/integrations/get-all/dto";
+import { responseSchema as getByIdResponseSchema } from "@fluxify/server/src/api/v1/integrations/get-by-id/dto";
+import { responseSchema as getAllResponseSchema } from "@fluxify/server/src/api/v1/integrations/get-all/dto";
 import {
   requestBodySchema as createRequestSchema,
   responseSchema as createResponseSchema,
-} from "@fluxify/backend-engine/src/api/v1/integrations/create/dto";
+} from "@fluxify/server/src/api/v1/integrations/create/dto";
 import {
   requestBodySchema as updateRequestSchema,
   responseSchema as updateResponseSchema,
-} from "@fluxify/backend-engine/src/api/v1/integrations/update/dto";
-import { responseSchema as testConnectionResponseSchema } from "@fluxify/backend-engine/src/api/v1/integrations/test-connection/dto";
-import { responseSchema as testExistingConnectionResponseSchema } from "@fluxify/backend-engine/src/api/v1/integrations/test-existing-connection/dto";
+} from "@fluxify/server/src/api/v1/integrations/update/dto";
+import { responseSchema as testConnectionResponseSchema } from "@fluxify/server/src/api/v1/integrations/test-connection/dto";
+import { responseSchema as testExistingConnectionResponseSchema } from "@fluxify/server/src/api/v1/integrations/test-existing-connection/dto";
 import z from "zod";
 
 const baseUrl = "/v1/integrations";

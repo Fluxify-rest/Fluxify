@@ -18,7 +18,7 @@ import {
   getIntegrationsGroups,
   getIntegrationsVariants,
   getDefaultVariantValue,
-} from "@fluxify/backend-engine/src/api/v1/integrations/helpers";
+} from "@fluxify/server/src/api/v1/integrations/helpers";
 import { getZodValidatedErrors } from "@/lib/forms";
 import PostgresForm from "./databases/postgres";
 import TestIntegrationConnectionButton from "../buttons/testIntegrationConnectionButton";

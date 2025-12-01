@@ -1,4 +1,4 @@
-import { integrationsGroupSchema } from "@fluxify/backend-engine/src/api/v1/integrations/schemas";
+import { integrationsGroupSchema } from "@fluxify/server/src/api/v1/integrations/schemas";
 import z from "zod";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";

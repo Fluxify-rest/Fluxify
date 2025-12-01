@@ -3,7 +3,7 @@ import {
   baasVariantSchema,
   databaseVariantSchema,
   kvVariantSchema,
-} from "@fluxify/backend-engine/src/api/v1/integrations/schemas";
+} from "@fluxify/server/src/api/v1/integrations/schemas";
 import React from "react";
 import { BiLogoPostgresql } from "react-icons/bi";
 import { DiMongodb, DiRedis } from "react-icons/di";
