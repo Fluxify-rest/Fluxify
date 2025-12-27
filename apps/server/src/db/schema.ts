@@ -14,6 +14,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import z from "zod";
+import { user } from "./auth-schema";
+import { createSelectSchema } from "drizzle-zod";
 
 export enum HttpMethod {
   GET = "GET",
@@ -155,5 +157,44 @@ export const integrationsEntity = pgTable(
     index("idx_integrations_name").on(table.name),
     index("idx_integrations_group").on(table.group),
     index("idx_integrations_variant").on(table.variant),
+  ]
+);
+
+export const accessControlRoleEnum = pgEnum("access_control_roles", [
+  "viewer", // Can view routes, but not configs/integrations
+  "creator", //can CRUD routes, and CRU access to appconfigs and integrations, but No delete, View access to project settings
+  "project_admin", // All Access for that project, assign/revoke users to projects, edit project configs
+  "system_admin", // Access to everything in the system (create users as well)
+]);
+
+const accessControlRoleEnumSchema = createSelectSchema(accessControlRoleEnum);
+export type AccessControlRole = z.infer<typeof accessControlRoleEnumSchema>;
+export type AuthACL = {
+  projectId: string;
+  role: AccessControlRole;
+};
+
+export const accessControlEntity = pgTable(
+  "access_control",
+  {
+    id: serial().primaryKey(),
+    userId: varchar("user_id", { length: 50 }).references(() => user.id, {
+      onDelete: "cascade",
+    }),
+    projectId: varchar("project_id", { length: 50 }).references(
+      () => projectsEntity.id,
+      {
+        onDelete: "cascade",
+      }
+    ),
+    role: accessControlRoleEnum("role"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("idx_access_control_user_id").on(table.userId),
+    index("idx_access_control_project_id").on(table.projectId),
   ]
 );

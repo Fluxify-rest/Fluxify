@@ -9,6 +9,8 @@ import { requestQuerySchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { validationErrorSchema } from "../../../../errors/validationError";
+import { HonoServer } from "../../../../types";
+import { requireRoleAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Get all app configs",
@@ -34,10 +36,11 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.get(
     "/list",
     describeRoute(openapiRouteOptions),
+    requireRoleAccess("creator"),
     validator("query", requestQuerySchema, zodErrorCallbackParser),
     async (c) => {
       const params = c.req.valid("query");

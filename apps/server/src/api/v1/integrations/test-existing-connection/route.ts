@@ -9,6 +9,8 @@ import { responseSchema } from "./dto";
 import handleRequest from "./service";
 import { requestRouteSchema } from "../../routes/get-by-id/dto";
 import { errorSchema } from "../../../../errors/customError";
+import { HonoServer } from "../../../../types";
+import { requireRoleAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Test the existing integration by its ID",
@@ -34,10 +36,11 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.get(
     "/test-existing-connection/:id",
     describeRoute(openapiRouteOptions),
+    requireRoleAccess("creator"),
     validator("param", requestRouteSchema),
     async (c) => {
       const params = c.req.valid("param");

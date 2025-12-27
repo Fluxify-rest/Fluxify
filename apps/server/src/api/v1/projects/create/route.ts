@@ -10,6 +10,8 @@ import handleRequest from "./service";
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
+import { HonoServer } from "../../../../types";
+import { requireSystemAdmin } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "create a new project",
@@ -43,10 +45,11 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.post(
     "/",
     describeRoute(openapiRouteOptions),
+    requireSystemAdmin,
     validator("json", requestBodySchema, zodErrorCallbackParser),
     async (c) => {
       const data = c.req.valid("json");

@@ -1,14 +1,32 @@
 import z from "zod";
 import { requestQuerySchema, responseSchema } from "./dto";
 import { getRoutesList } from "./repository";
-import { eq, gt, gte, ilike, lt, lte, ne, sql } from "drizzle-orm";
-import { routesEntity } from "../../../../db/schema";
+import {
+  and,
+  eq,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  lt,
+  lte,
+  ne,
+  sql,
+} from "drizzle-orm";
+import { AuthACL, routesEntity } from "../../../../db/schema";
 
 export default async function handleRequest(
-  query: z.infer<typeof requestQuerySchema>
+  query: z.infer<typeof requestQuerySchema>,
+  acl: AuthACL[] = []
 ): Promise<z.infer<typeof responseSchema>> {
   const offset = query.perPage * (query.page - 1);
-  const filterSQL = generateFilterSQL(query);
+  const projectIds = acl.map((a) => a.projectId);
+  const isSystemAdmin = acl.some((a) => a.projectId === "*");
+  const filter = generateFilterSQL(query);
+  const filterSQL = and(
+    filter,
+    isSystemAdmin ? undefined : inArray(routesEntity.projectId, projectIds)
+  );
   const { result, totalCount } = await getRoutesList(
     offset,
     query.perPage,
@@ -28,6 +46,7 @@ export default async function handleRequest(
       method: value.method!,
       path: value.path!,
       projectId: value.projectId!,
+      projectName: value.projectName!,
       createdAt: value.createdAt.toISOString(),
       updatedAt: value.updatedAt.toISOString(),
     })),

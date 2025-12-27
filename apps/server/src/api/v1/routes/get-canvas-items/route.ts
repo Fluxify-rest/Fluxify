@@ -10,6 +10,7 @@ import handleRequest from "./service";
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description:
@@ -44,14 +45,15 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.get(
     "/:id/canvas-items",
     describeRoute(openapiRouteOptions),
     validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (c) => {
       const { id } = c.req.valid("param");
-      const result = await handleRequest(id);
+      const acl = c.get("acl") || [];
+      const result = await handleRequest(id, acl);
       return c.json(result);
     }
   );

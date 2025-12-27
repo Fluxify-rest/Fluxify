@@ -2,6 +2,8 @@
 import { ActionIcon, Avatar, Group, Menu, Text } from "@mantine/core";
 import React from "react";
 import { TbDots, TbLogout, TbSettings } from "react-icons/tb";
+import { authClient } from "@/lib/auth";
+import { redirect, useRouter } from "next/navigation";
 
 const menuItems = [
   {
@@ -17,12 +19,31 @@ const menuItems = [
 ];
 
 const ProfileSection = () => {
-  function onMenuItemClick(action: string) {}
+  const session = authClient.useSession();
+  const nav = useRouter();
+  const username =
+    session.data?.user.name?.split(" ")[0].substring(0, 15) || "User";
+  function onMenuItemClick(action: string) {
+    if (action === "logout-btn") {
+      logout();
+    } else {
+      nav.push(action);
+    }
+  }
+
+  const logout = async () => {
+    await authClient.signOut();
+    redirect("/login");
+  };
 
   return (
     <Group pt={"xs"} justify="space-between" align="center">
-      <Avatar />
-      <Text>Account Name</Text>
+      <Avatar color={"violet"} src={session.data?.user.image}>
+        {session.data?.user.image
+          ? null
+          : session.data?.user.name?.substring(0, 2).toUpperCase()}
+      </Avatar>
+      <Text style={{ flex: 1 }}>{username}</Text>
       <Menu shadow="sm" width={200} position="right-end">
         <Menu.Target>
           <ActionIcon color="dark" variant="subtle">

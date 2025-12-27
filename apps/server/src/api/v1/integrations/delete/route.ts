@@ -8,6 +8,8 @@ import {
 import handleRequest from "./service";
 import { requestRouteSchema } from "./dto";
 import { errorSchema } from "../../../../errors/customError";
+import { HonoServer } from "../../../../types";
+import { requireRoleAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Delete an integration",
@@ -28,10 +30,11 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.delete(
     "/:id",
     describeRoute(openapiRouteOptions),
+    requireRoleAccess("project_admin"),
     validator("param", requestRouteSchema),
     async (c) => {
       const id = c.req.param("id");

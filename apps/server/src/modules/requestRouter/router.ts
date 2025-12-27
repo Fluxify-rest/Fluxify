@@ -2,7 +2,7 @@ import { HttpRouteParser } from "@fluxify/lib";
 import { Hono } from "hono";
 import { handleRequest } from "./service";
 
-export async function mapRouter(app: Hono, parser: HttpRouteParser) {
+export async function mapRouter(app: Hono<any>, parser: HttpRouteParser) {
   app.all("*", async (c) => {
     try {
       const response = await handleRequest(c, parser);

@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import {
   describeRoute,
   DescribeRouteOptions,
@@ -10,6 +9,7 @@ import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackPars
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { errorSchema } from "../../../../errors/customError";
 import handleRequest from "./service";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Returns a Route if matching id exist",
@@ -43,14 +43,15 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.get(
     "/:id",
     describeRoute(openapiRouteOptions),
     validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (ctx) => {
       const { id } = ctx.req.valid("param");
-      const result = await handleRequest(id);
+      const acl = ctx.get("acl") || [];
+      const result = await handleRequest(id, acl);
       return ctx.json(result);
     }
   );

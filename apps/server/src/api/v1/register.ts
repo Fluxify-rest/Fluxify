@@ -1,13 +1,13 @@
-import { Hono } from "hono";
-import routesRegister from "./routes/register";
-import projectsRegister from "./projects/register";
-import appConfigRegister from "./app-config/register";
 import { openAPIRouteHandler } from "hono-openapi";
-import integrationsRegister from "./integrations/register";
+import routes from "./routes/register";
+import projects from "./projects/register";
+import appConfig from "./app-config/register";
+import integrations from "./integrations/register";
+import { HonoServer } from "../../types";
 
 export default {
   name: "v1",
-  registerHandler(app: Hono) {
+  registerHandler(app: HonoServer) {
     const router = app.basePath("/v1");
     router.get(
       "/openapi.json",
@@ -21,9 +21,9 @@ export default {
         },
       })
     );
-    routesRegister.registerHandler(router);
-    projectsRegister.registerHandler(router);
-    appConfigRegister.registerHandler(router);
-    integrationsRegister.registerHandler(router);
+    routes.registerHandler(router);
+    projects.registerHandler(router);
+    appConfig.registerHandler(router);
+    integrations.registerHandler(router);
   },
 };

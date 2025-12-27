@@ -11,6 +11,7 @@ import { errorSchema } from "../../../../errors/customError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { requestBodyValidator } from "./middleware";
 import handleRequest from "./service";
+import { HonoServer } from "../../../../types";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description:
@@ -48,7 +49,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.put(
     "/:id/save-canvas",
     describeRoute(openapiRouteOptions),
@@ -58,7 +59,8 @@ export default function (app: Hono) {
     async (c) => {
       const { id } = c.req.valid("param");
       const data = c.req.valid("json");
-      await handleRequest(id, data);
+      const acl = c.get("acl") || [];
+      await handleRequest(id, data, acl);
       return c.body(null, 204);
     }
   );

@@ -6,10 +6,11 @@ import registerUpdateRoute from "./update/route";
 import registerDeleteRoute from "./delete/route";
 import registerTestConnectionRoute from "./test-connection/route";
 import registerTestExistingConnectionRoute from "./test-existing-connection/route";
+import { HonoServer } from "../../../types";
 
 export default {
   name: "integrations",
-  registerHandler(app: Hono) {
+  registerHandler(app: HonoServer) {
     const router = app.basePath("/integrations");
     registerGetAllRoute(router);
     registerGetByIdRoute(router);

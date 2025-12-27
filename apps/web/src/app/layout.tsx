@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: "CBE Console",
 };
 
-export default function RootLayout({ children }: any) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>

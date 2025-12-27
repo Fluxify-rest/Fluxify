@@ -2,15 +2,15 @@ import { httpClient } from "@/lib/http";
 import {
   requestQuerySchema as getAllRequestQuerySchema,
   responseSchema as getAllResponseSchema,
-} from "@fluxify/backend-engine/src/api/v1/projects/get-all/dto";
+} from "@fluxify/server/src/api/v1/projects/get-all/dto";
 import {
   requestBodySchema as createRequestBodySchema,
   responseSchema as createResponseSchema,
-} from "@fluxify/backend-engine/src/api/v1/projects/create/dto";
+} from "@fluxify/server/src/api/v1/projects/create/dto";
 import {
   requestBodySchema as updateRequestBodySchema,
   responseSchema as updateResponseSchema,
-} from "@fluxify/backend-engine/src/api/v1/projects/update/dto";
+} from "@fluxify/server/src/api/v1/projects/update/dto";
 import z from "zod";
 
 const baseUrl = "/v1/projects";

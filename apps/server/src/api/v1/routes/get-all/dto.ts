@@ -46,6 +46,7 @@ export const responseSchema = z.object({
       createdAt: z.string(),
       updatedAt: z.string(),
       projectId: z.string(),
+      projectName: z.string(),
     })
   ),
   pagination: paginationResponseSchema,

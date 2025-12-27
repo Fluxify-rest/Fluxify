@@ -10,6 +10,8 @@ import handleRequest from "./service";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
+import { HonoServer } from "../../../../types";
+import { requireRoleAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Delete app config by id",
@@ -43,10 +45,11 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.delete(
     "/:id",
     describeRoute(openapiRouteOptions),
+    requireRoleAccess("project_admin"),
     validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (c) => {
       const { id } = c.req.valid("param");

@@ -8,6 +8,8 @@ import {
 import { requestBodySchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
+import { HonoServer } from "../../../../types";
+import { requireRoleAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Test integration connection",
@@ -25,10 +27,11 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.post(
     "/test-connection",
     describeRoute(openapiRouteOptions),
+    requireRoleAccess("creator"),
     validator("json", requestBodySchema, zodErrorCallbackParser),
     async (c) => {
       const body = c.req.valid("json");

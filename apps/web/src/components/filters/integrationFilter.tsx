@@ -17,7 +17,7 @@ import {
 } from "@mantine/core";
 import React from "react";
 import DebouncedTextInput from "../editors/debouncedTextInput";
-import { getIntegrationsVariants } from "@fluxify/backend-engine/src/api/v1/integrations/helpers";
+import { getIntegrationsVariants } from "@fluxify/server/src/api/v1/integrations/helpers";
 import { TbFilter } from "react-icons/tb";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 

@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import v1Register from "./v1/register";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { HonoServer } from "../types";
 
-export function mapVersionedAdminRoutes(app: Hono) {
+export function mapVersionedAdminRoutes(app: HonoServer) {
   const router = app.basePath("/_/admin/api");
   router.get("/openapi/ui", (c) => {
     try {

@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import {
   describeRoute,
   DescribeRouteOptions,
@@ -10,6 +9,8 @@ import handleRequest from "./service";
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
+import { HonoServer } from "../../../../types";
+import { AuthACL } from "../../../../db/schema";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description:
@@ -44,14 +45,15 @@ const openapiRouteOptions: DescribeRouteOptions = {
   },
 };
 
-export default function (app: Hono) {
+export default function (app: HonoServer) {
   app.delete(
     "/:id",
     describeRoute(openapiRouteOptions),
     validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (c) => {
       const { id } = c.req.valid("param");
-      await handleRequest(id);
+      const acl = c.get("acl") as AuthACL[];
+      await handleRequest(id, acl);
       return c.body(null, 204);
     }
   );
