@@ -8,6 +8,8 @@ import { MdOutlineVerifiedUser } from "react-icons/md";
 import { FaNpm } from "react-icons/fa6";
 import RequireRoleInAnyProject from "../auth/requireRoleInAnyProject";
 import AccountDetails from "./accountDetails";
+import UsersList from "./usersList";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Props = {
   disableNpm?: boolean;
@@ -15,8 +17,28 @@ type Props = {
 
 const SettingsTabs = (props: Props) => {
   const red = useMantineTheme().colors.red;
+  const query = useSearchParams();
+  const router = useRouter();
+  function onTabClicked(value: string | null) {
+    if (!value) return;
+    router.replace(`?tab=${value}`);
+  }
+  let tab = query.get("tab") || "Personal";
+  // validate tab
+  if (
+    ![
+      "Personal",
+      "Users",
+      "Deployments",
+      "Authentication",
+      "NPM Packages",
+    ].includes(tab)
+  ) {
+    router.replace("?tab=Personal");
+    tab = "Personal";
+  }
   return (
-    <Tabs color="violet" defaultValue={"Personal"}>
+    <Tabs onChange={onTabClicked} color="violet" defaultValue={tab}>
       <Tabs.List w={"fit-content"}>
         <Tabs.Tab leftSection={<TbUserCircle size={18} />} value="Personal">
           Personal
@@ -54,7 +76,7 @@ const SettingsTabs = (props: Props) => {
           <AccountDetails />
         </Tabs.Panel>
         <Tabs.Panel value="Users">
-          <p>Not implemented</p>
+          <UsersList />
         </Tabs.Panel>
         <Tabs.Panel value="Deployments">
           <p>Not implemented</p>
