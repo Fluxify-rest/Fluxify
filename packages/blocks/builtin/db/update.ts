@@ -40,7 +40,7 @@ export class UpdateDbBlock extends BaseBlock {
           this.input.data.value
         )) as object;
       }
-      if (!(dataToUpdate instanceof Object)) {
+      if (!(typeof dataToUpdate === "object")) {
         return {
           continueIfFail: false,
           successful: false,

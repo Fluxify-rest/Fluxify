@@ -10,7 +10,7 @@ export const jsRunnerBlockSchema = z
 export class JsRunnerBlock extends BaseBlock {
   override async executeAsync(params?: any): Promise<BlockOutput> {
     try {
-      const result = await this.context.vm.runAsync(this.input, params);
+      const result = await this.context.vm.runAsync(this.input.value, params);
       return {
         continueIfFail: true,
         successful: true,

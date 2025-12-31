@@ -41,7 +41,7 @@ export class InsertDbBlock extends BaseBlock {
           this.input.data.value
         )) as object;
       }
-      if (!(dataToInsert instanceof Object)) {
+      if (typeof dataToInsert !== "object") {
         return {
           continueIfFail: false,
           successful: false,
@@ -54,6 +54,7 @@ export class InsertDbBlock extends BaseBlock {
             this.input.tableName.slice(3)
           )) as string)
         : this.input.tableName;
+
       const result = await this.dbAdapter.insert(
         this.input.tableName,
         dataToInsert
