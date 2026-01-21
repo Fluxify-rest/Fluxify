@@ -1,3 +1,4 @@
+"use server";
 import AddIntegrationButton from "@/components/buttons/addIntegrationButton";
 import IntegrationFilter from "@/components/filters/integrationFilter";
 import AvailableConnectors from "@/components/panels/availableConnectors";

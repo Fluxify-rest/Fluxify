@@ -4,13 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 5500",
-    "build:web": "next build --turbopack --experimental-build-mode compile",
+    "build:web": "next build --turbopack",
     "start": "next start -p 5500",
-    "lint": "eslint"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.5",
-    "@fluxify/server": "file:../server",
+    "@fluxify/server": "workspace:../server",
+    "@fluxify/lib": "workspace:../../packages/lib",
+    "@fluxify/adapters": "workspace:../../packages/adapters",
+    "@fluxify/blocks": "workspace:../../packages/blocks",
     "@mantine/core": "^8.3.5",
     "@mantine/form": "^8.3.5",
     "@mantine/hooks": "^8.3.5",
@@ -31,12 +34,11 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.5",
-    "typescript": "^5"
+    "globals": "^17.0.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.53.1"
   }
 }

@@ -1,29 +1,21 @@
-FROM ubuntu:latest
+FROM oven/bun:alpine AS base
 
-# Install system dependencies
-RUN apt update && apt upgrade -y && \
-  apt install -y curl sudo && \
-  apt install -y debian-keyring debian-archive-keyring apt-transport-https && \
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && \
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
-  chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list && \
-  apt update -y && \
-  apt install -y caddy libatomic1
+FROM base AS build
+WORKDIR /app
+COPY . .
+RUN bun install --production
+RUN bun run build:standalone
 
-# Install Node.js using nodesource instead of NVM for better Docker compatibility
-RUN apt-get update && \
-  apt-get install -y ca-certificates curl gnupg && \
-  mkdir -p /etc/apt/keyrings && \
-  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
-  apt-get update && \
-  apt-get install nodejs -y
+FROM base AS production
+WORKDIR /app
+COPY --from=build /app/apps/server/dist /app/apps/server
+COPY --from=build /app/apps/server/package.json /app/apps/server/package.json
+COPY --from=build /app/packages/lib /app/packages/lib
+COPY --from=build /app/packages/blocks /app/packages/blocks
+COPY --from=build /app/packages/adapters /app/packages/adapters
+COPY --from=build /app/package.json /app/package.json
 
-# Verify installation
-RUN node --version && npm --version
-# install pm2
-RUN npm install -g pm2
+RUN bun install --production
 
-# TODO: need to work on building, testing and bundling and running the app behind caddy
-
-ENTRYPOINT ["node"]
+WORKDIR /app/apps/server
+CMD ["bun", "deployments/standalone.js"]

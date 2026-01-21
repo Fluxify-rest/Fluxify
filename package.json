@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "server:dev": "npm run dev -w apps/server",
     "dev": "turbo run dev",
+    "lint": "turbo run lint",
     "test": "turbo run test",
-    "build:standalone": "turbo run build:standalone --filter=@fluxify/server --filter=@fluxify/lib --filter=@fluxify/blocks --filter=@fluxify/adapters",
-    "build:web": "turbo run build:ui --filter=@fluxify/web --filter=@fluxify/lib --filter=@fluxify/blocks --filter=@fluxify/adapters"
+    "build": "turbo run build",
+    "build:server": "turbo run build:standalone",
+    "build:web": "turbo run build:web"
   },
   "keywords": [
     "fluxify",
@@ -17,18 +18,14 @@
     "packages/*",
     "apps/*"
   ],
-  "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
-  },
-  "packageManager": "npm@10.9.2",
+  "packageManager": "bun@1.3.6",
   "author": "07prajwal2000",
   "license": "ISC",
   "description": "",
-  "devDependencies": {
-    "turbo": "^2.5.5"
-  },
   "dependencies": {
     "@hono/zod-validator": "^0.7.2"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.5"
   }
 }

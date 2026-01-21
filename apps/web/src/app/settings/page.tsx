@@ -1,3 +1,4 @@
+"use server";
 import SettingsTabs from "@/components/settings/tabs";
 import { authClient } from "@/lib/auth";
 import { canAccess } from "@fluxify/server/src/lib/acl";

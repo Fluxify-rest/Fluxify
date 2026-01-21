@@ -1,6 +1,7 @@
+"use server";
 import { redirect } from "next/navigation";
 
-const page = () => {
+const page = async () => {
   return redirect("/");
 };
 

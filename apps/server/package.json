@@ -6,11 +6,12 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx watch deployments/standalone.ts",
+    "dev": "bun --watch deployments/standalone.ts",
     "test": "vitest run",
-    "build:standalone": "tsc -p tsconfig.json",
-    "db:generate": "npx drizzle-kit generate",
-    "db:push": "npx drizzle-kit push"
+    "lint": "tsc --noEmit",
+    "build": "bun build deployments/standalone.ts --outdir dist --bundle --target bun --minify --external better-sqlite3 --external mysql2 --external sqlite3 --external mysql --external pg-query-stream --external tedious --external oracledb",
+    "db:generate": "bun x drizzle-kit generate",
+    "db:push": "bun x drizzle-kit push"
   },
   "keywords": [
     "configurable-backend-engine"
@@ -19,6 +20,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/bun": "^1.3.6",
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
     "drizzle-kit": "^0.31.4",
@@ -28,9 +30,9 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.11",
-    "@fluxify/adapters": "../../packages/adapters/",
-    "@fluxify/blocks": "file:../../packages/blocks",
-    "@fluxify/lib": "file:../../packages/lib",
+    "@fluxify/adapters": "workspace:../../packages/adapters/",
+    "@fluxify/blocks": "workspace:../../packages/blocks",
+    "@fluxify/lib": "workspace:../../packages/lib",
     "@hono/node-server": "^1.19.0",
     "@hono/standard-validator": "^0.1.5",
     "@hono/zod-validator": "^0.7.2",

@@ -1,3 +1,4 @@
+"use server";
 import BackToEditorButton from "@/components/editor/backToEditorButton";
 import { authClient } from "@/lib/auth";
 import { canAccess } from "@fluxify/server/src/lib/acl";

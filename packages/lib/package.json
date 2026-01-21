@@ -11,10 +11,13 @@
   "description": "",
   "scripts": {
     "test": "vitest run",
+    "dev": "tsc --watch -p tsconfig.json",
+    "lint": "tsc --noEmit",
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "axios": "^1.13.1",
+    "http2": "^3.3.7",
+    "net": "^1.0.2",
     "uuidv7": "^1.0.2",
     "zod": "^4.0.17"
   },
