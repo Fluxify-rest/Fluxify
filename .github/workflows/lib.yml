@@ -18,4 +18,4 @@ jobs:
       - name: Change Directory to lib package
         run: cd packages/lib
       - name: Run tests
-        run: bun test
+        run: bun run test

@@ -18,4 +18,4 @@ jobs:
       - name: Change Directory to blocks package
         run: cd packages/blocks
       - name: Run tests
-        run: Bun test
+        run: bun run test
