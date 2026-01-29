@@ -65,6 +65,7 @@ const JsTextInput = ({
                 variant="transparent"
                 color="violet"
                 w={"100%"}
+                disabled={props.disabled}
                 h={"100%"}
               >
                 <TbX />
@@ -75,6 +76,7 @@ const JsTextInput = ({
         <JsEditorDialog
           onClose={close}
           opened={opened}
+          readonly={props.disabled}
           value={props.value!.toString().slice(3)}
           onSave={(val) => onChange(val, true)}
           title="Edit Js Expression"
@@ -102,7 +104,7 @@ const JsTextInput = ({
         onChange={(e) => onChange(e.target.value, false)}
         rightSection={
           enableJs && (
-            <ActionIcon color="violet" onClick={open} size={props.size}>
+            <ActionIcon disabled={props.disabled} color="violet" onClick={open} size={props.size}>
               <IoLogoJavascript size={iconSize} />
             </ActionIcon>
           )
