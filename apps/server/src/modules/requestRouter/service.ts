@@ -1,6 +1,10 @@
 import { getCookie, setCookie } from "hono/cookie";
 import { HttpClient, HttpRoute, HttpRouteParser } from "@fluxify/lib";
-import { Context as BlockContext, BlockOutput, ContextVarsType } from "@fluxify/blocks";
+import {
+  Context as BlockContext,
+  BlockOutput,
+  ContextVarsType,
+} from "@fluxify/blocks";
 import { Context } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { JsVM } from "@fluxify/lib";
@@ -57,9 +61,14 @@ export async function handleRequest(
 
 function parseResult(executionResult: BlockOutput) {
   return {
-    status: executionResult.output?.httpCode || (executionResult.error ? 500 : 200),
+    status:
+      executionResult.output?.httpCode || (executionResult.error ? 500 : 200),
     data:
-      executionResult.output?.body || executionResult?.output || (!executionResult.successful ? ({error: executionResult.error?.toString() || "Unknown error"}) : "NO RESULT"),
+      executionResult.output?.body ||
+      executionResult?.output ||
+      (!executionResult.successful
+        ? { error: executionResult.error?.toString() || "Unknown error" }
+        : "NO RESULT"),
   };
 }
 
@@ -82,8 +91,8 @@ function createContext(
     abortController: new AbortController(),
     stopper: {
       timeoutEnd: 0,
-      duration: RESPONSE_TIMEOUT
-    }
+      duration: RESPONSE_TIMEOUT,
+    },
   };
 }
 

@@ -12,10 +12,13 @@ export type EngineOptions = {
 };
 
 export class Engine {
-  constructor(private readonly blocks: Blocks, private readonly options: EngineOptions) {}
+  constructor(
+    private readonly blocks: Blocks,
+    private readonly options: EngineOptions,
+  ) {}
   public async start(
     blockId: string,
-    params?: any
+    params?: any,
   ): Promise<BlockOutput | null> {
     let result: BlockOutput | null = null;
     const blocks = this.blocks;
@@ -25,15 +28,19 @@ export class Engine {
     let block = blocks[blockId],
       nextParams = params;
     if (this.options.context.stopper.timeoutEnd === 0) {
-      this.options.context.stopper.timeoutEnd = performance.now() + this.options.context.stopper.duration;
+      this.options.context.stopper.timeoutEnd =
+        performance.now() + this.options.context.stopper.duration;
     }
-    while (!this.options.context.abortController.signal.aborted && performance.now() < this.options.context.stopper.timeoutEnd) {
+    while (
+      !this.options.context.abortController.signal.aborted &&
+      performance.now() < this.options.context.stopper.timeoutEnd
+    ) {
       try {
         result = await block.executeAsync(nextParams);
         if (!result || (!result.successful && !result.continueIfFail)) {
           const errorBlockResult = await errorBlock.executeAsync(result.error);
           if (errorBlockResult.next) {
-            nextParams = errorBlockResult.output;
+            nextParams = errorBlockResult.error;
             block = blocks[errorBlockResult.next];
             continue;
           } else {
@@ -46,7 +53,7 @@ export class Engine {
       } catch (error: any) {
         const errorBlockResult = await errorBlock.executeAsync(error);
         if (errorBlockResult.next) {
-          nextParams = errorBlockResult.output;
+          nextParams = errorBlockResult.error;
           block = blocks[errorBlockResult.next];
           continue;
         } else {
@@ -58,7 +65,8 @@ export class Engine {
         }
       }
     }
-    const stopTime = performance.now() - 200; // subtracting error time
+    const stopTime =
+      performance.now() - 50 - this.options.context.stopper.timeoutEnd; // subtracting error time
     if (stopTime > this.options.context.stopper.duration) {
       this.options.context.abortController.abort();
       return {
