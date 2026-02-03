@@ -6,6 +6,7 @@ import z from "zod";
 export interface Context {
   vm: JsVM;
   route: string;
+  projectId: string;
   apiId: string;
   vars: ContextVarsType & Record<string, any>;
   requestBody?: any;

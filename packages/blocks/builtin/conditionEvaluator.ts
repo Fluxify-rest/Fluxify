@@ -58,6 +58,21 @@ export class ConditionEvaluator {
     }
     return totalTrues == totalOperators - checkpoint;
   }
+  public static async evaluateScript(lhs: any, rhs: any, vm: JsVM) {
+    lhs =
+      typeof lhs === "string"
+        ? lhs.startsWith("js:")
+          ? await vm.run(lhs.slice(3))
+          : lhs
+        : lhs;
+    rhs =
+      typeof rhs === "string"
+        ? rhs.startsWith("js:")
+          ? await vm.run(rhs.slice(3))
+          : rhs
+        : rhs;
+    return { lhs, rhs };
+  }
   public static async evaluateOperator(
     lhs: any,
     rhs: any,

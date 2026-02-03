@@ -7,6 +7,7 @@ import {
 } from "../../baseBlock";
 import type { IDbAdapter } from "@fluxify/adapters";
 import { whereConditionSchema } from "./schema";
+import { ConditionEvaluator } from "../conditionEvaluator";
 
 export const updateDbBlockSchema = z
   .object({
@@ -59,6 +60,20 @@ export class UpdateDbBlock extends BaseBlock {
         };
       }
       dataToUpdate = await this.evaluateJsInData(dataToUpdate);
+      const evaluatedConditions = await Promise.all(
+        this.input.conditions.map(async (condition) => {
+          const { lhs, rhs } = await ConditionEvaluator.evaluateScript(
+            condition.attribute,
+            condition.value,
+            this.context.vm,
+          );
+          return {
+            ...condition,
+            attribute: lhs,
+            value: rhs,
+          };
+        }),
+      );
       this.input.tableName = this.input.tableName.startsWith("js:")
         ? ((await this.context.vm.runAsync(
             this.input.tableName.slice(3),
@@ -67,7 +82,7 @@ export class UpdateDbBlock extends BaseBlock {
       const result = await this.dbAdapter.update(
         this.input.tableName,
         dataToUpdate,
-        this.input.conditions,
+        evaluatedConditions,
       );
       return {
         continueIfFail: false,

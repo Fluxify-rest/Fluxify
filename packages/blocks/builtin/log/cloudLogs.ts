@@ -1,16 +1,18 @@
 import z from "zod";
 import { BaseBlock, BlockOutput, Context } from "../../baseBlock";
 import { formatMessage, logBlockSchema } from ".";
+import { AbstractLogger } from "@fluxify/lib";
 
-export const consoleAiDescription = {
-  name: "console_log",
-  description: `logs message to console`,
-  jsonSchema: JSON.stringify(z.toJSONSchema(logBlockSchema)),
-};
+export const cloudLogsBlockSchema = z
+  .object({
+    connection: z.string().describe("integration id"),
+  })
+  .extend(logBlockSchema.shape);
 
-export class ConsoleLoggerBlock extends BaseBlock {
+export class CloudLogsBlock extends BaseBlock {
   constructor(
     context: Context,
+    private readonly logger: AbstractLogger,
     input: z.infer<typeof logBlockSchema>,
     next?: string,
   ) {
@@ -23,11 +25,11 @@ export class ConsoleLoggerBlock extends BaseBlock {
     const msgOrParams = data.message?.trim() != "" ? data.message : params;
     const msg = await formatMessage(msgOrParams, level, this.context, params);
     if (level == "info") {
-      console.log(msg);
+      this.logger.logInfo(msg);
     } else if (level == "error") {
-      console.error(msg);
+      this.logger.logError(msg);
     } else {
-      console.warn(msg);
+      this.logger.logWarn(msg);
     }
     return {
       continueIfFail: true,

@@ -27,6 +27,7 @@ export class Engine {
     const errorBlock = blocks[this.options.errorHandlerId] as ErrorHandlerBlock;
     let block = blocks[blockId],
       nextParams = params;
+
     if (this.options.context.stopper.timeoutEnd === 0) {
       this.options.context.stopper.timeoutEnd =
         performance.now() + this.options.context.stopper.duration;

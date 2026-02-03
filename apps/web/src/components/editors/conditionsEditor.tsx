@@ -22,6 +22,7 @@ interface Props {
   conditions: z.infer<typeof ifBlockSchema>["conditions"];
   onChange?: (conditions: z.infer<typeof ifBlockSchema>["conditions"]) => void;
   disableJsConditions?: boolean;
+  ignoreOperators?: string[];
 }
 
 const ConditionsEditor = (props: Props) => {
@@ -71,7 +72,9 @@ const ConditionsEditor = (props: Props) => {
     <Stack gap={"xs"}>
       {conditions.map((condition, index) => {
         const isJs = condition.operator === "js";
-        const hideRhs = condition.operator === "is_empty" || condition.operator === "is_not_empty";
+        const hideRhs =
+          condition.operator === "is_empty" ||
+          condition.operator === "is_not_empty";
         return (
           <Box key={index}>
             {condition.chain === "or" && (
@@ -127,19 +130,25 @@ const ConditionsEditor = (props: Props) => {
                     value={condition.operator}
                     data={
                       props.disableJsConditions
-                        ? operators.filter((x) => x.value !== "js")
+                        ? operators.filter(
+                            (x) =>
+                              x.value !== "js" &&
+                              !props.ignoreOperators?.includes(x.value),
+                          )
                         : operators
                     }
                     onChange={(value) => onOperatorChange(index, value)}
                   />
                 </Grid.Col>
-                {!hideRhs && <Grid.Col span={4}>
-                  <JsTextInput
-                    value={condition.rhs.toString()}
-                    onValueChange={(value) => onRHSChange(index, value)}
-                    disabled={hideRhs}
-                  />
-                </Grid.Col>}
+                {!hideRhs && (
+                  <Grid.Col span={4}>
+                    <JsTextInput
+                      value={condition.rhs.toString()}
+                      onValueChange={(value) => onRHSChange(index, value)}
+                      disabled={hideRhs}
+                    />
+                  </Grid.Col>
+                )}
                 <Grid.Col span={1}>
                   <Center h={"100%"}>
                     <ActionIcon
@@ -190,7 +199,7 @@ const operators = [
   { value: "lte", label: "<=" },
   { value: "js", label: "JS" },
   { value: "is_empty", label: "Is Empty/Null" },
-  { value: "is_not_empty", label: "Is Not Empty/Null" }
+  { value: "is_not_empty", label: "Is Not Empty/Null" },
 ];
 
 export default ConditionsEditor;

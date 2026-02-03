@@ -7,6 +7,7 @@ import {
 } from "../../baseBlock";
 import type { IDbAdapter } from "@fluxify/adapters";
 import { whereConditionSchema } from "./schema";
+import { ConditionEvaluator } from "../conditionEvaluator";
 
 export const deleteDbBlockSchema = z
   .object({
@@ -39,9 +40,23 @@ export class DeleteDbBlock extends BaseBlock {
             this.input.tableName.slice(3),
           )) as string)
         : this.input.tableName;
+      const evaluatedConditions = await Promise.all(
+        this.input.conditions.map(async (condition) => {
+          const { lhs, rhs } = await ConditionEvaluator.evaluateScript(
+            condition.attribute,
+            condition.value,
+            this.context.vm,
+          );
+          return {
+            ...condition,
+            attribute: lhs,
+            value: rhs,
+          };
+        }),
+      );
       const result = await this.dbAdapter.delete(
         this.input.tableName,
-        this.input.conditions,
+        evaluatedConditions,
       );
       return {
         continueIfFail: false,

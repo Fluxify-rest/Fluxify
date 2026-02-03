@@ -31,11 +31,11 @@ export async function handleRequest(
   ctx: Context,
   parser: HttpRouteParser,
 ): Promise<HandleRequestType> {
-  const pathId = parser.getRouteId(
+  const path = parser.getRouteId(
     ctx.req.path,
     ctx.req.method as HttpRoute["method"],
   );
-  if (!pathId) {
+  if (!path) {
     return {
       status: 404,
       data: {
@@ -45,15 +45,23 @@ export async function handleRequest(
   }
 
   let requestBody = await getRequestBody(ctx);
-  const vars = setupContextVars(ctx, requestBody, pathId.routeParams);
+  const vars = setupContextVars(ctx, requestBody, path.routeParams);
   const vm = createJsVM(vars);
   const dbFactory = createDbFactory(vm);
-  const context = createContext(pathId, ctx, requestBody, vm, vars, dbFactory);
+  const context = createContext(path, ctx, requestBody, vm, vars, dbFactory);
+
   const timeoutId = setTimeout(() => {
     context.abortController.abort();
   }, RESPONSE_TIMEOUT);
 
-  const executionResult = await startBlocksExecution(pathId.id, context);
+  const executionResult = await startBlocksExecution(
+    {
+      projectId: path.projectId!,
+      routeId: path.id,
+      projectName: path.projectName,
+    },
+    context,
+  );
   clearTimeout(timeoutId);
   if (executionResult) {
     return parseResult(executionResult);
@@ -80,7 +88,7 @@ function parseResult(executionResult: BlockOutput) {
 }
 
 function createContext(
-  pathId: { id: string; routeParams?: Record<string, string> },
+  path: { id: string; routeParams?: Record<string, string>; projectId: string },
   ctx: Context<any, any, {}>,
   requestBody: any,
   vm: JsVM,
@@ -88,8 +96,9 @@ function createContext(
   dbFactory: DbFactory,
 ): BlockContext {
   return {
-    apiId: pathId.id,
+    apiId: path.id,
     route: ctx.req.path,
+    projectId: path.projectId,
     requestBody,
     vm,
     vars,

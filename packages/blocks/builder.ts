@@ -61,7 +61,12 @@ import {
   HttpRequestBlock,
   httpRequestBlockSchema,
 } from "./builtin/httpRequest";
-import { ErrorHandlerBlock, errorHandlerBlockSchema } from "./builtin/errorHandler";
+import {
+  ErrorHandlerBlock,
+  errorHandlerBlockSchema,
+} from "./builtin/errorHandler";
+import { logBlockSchema } from "./builtin/log";
+import { CloudLogsBlock, cloudLogsBlockSchema } from "./builtin/log/cloudLogs";
 
 export const blockDTOSchema = z.object({
   id: z.uuidv7(),
@@ -102,6 +107,10 @@ export interface EngineFactory {
   create(builder: BlockBuilder, executor: string): Engine;
 }
 
+export interface IntegrationFactory {
+  create(options: { integrationId: string; type: string }): any;
+}
+
 export class BlockBuilder {
   private edgesMap: EdgesType = {};
   private blocksMap: { [id: string]: BlockDTOType } = {};
@@ -111,6 +120,7 @@ export class BlockBuilder {
   constructor(
     private readonly context: Context,
     private readonly engineFactory: EngineFactory,
+    private readonly integrationFactory: IntegrationFactory,
     private readonly shouldValidateBlockData?: boolean,
   ) {}
 
@@ -226,30 +236,41 @@ export class BlockBuilder {
         return this.createDbTransactionBlock(block);
       case BlockTypes.errorHandler:
         return this.createErrorHandlerBlock(block);
+      case BlockTypes.cloudLogs:
+        return this.createCloudLogsBlock(block);
     }
   }
 
+  private createCloudLogsBlock(block: BlockDTOType) {
+    const parsedResult = this.shouldValidateBlockData
+      ? cloudLogsBlockSchema.safeParse(block.data)
+      : { data: block.data, success: true };
+    if (!parsedResult.success) throw new Error("Invalid Cloud logs block data");
+    const edge = this.findEdge(block, "source");
+    const logger = this.integrationFactory.create(
+      parsedResult.data.integrationId,
+    );
+    return new CloudLogsBlock(this.context, logger, parsedResult.data, edge);
+  }
   private createErrorHandlerBlock(block: BlockDTOType) {
     const parsedResult = this.shouldValidateBlockData
       ? errorHandlerBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid Error handler block data");
     const edge = this.findEdge(block, "source");
     if (edge === block.id) {
       throw new Error("Error handler block cannot be connected to itself");
     }
-    return new ErrorHandlerBlock(
-      edge,
-      this.context,
-      parsedResult.data,
-    );
+    return new ErrorHandlerBlock(edge, this.context, parsedResult.data);
   }
 
   private createDbTransactionBlock(block: BlockDTOType) {
     const parsedResult = this.shouldValidateBlockData
       ? transactionDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid DB transaction block data");
     const edge = this.findEdge(block, "source");
     const executor = this.findEdge(block, "executor");
     parsedResult.data.executor = executor;
@@ -266,7 +287,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? httpRequestBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid HTTP request block data");
     const edge = this.findEdge(block, "source");
     return new HttpRequestBlock(this.context, parsedResult.data, edge);
   }
@@ -275,7 +297,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? getSingleDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid DB get single block data");
     const edge = this.findEdge(block, "source");
     return new GetSingleDbBlock(
       this.context,
@@ -288,7 +311,7 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? getAllDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success) throw new Error("Invalid DB get all block data");
     const edge = this.findEdge(block, "source");
     return new GetAllDbBlock(
       this.context,
@@ -301,7 +324,7 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? nativeDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success) throw new Error("Invalid DB native block data");
     const edge = this.findEdge(block, "source");
     return new NativeDbBlock(
       this.context,
@@ -314,7 +337,7 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? updateDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success) throw new Error("Invalid DB update block data");
     const edge = this.findEdge(block, "source");
     return new UpdateDbBlock(
       this.context,
@@ -327,7 +350,7 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? insertBulkDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success) throw new Error("Invalid DB insert block data");
     const edge = this.findEdge(block, "source");
     return new InsertBulkDbBlock(
       this.context,
@@ -340,7 +363,7 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? deleteDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success) throw new Error("Invalid DB delete block data");
     const edge = this.findEdge(block, "source");
     return new DeleteDbBlock(
       this.context,
@@ -353,7 +376,7 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? insertDbBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success) throw new Error("Invalid DB insert block data");
     const edge = this.findEdge(block, "source");
     return new InsertDbBlock(
       this.context,
@@ -366,7 +389,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? getHttpHeaderBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid HTTP get header block data");
     const edge = this.findEdge(block, "source");
     return new GetHttpHeaderBlock(this.context, parsedResult.data, edge);
   }
@@ -374,7 +398,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? getHttpHeaderBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid HTTP set header block data");
     const edge = this.findEdge(block, "source");
     return new SetHttpHeaderBlock(this.context, parsedResult.data, edge);
   }
@@ -382,7 +407,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? getHttpParamBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid HTTP get param block data");
     const edge = this.findEdge(block, "source");
     return new GetHttpParamBlock(this.context, parsedResult.data, edge);
   }
@@ -390,7 +416,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? getHttpCookieBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid HTTP get cookie block data");
     const edge = this.findEdge(block, "source");
     return new GetHttpCookieBlock(this.context, parsedResult.data, edge);
   }
@@ -398,7 +425,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? setHttpCookieBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid HTTP set cookie block data");
     const edge = this.findEdge(block, "source");
     return new SetHttpCookieBlock(this.context, parsedResult.data, edge);
   }
@@ -410,7 +438,8 @@ export class BlockBuilder {
     const parsedResult = this.shouldValidateBlockData
       ? arrayOperationsBlockSchema.safeParse(block.data)
       : { data: block.data, success: true };
-    if (!parsedResult.success) throw new Error("Invalid response block data");
+    if (!parsedResult.success)
+      throw new Error("Invalid array operations block data");
     const edge = this.findEdge(block, "source");
     return new ArrayOperationsBlock(this.context, parsedResult.data, edge);
   }

@@ -10,11 +10,13 @@ import { parsePostgresUrl } from "../lib/parsers/postgres";
 import {
   integrationsGroupSchema,
   databaseVariantSchema,
+  observabilityVariantSchema,
 } from "../api/v1/integrations/schemas";
-import { DbFactory } from "@fluxify/adapters";
+import { DbFactory, OpenObserve } from "@fluxify/adapters";
 
 export let dbIntegrationsCache: Record<string, any> = {};
 export let kvIntegrationsCache: Record<string, any> = {};
+export let observabilityIntegrationsCache: Record<string, any> = {};
 
 export async function loadIntegrations() {
   await loadFromDB();
@@ -33,12 +35,30 @@ export async function loadIntegrations() {
 async function loadFromDB() {
   const integrations = await db.select().from(integrationsEntity);
   for (let integration of integrations) {
+    const group = integration.group!;
+    const variant = integration.variant!;
+    let config: any = null!;
     if (integration.group === integrationsGroupSchema.enum.database) {
       if (integration.variant === databaseVariantSchema.enum.PostgreSQL) {
-        dbIntegrationsCache[integration.id] = mapIntegrationToPgConnectionData(
-          integration.config as any,
-        );
+        config = mapIntegrationToPgConnectionData(integration.config as any);
+        dbIntegrationsCache[integration.id] = config;
       }
+    } else if (
+      integration.group === integrationsGroupSchema.enum.observability
+    ) {
+      if (
+        integration.variant === observabilityVariantSchema.enum["Open Observe"]
+      ) {
+        config = OpenObserve.extractConnectionInfo(
+          integration.config as any,
+          appConfigCache,
+        );
+        observabilityIntegrationsCache[integration.id] = config;
+      }
+    }
+    if (config) {
+      config.variant = variant;
+      config.group = group;
     }
   }
 }

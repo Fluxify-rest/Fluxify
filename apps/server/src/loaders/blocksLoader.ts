@@ -3,20 +3,37 @@ import { db } from "../db";
 import { blocksEntity, edgesEntity } from "../db/schema";
 import { and, eq, ne } from "drizzle-orm";
 import { getCache, hasCacheKey, setCache } from "../db/redis";
+import { createIntegrationObject } from "./integrationFactory";
 
-export async function startBlocksExecution(routeId: string, context: Context) {
-  const builder = new BlockBuilder(context, {
-    create(builder, executor) {
-      return new Engine(builder.buildGraph(executor), {
-        errorHandlerId: builder.getErrorHandlerId(),
-        maxExecutionTimeInMs: 4 * 1000,
-        context: context
-      });
+export async function startBlocksExecution(
+  path: {
+    routeId: string;
+    projectId: string;
+    projectName: string;
+  },
+  context: Context,
+) {
+  const builder = new BlockBuilder(
+    context,
+    {
+      create(builder, executor) {
+        return new Engine(builder.buildGraph(executor), {
+          errorHandlerId: builder.getErrorHandlerId(),
+          maxExecutionTimeInMs: 4 * 1000,
+          context: context,
+        });
+      },
     },
-  });
+    {
+      create(options) {
+        createIntegrationObject({ ...options, path });
+      },
+    },
+    false,
+  );
 
   // Load blocks and edges from database
-  const { blocks, edges } = await loadBlocksAndEdgesFromDatabase(routeId);
+  const { blocks, edges } = await loadBlocksAndEdgesFromDatabase(path.routeId);
   builder.loadBlocks(blocks);
   builder.loadEdges(edges);
   const entrypoint = builder.getEntrypoint();
@@ -24,7 +41,7 @@ export async function startBlocksExecution(routeId: string, context: Context) {
   const engine = new Engine(graph, {
     errorHandlerId: builder.getErrorHandlerId(),
     maxExecutionTimeInMs: 4 * 1000,
-    context: context
+    context: context,
   });
   const executionResult = await engine.start(entrypoint, context.requestBody);
   return executionResult;
@@ -53,8 +70,8 @@ async function loadBlocksFromDB(routeId: string) {
     .where(
       and(
         eq(blocksEntity.routeId, routeId),
-        ne(blocksEntity.type, BlockTypes.sticky_note)
-      )
+        ne(blocksEntity.type, BlockTypes.sticky_note),
+      ),
     );
 
   // Filter out blocks with null types and ensure proper typing

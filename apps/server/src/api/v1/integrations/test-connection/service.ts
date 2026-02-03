@@ -1,4 +1,4 @@
-import { success, z } from "zod";
+import { z } from "zod";
 import { requestBodySchema, responseSchema } from "./dto";
 import {
   databaseVariantSchema,
@@ -11,9 +11,9 @@ import { getAppConfigKeysFromData } from "../create/service";
 import { getAppConfigs } from "./repository";
 import { parsePostgresUrl } from "../../../../lib/parsers/postgres";
 import {
-  openObserveSettings,
+  extractPgConnectionInfo,
+  OpenObserve,
   PostgresAdapter,
-  testOpenObserveConnection,
 } from "@fluxify/adapters";
 import { EncryptionService } from "../../../../lib/encryption";
 import { getSchema } from "../helpers";
@@ -79,7 +79,11 @@ async function testDatabasesConnection(
 ) {
   switch (variant as z.infer<typeof databaseVariantSchema>) {
     case "PostgreSQL":
-      const pgConfig = extractPgConnectionInfo(config, appConfigs);
+      const pgConfig = extractPgConnectionInfo(
+        config,
+        appConfigs,
+        parsePostgresUrl,
+      );
       if (
         !pgConfig ||
         !postgresVariantConfigSchema.safeParse(pgConfig).success
@@ -115,14 +119,14 @@ async function testObservibilityConnection(
       if (!openObserveVariantConfigSchema.safeParse(config).success) {
         return { success: false, error: "Invalid configuration" };
       }
-      const openObserveConfig = extractOpenObserveConnectionInfo(
+      const openObserveConfig = OpenObserve.extractConnectionInfo(
         config,
         appConfigs,
       );
       if (!openObserveConfig) {
         return { success: false, error: "Invalid configuration" };
       }
-      const result = await testOpenObserveConnection(openObserveConfig);
+      const result = await OpenObserve.TestConnection(openObserveConfig);
       if (!result) {
         return { success: false, error: "Failed to connect to Open Observe" };
       }
@@ -130,55 +134,6 @@ async function testObservibilityConnection(
     default:
       return { success: false, error: "Invalid variant" };
   }
-}
-
-function extractOpenObserveConnectionInfo(
-  config: z.infer<typeof openObserveVariantConfigSchema>,
-  appConfig: Map<string, string>,
-): z.infer<typeof openObserveSettings> | null {
-  const baseUrl = config.baseUrl.startsWith("cfg:")
-    ? appConfig.get(config.baseUrl.substring(3))
-    : config.baseUrl;
-  if (!baseUrl || !z.url().safeParse(baseUrl).success) return null;
-  const credentials = config.credentials;
-
-  return {
-    baseUrl,
-    credentials: typeof credentials === "object" ? credentials : undefined,
-    projectId: "",
-    routeId: "",
-    encodedBasicAuth: typeof credentials === "string" ? credentials : undefined,
-  };
-}
-
-function extractPgConnectionInfo(config: any, appConfigs: Map<string, string>) {
-  if (config.source === "url") {
-    config.url = config.url.startsWith("cfg:")
-      ? appConfigs.get(config.url.slice(4)) || ""
-      : config.url;
-    const result = parsePostgresUrl(config.url);
-    if (result === null) {
-      return null;
-    }
-    return {
-      host: result.host,
-      port: result.port,
-      database: result.database,
-      username: result.username,
-      password: result.password,
-      ssl: result.ssl === true,
-      dbType: result.dbType,
-    };
-  }
-  for (const key in config) {
-    const value = config[key].toString();
-    if (value.startsWith("cfg:")) {
-      config[key] = appConfigs.get(value.slice(4)) || "";
-    } else {
-      config[key] = value;
-    }
-  }
-  return config;
 }
 
 async function decodeAppConfig(keys: string[]) {

@@ -198,6 +198,7 @@ export function GetAllBlockDataSettingsPanel(props: {
               rhs: condition.value,
             })) ?? []
           }
+          ignoreOperators={["is_empty", "is_not_empty"]}
           onChange={onConditionsChange}
           disableJsConditions
         />
