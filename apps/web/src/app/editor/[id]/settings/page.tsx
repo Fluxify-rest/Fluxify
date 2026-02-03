@@ -9,7 +9,6 @@ import React from "react";
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const routeId = (await params).id;
-  console.log(await params);
 
   const headersList = await headers();
   const session = await authClient.getSession({

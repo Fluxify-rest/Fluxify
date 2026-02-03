@@ -26,7 +26,7 @@ export async function startBlocksExecution(
     },
     {
       create(options) {
-        createIntegrationObject({ ...options, path });
+        return createIntegrationObject({ ...options, path });
       },
     },
     false,

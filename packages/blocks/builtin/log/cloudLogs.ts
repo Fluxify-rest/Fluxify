@@ -24,6 +24,7 @@ export class CloudLogsBlock extends BaseBlock {
     const level = data.level;
     const msgOrParams = data.message?.trim() != "" ? data.message : params;
     const msg = await formatMessage(msgOrParams, level, this.context, params);
+
     if (level == "info") {
       this.logger.logInfo(msg);
     } else if (level == "error") {

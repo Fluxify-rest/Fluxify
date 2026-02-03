@@ -5,6 +5,7 @@ import {
 } from "../api/v1/integrations/schemas";
 import { observabilityIntegrationsCache } from "./integrationsLoader";
 import { OpenObserve } from "@fluxify/adapters";
+import { BadRequestError } from "../errors/badRequestError";
 
 export function createIntegrationObject(options: {
   integrationId: string;
@@ -48,5 +49,7 @@ function createObservibilityIntegration(
         projectId: path.projectName,
         routeId: path.routeId,
       });
+    default:
+      throw new BadRequestError("Integration not found");
   }
 }

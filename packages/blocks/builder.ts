@@ -247,9 +247,10 @@ export class BlockBuilder {
       : { data: block.data, success: true };
     if (!parsedResult.success) throw new Error("Invalid Cloud logs block data");
     const edge = this.findEdge(block, "source");
-    const logger = this.integrationFactory.create(
-      parsedResult.data.integrationId,
-    );
+    const logger = this.integrationFactory.create({
+      integrationId: parsedResult.data.connection,
+      type: "observability",
+    });
     return new CloudLogsBlock(this.context, logger, parsedResult.data, edge);
   }
   private createErrorHandlerBlock(block: BlockDTOType) {

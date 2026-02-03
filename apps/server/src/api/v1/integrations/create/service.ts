@@ -16,7 +16,7 @@ import {
 } from "../../../../db/redis";
 
 export default async function handleRequest(
-  data: z.infer<typeof requestBodySchema>
+  data: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
   const result = await db.transaction(async (tx) => {
     const exist = await integrationExistByName(data.name, tx);
@@ -42,7 +42,7 @@ export default async function handleRequest(
         variant: data.variant,
         config: data.config,
       },
-      tx
+      tx,
     );
     return generatedID;
   });

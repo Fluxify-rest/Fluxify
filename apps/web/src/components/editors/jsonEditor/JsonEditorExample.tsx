@@ -39,7 +39,6 @@ export const ObjectEditorExample: React.FC = () => {
             defaultValue={defaultObjectValue}
             onSave={(json) => {
               setSavedData(json);
-              console.log("Saved:", json);
             }}
           />
         </Card.Section>
@@ -83,7 +82,6 @@ export const ArrayEditorExample: React.FC = () => {
             defaultValue={defaultArrayValue}
             onSave={(json) => {
               setSavedData(json);
-              console.log("Saved:", json);
             }}
           />
         </Card.Section>

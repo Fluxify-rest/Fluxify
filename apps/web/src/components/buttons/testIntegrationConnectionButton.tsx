@@ -22,7 +22,6 @@ const TestIntegrationConnectionButton = (props: PropTypes) => {
       return;
     }
     try {
-      console.log(props.data);
       const res = await mutateAsync({
         variant: props.variant,
         group: props.group,

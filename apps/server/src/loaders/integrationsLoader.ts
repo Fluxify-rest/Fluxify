@@ -57,8 +57,8 @@ async function loadFromDB() {
       }
     }
     if (config) {
-      config.variant = variant;
-      config.group = group;
+      config["variant"] = variant;
+      config["group"] = group;
     }
   }
 }

@@ -13,6 +13,7 @@ export async function formatMessage(
   level: string,
   context: Context,
   params?: any,
+  type: "str" | "obj" = "str",
 ) {
   const isObject = typeof originalMsg == "object";
   const datetime = new Date().toISOString().split("T");
@@ -21,7 +22,9 @@ export async function formatMessage(
   const path = context.route;
   const msg = `${level.toUpperCase()}-${path}-${date} ${time}\n${
     isObject
-      ? JSON.stringify(originalMsg, null, 2)
+      ? type === "obj"
+        ? originalMsg
+        : JSON.stringify(originalMsg, null, 2)
       : typeof originalMsg == "string"
         ? originalMsg.startsWith("js:")
           ? ((await context.vm.runAsync(
