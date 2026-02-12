@@ -15,7 +15,7 @@ import handleRequest from "./service";
 const openapiRouteOptions: DescribeRouteOptions = {
   operationId: "project-members-remove",
   description: "Remove a user from project's ACL",
-  tags: ["Projects", "Project Settings", "Members"],
+  tags: ["Projects", "Project Settings"],
   responses: {
     204: {
       description: "Deleted",
@@ -45,6 +45,6 @@ export default function (app: HonoServer) {
       const params = c.req.valid("param");
       await handleRequest(id, params);
       return c.body(null, 204);
-    }
+    },
   );
 }

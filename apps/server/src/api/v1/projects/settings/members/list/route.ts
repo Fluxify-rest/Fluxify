@@ -16,7 +16,7 @@ const openapiRouteOptions: DescribeRouteOptions = {
   operationId: "project-members-list",
   description:
     "List users associated with a project with optional filters and pagination",
-  tags: ["Projects", "Project Settings", "Members"],
+  tags: ["Projects", "Project Settings"],
   responses: {
     200: {
       description: "Successful",
@@ -42,6 +42,6 @@ export default function (app: HonoServer) {
       const query = c.req.valid("query");
       const result = await handleRequest(id, query);
       return c.json(result);
-    }
+    },
   );
 }

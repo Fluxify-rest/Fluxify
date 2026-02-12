@@ -10,7 +10,7 @@ const insertEntitySchema = createInsertSchema(edgesEntity);
 
 export async function upsertBlocks(
   blocks: z.infer<typeof insertBlocksSchema>[],
-  tx?: DbTransactionType
+  tx?: DbTransactionType,
 ) {
   await (tx ?? db)
     .insert(blocksEntity)
@@ -27,11 +27,20 @@ export async function upsertBlocks(
     });
 }
 
-export async function getBlocksCountByType(routeId: string, blocks: BlockTypes[], tx?: DbTransactionType) {
+export async function getBlocksCountByType(
+  routeId: string,
+  blocks: BlockTypes[],
+  tx?: DbTransactionType,
+) {
   const duplicateBlocks = await (tx ?? db)
-    .select({  count: count(blocksEntity.id), type: blocksEntity.type })
+    .select({ count: count(blocksEntity.id), type: blocksEntity.type })
     .from(blocksEntity)
-    .where(and(eq(blocksEntity.routeId, routeId), inArray(blocksEntity.type, blocks)))
+    .where(
+      and(
+        eq(blocksEntity.routeId, routeId),
+        inArray(blocksEntity.type, blocks),
+      ),
+    )
     .groupBy(blocksEntity.type);
 
   return duplicateBlocks;
@@ -44,14 +53,24 @@ export async function deleteBlocks(blockIds: string[], tx?: DbTransactionType) {
       and(
         inArray(blocksEntity.id, blockIds),
         ne(blocksEntity.type, BlockTypes.entrypoint),
-        ne(blocksEntity.type, BlockTypes.errorHandler)
-      )
+        ne(blocksEntity.type, BlockTypes.errorHandler),
+      ),
     );
+}
+
+export async function setUpdatedAtTimeForRoute(
+  routeId: string,
+  tx?: DbTransactionType,
+) {
+  await (tx ?? db)
+    .update(routesEntity)
+    .set({ updatedAt: sql`now()` })
+    .where(eq(routesEntity.id, routeId));
 }
 
 export async function insertEdges(
   edges: z.infer<typeof insertEntitySchema>[],
-  tx?: DbTransactionType
+  tx?: DbTransactionType,
 ) {
   await (tx ?? db).insert(edgesEntity).values(edges);
 }
@@ -63,7 +82,7 @@ export async function deleteEdges(edgeIds: string[], tx?: DbTransactionType) {
 export async function routeExist(
   routeId: string,
   projectIds: string[] = [],
-  tx?: DbTransactionType
+  tx?: DbTransactionType,
 ) {
   const isSystemAdmin = projectIds.some((id) => id === "*");
   const route = await (tx ?? db)
@@ -74,8 +93,8 @@ export async function routeExist(
     .where(
       and(
         eq(routesEntity.id, routeId),
-        isSystemAdmin ? undefined : inArray(routesEntity.projectId, projectIds)
-      )
+        isSystemAdmin ? undefined : inArray(routesEntity.projectId, projectIds),
+      ),
     )
     .limit(1);
   return route.length > 0;

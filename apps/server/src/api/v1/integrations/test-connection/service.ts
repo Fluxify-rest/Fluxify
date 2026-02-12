@@ -92,10 +92,8 @@ async function testDatabasesConnection(
         appConfigs,
         parsePostgresUrl,
       );
-      if (
-        !pgConfig ||
-        !postgresVariantConfigSchema.safeParse(pgConfig).success
-      ) {
+
+      if (!pgConfig) {
         return {
           success: false,
           error: "Invalid configuration",

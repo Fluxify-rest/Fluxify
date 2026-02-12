@@ -1,6 +1,6 @@
 "use client";
 
-import { Group, Tabs } from "@mantine/core";
+import { Group, Stack, Tabs, Text } from "@mantine/core";
 import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import RoutesPanel from "./panels/routesPanel";
 import RouterFilter from "./filters/routerFilter";
@@ -32,7 +32,7 @@ const OverviewTabs = (props: PropTypes) => {
   useLayoutEffect(() => {
     const tab = searchParams.get("tab")?.toString() || "";
     const possibleTabs = ["routes", "executions"].concat(
-      (props.tabs ?? []).map((x) => x.value)
+      (props.tabs ?? []).map((x) => x.value),
     );
     if (!possibleTabs.includes(tab)) {
       setSelectedTab("routes");
@@ -56,6 +56,8 @@ const OverviewTabs = (props: PropTypes) => {
         style={{ position: "sticky", top: 0, zIndex: 100 }}
         w={"100%"}
         bg={"white"}
+        px={"xs"}
+        pt={"xs"}
         gap={0}
       >
         <Tabs.List>
@@ -85,7 +87,11 @@ const OverviewTabs = (props: PropTypes) => {
       <Tabs.Panel value="routes">
         <RoutesPanel projectId={props.projectId} />
       </Tabs.Panel>
-      <Tabs.Panel value="executions">Executions panel</Tabs.Panel>
+      <Tabs.Panel value="executions">
+        <Stack>
+          <Text>TODO: Executions panel need to be implemented</Text>
+        </Stack>
+      </Tabs.Panel>
       {props.tabs?.map((tab, index) => (
         <Tabs.Panel key={index} value={tab.value}>
           {tab.content}

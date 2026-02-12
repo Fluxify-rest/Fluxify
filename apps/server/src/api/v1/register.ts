@@ -14,12 +14,13 @@ export default {
       openAPIRouteHandler(router, {
         documentation: {
           info: {
-            title: "CBE API",
+            title: "Fluxify - Low Code Rest API Platform",
             version: "v1",
-            description: "CBE API Documentation",
+            description:
+              "Fluxify | Low Code Rest API Platform | Admin API Documentation | Require Authentication",
           },
         },
-      })
+      }),
     );
     routes.registerHandler(router);
     projects.registerHandler(router);

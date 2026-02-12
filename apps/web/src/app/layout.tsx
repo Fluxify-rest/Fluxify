@@ -15,8 +15,8 @@ import { Notifications } from "@mantine/notifications";
 import { NavigationProgress } from "@mantine/nprogress";
 
 export const metadata: Metadata = {
-  title: "Configurable Backend Engine",
-  description: "CBE Console",
+  title: "Fluxify",
+  description: "Fluxify Console",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

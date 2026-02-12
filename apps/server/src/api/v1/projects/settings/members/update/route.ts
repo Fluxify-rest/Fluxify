@@ -15,7 +15,7 @@ import handleRequest from "./service";
 const openapiRouteOptions: DescribeRouteOptions = {
   operationId: "project-members-update",
   description: "Update a user's role in project's ACL",
-  tags: ["Projects", "Project Settings", "Members"],
+  tags: ["Projects", "Project Settings"],
   responses: {
     200: {
       description: "Updated",
@@ -47,6 +47,6 @@ export default function (app: HonoServer) {
       const body = c.req.valid("json");
       const result = await handleRequest(id, params, body);
       return c.json(result);
-    }
+    },
   );
 }
