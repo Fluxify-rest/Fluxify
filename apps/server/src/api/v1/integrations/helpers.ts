@@ -9,6 +9,11 @@ import {
   baasVariantSchema,
   aiVariantSchema,
   lokiVariantConfigSchema,
+  openAIVariantConfigSchema,
+  anthropicVariantConfigSchema,
+  openAiCompatibleVariantConfigSchema,
+  geminiVariantConfigSchema,
+  mistralVariantConfigSchema,
 } from "./schemas";
 
 type Variants =
@@ -21,7 +26,7 @@ type Variants =
 export const humanReadableConnectorNames = {
   database: "Databases",
   kv: "Key Value store",
-  ai: "Artifical Intelligence",
+  ai: "AI",
   baas: "Backend as a Service",
   observability: "Observability",
 };
@@ -38,6 +43,9 @@ export function getIntegrationsVariants(
   }
   if (group === "observability") {
     return Object.values(observabilityVariantSchema.options);
+  }
+  if (group === "ai") {
+    return Object.values(aiVariantSchema.options);
   }
   return [];
 }
@@ -64,6 +72,24 @@ export function getDefaultVariantValue(variant: Variants) {
         password: "",
       },
     } as z.infer<typeof openObserveVariantConfigSchema>;
+  }
+  if (
+    variant === "OpenAI" ||
+    variant === "Anthropic" ||
+    variant === "Gemini" ||
+    variant === "Mistral"
+  ) {
+    return {
+      apiKey: "",
+      model: "",
+    } as z.infer<typeof openAIVariantConfigSchema>;
+  }
+  if (variant === "OpenAI Compatible") {
+    return {
+      apiKey: "",
+      model: "",
+      baseUrl: "",
+    } as z.infer<typeof openAiCompatibleVariantConfigSchema>;
   }
   return null;
 }
@@ -105,6 +131,28 @@ export function getSchema(
         break;
       case "Loki":
         schema = lokiVariantConfigSchema;
+        break;
+    }
+  } else if (group === "ai") {
+    const result = aiVariantSchema.safeParse(variant);
+    if (!result.success) {
+      return null;
+    }
+    switch (variant as z.infer<typeof aiVariantSchema>) {
+      case "OpenAI":
+        schema = openAIVariantConfigSchema;
+        break;
+      case "Anthropic":
+        schema = anthropicVariantConfigSchema;
+        break;
+      case "Gemini":
+        schema = geminiVariantConfigSchema;
+        break;
+      case "Mistral":
+        schema = mistralVariantConfigSchema;
+        break;
+      case "OpenAI Compatible":
+        schema = openAiCompatibleVariantConfigSchema;
         break;
     }
   }

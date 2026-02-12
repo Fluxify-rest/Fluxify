@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requestBodySchema, responseSchema } from "./dto";
 import {
+  aiVariantSchema,
   databaseVariantSchema,
   integrationsGroupSchema,
   lokiVariantConfigSchema,
@@ -12,8 +13,13 @@ import { getAppConfigKeysFromData } from "../create/service";
 import { getAppConfigs } from "./repository";
 import { parsePostgresUrl } from "../../../../lib/parsers/postgres";
 import {
+  AnthropicIntegration,
   extractPgConnectionInfo,
+  GeminiIntegration,
   LokiLogger,
+  MistralIntegration,
+  OpenAICompatibleIntegration,
+  OpenAIIntegration,
   OpenObserve,
   PostgresAdapter,
 } from "@fluxify/adapters";
@@ -50,7 +56,7 @@ export async function testIntegrationConnection(
     case "kv":
       break;
     case "ai":
-      break;
+      return testAiConnection(variant, config, appConfigs);
     case "baas":
       break;
     case "observability":
@@ -118,34 +124,78 @@ async function testObservibilityConnection(
 ) {
   switch (variant as z.infer<typeof observabilityVariantSchema>) {
     case "Open Observe":
-      if (!openObserveVariantConfigSchema.safeParse(config).success) {
-        return { success: false, error: "Invalid configuration" };
-      }
-      const openObserveConfig = OpenObserve.extractConnectionInfo(
+      const openObserveResult = await OpenObserve.TestConnection(
         config,
         appConfigs,
       );
-      if (!openObserveConfig) {
-        return { success: false, error: "Invalid configuration" };
-      }
-      const openObserveResult =
-        await OpenObserve.TestConnection(openObserveConfig);
-      if (!openObserveResult) {
-        return { success: false, error: "Failed to connect to Open Observe" };
-      }
-      return { success: true, error: "" };
-
+      return {
+        success: openObserveResult,
+        error: openObserveResult ? "" : "Failed to connect to Open Observe",
+      };
     case "Loki":
       if (!lokiVariantConfigSchema.safeParse(config).success) {
         return { success: false, error: "Invalid configuration" };
       }
-      const lokiConfig = LokiLogger.extractConnectionInfo(config, appConfigs);
-      if (!lokiConfig) {
-        return { success: false, error: "Invalid configuration" };
+      const lokiResult = await LokiLogger.TestConnection(config, appConfigs);
+      return {
+        success: lokiResult,
+        error: lokiResult ? "" : "Failed to connect to Loki",
+      };
+    default:
+      return { success: false, error: "Invalid variant" };
+  }
+}
+
+export async function testAiConnection(
+  variant: string,
+  config: any,
+  appConfigs: Map<string, string>,
+) {
+  switch (variant as z.infer<typeof aiVariantSchema>) {
+    case "OpenAI":
+      const openAiResult = await OpenAIIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!openAiResult) {
+        return { success: false, error: "Failed to connect to OpenAI" };
       }
-      const lokiResult = await LokiLogger.TestConnection(lokiConfig);
-      if (!lokiResult) {
-        return { success: false, error: "Failed to connect to Loki" };
+      return { success: true, error: "" };
+    case "Anthropic":
+      const anthropicResult = await AnthropicIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!anthropicResult) {
+        return { success: false, error: "Failed to connect to Anthropic" };
+      }
+      return { success: true, error: "" };
+    case "Gemini":
+      const geminiResult = await GeminiIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!geminiResult) {
+        return { success: false, error: "Failed to connect to Gemini" };
+      }
+      return { success: true, error: "" };
+    case "Mistral":
+      const mistralResult = await MistralIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!mistralResult) {
+        return { success: false, error: "Failed to connect to Mistral" };
+      }
+      return { success: true, error: "" };
+    case "OpenAI Compatible":
+      const openAiCompatibleResult =
+        await OpenAICompatibleIntegration.TestConnection(config, appConfigs);
+      if (!openAiCompatibleResult) {
+        return {
+          success: false,
+          error: "Failed to connect to OpenAI Compatible",
+        };
       }
       return { success: true, error: "" };
     default:

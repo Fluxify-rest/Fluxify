@@ -28,11 +28,10 @@ app.use(
   cors({
     origin: (origin) => {
       // Allow requests from localhost on common development ports
-      if (!origin) return null; // Allow requests without origin (like mobile apps)
-      if (origin.startsWith("http://localhost:")) {
+      if (origin?.startsWith("http://localhost:")) {
         return origin;
       }
-      return null; // Reject other origins
+      return null;
     },
     allowHeaders: ["Content-Type", "Authorization", "Accept"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],

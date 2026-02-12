@@ -87,13 +87,16 @@ export class LokiLogger implements AbstractLogger {
     ));
   }
   public static async TestConnection(
-    settings: z.infer<typeof lokiLoggerSettings>,
+    settings: any,
+    appConfig: ConfigType,
   ): Promise<boolean> {
     try {
-      const headers = LokiLogger.getHeader(settings);
+      const extracted = LokiLogger.extractConnectionInfo(settings, appConfig);
+      if (!extracted) return false;
+      const headers = LokiLogger.getHeader(extracted);
       headers["Content-Type"] = "application/json";
 
-      const baseUrl = new URL(settings.baseUrl);
+      const baseUrl = new URL(extracted.baseUrl);
       const lokiBaseUrl = `${baseUrl.protocol}//${baseUrl.host}`;
 
       // Test 1: Health check (no auth required)

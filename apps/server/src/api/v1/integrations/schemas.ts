@@ -15,6 +15,8 @@ export const kvVariantSchema = z.enum(["Redis", "Memcached"]);
 export const aiVariantSchema = z.enum([
   "OpenAI",
   "Anthropic",
+  "Gemini",
+  "Mistral",
   "OpenAI Compatible",
 ]);
 export const baasVariantSchema = z.enum(["Firebase", "Supabase"]);
@@ -50,6 +52,48 @@ export const postgresVariantConfigSchema = z
     }),
   );
 
+// AI
+export const openAIVariantConfigSchema = z.object({
+  apiKey: z
+    .string()
+    .refine((v) => (v.startsWith("cfg:") ? true : v.length > 1)),
+  model: z.string().min(1),
+});
+
+export const anthropicVariantConfigSchema = z.object({
+  apiKey: z
+    .string()
+    .refine((v) => (v.startsWith("cfg:") ? true : v.length > 1)),
+  model: z.string().min(1),
+});
+
+export const mistralVariantConfigSchema = z.object({
+  apiKey: z
+    .string()
+    .refine((v) => (v.startsWith("cfg:") ? true : v.length > 1)),
+  model: z.string().min(1),
+});
+
+export const geminiVariantConfigSchema = z.object({
+  apiKey: z
+    .string()
+    .refine((v) => (v.startsWith("cfg:") ? true : v.length > 1)),
+  model: z.string().min(1),
+});
+
+export const openAiCompatibleVariantConfigSchema = z.object({
+  baseUrl: z
+    .string()
+    .refine((v) =>
+      v.startsWith("cfg:") ? true : z.url().safeParse(v).success,
+    ),
+  apiKey: z
+    .string()
+    .refine((v) => (v.startsWith("cfg:") ? true : v.length > 1)),
+  model: z.string().min(1),
+});
+
+// Observability
 export const openObserveVariantConfigSchema = z.object({
   baseUrl: z
     .string()

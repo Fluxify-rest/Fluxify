@@ -3,6 +3,7 @@ import {
   baasVariantSchema,
   databaseVariantSchema,
   kvVariantSchema,
+  observabilityVariantSchema,
 } from "@fluxify/server/src/api/v1/integrations/schemas";
 import React from "react";
 import { BiLogoPostgresql } from "react-icons/bi";
@@ -11,12 +12,15 @@ import { SiAnthropic, SiMysql, SiOpenai } from "react-icons/si";
 import z from "zod";
 import MemcachedIcon from "./icons/memcached";
 import { TbBrandFirebase, TbBrandSupabase } from "react-icons/tb";
-import { RiOpenaiLine } from "react-icons/ri";
+import { RiGeminiFill, RiOpenaiLine, RiRobot2Fill } from "react-icons/ri";
+import { IoTelescope } from "react-icons/io5";
+import { PiNotebookLight } from "react-icons/pi";
 
 export type IntegrationVariants =
   | z.infer<typeof databaseVariantSchema>
   | z.infer<typeof kvVariantSchema>
   | z.infer<typeof aiVariantSchema>
+  | z.infer<typeof observabilityVariantSchema>
   | z.infer<typeof baasVariantSchema>;
 
 type IntegrationIcons = Record<IntegrationVariants, React.ReactNode>;
@@ -34,4 +38,8 @@ export const integrationIcons: IntegrationIcons = {
   "OpenAI Compatible": <RiOpenaiLine size={iconSize} style={iconStyles} />,
   Anthropic: <SiAnthropic size={iconSize} style={iconStyles} />,
   OpenAI: <SiOpenai size={iconSize} style={iconStyles} />,
+  Mistral: <RiRobot2Fill size={iconSize} style={iconStyles} />,
+  Gemini: <RiGeminiFill size={iconSize} style={iconStyles} />,
+  "Open Observe": <IoTelescope size={iconSize} style={iconStyles} />,
+  Loki: <PiNotebookLight size={iconSize} style={iconStyles} />,
 };

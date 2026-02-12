@@ -1,6 +1,5 @@
-import { Hono } from "hono";
 import v1Register from "./v1/register";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { HonoServer } from "../types";
 
@@ -19,17 +18,24 @@ export function mapVersionedAdminRoutes(app: HonoServer) {
 
 let cachedHtmlContent: string | null = null;
 
-// Function to load and cache HTML content
 function loadHtmlContent(): string {
   if (cachedHtmlContent) {
     return cachedHtmlContent;
   }
 
   try {
-    const htmlPath = join(process.cwd(), "src/public/openapi.html");
-    cachedHtmlContent = readFileSync(htmlPath, "utf-8");
-    return cachedHtmlContent;
-  } catch (error) {
+    const filePaths = [
+      join(process.cwd(), "src/public/openapi.html"),
+      join(process.cwd(), "apps/server/src/public/openapi.html"),
+    ];
+    for (const path of filePaths) {
+      if (existsSync(path)) {
+        cachedHtmlContent = readFileSync(path, "utf-8");
+        return cachedHtmlContent;
+      }
+    }
     throw new Error("OpenAPI UI file not found");
+  } catch (error) {
+    throw new Error("Failed to load OpenAPI UI file");
   }
 }

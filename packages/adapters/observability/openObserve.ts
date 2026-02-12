@@ -62,11 +62,11 @@ export class OpenObserve implements AbstractLogger {
     );
     return (this.logger = pinoLogger);
   }
-  public static async TestConnection(
-    settings: z.infer<typeof openObserveSettings>,
-  ) {
-    const headers = OpenObserve.getHeaders(settings);
-    const settingsUrl = `${settings.baseUrl}/settings`;
+  public static async TestConnection(settings: any, appConfig: ConfigType) {
+    const extracted = OpenObserve.extractConnectionInfo(settings, appConfig);
+    if (!extracted) return false;
+    const headers = OpenObserve.getHeaders(extracted);
+    const settingsUrl = `${extracted.baseUrl}/settings`;
     try {
       const result = await fetch(settingsUrl, { headers, method: "GET" });
       return result.status === 200;
