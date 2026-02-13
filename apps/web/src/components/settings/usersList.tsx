@@ -1,7 +1,7 @@
 "use client";
 
 import { ActionIcon, Badge, Group, Menu, Stack, Table } from "@mantine/core";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Pagination from "../pagination/Pagination";
 import { authQuery } from "@/query/authQuery";
 import QueryLoader from "../query/queryLoader";
@@ -42,6 +42,14 @@ const UsersList = () => {
     type: "promote",
     user: null,
   });
+  const promotionMessage = useMemo(() => {
+    if (!openPromoteDialog.user) return "";
+    if (openPromoteDialog.type === "promote") {
+      return <div>Are you sure you want to promote <b>{openPromoteDialog.user.name}</b> as admin?</div>;
+    } else {
+      return <div>Are you sure you want to demote <b>{openPromoteDialog.user.name}</b> from admin?</div>;
+    }
+  }, [openPromoteDialog]);
 
   if (!data || isLoading) {
     return <QueryLoader />;
@@ -197,21 +205,24 @@ const UsersList = () => {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {data.data.map((user) => (
-            <Table.Tr key={user.id}>
-              <Table.Td>
-                <Group>
-                  <p>{user.name || "<No name>"}</p>
-                  {user.id === userData.id && <Badge color="violet">Me</Badge>}
-                </Group>
-              </Table.Td>
-              <Table.Td>{user.email}</Table.Td>
-              <Table.Td>{user.role || "No role assigned"}</Table.Td>
-              <Table.Td>{user.isSystemAdmin ? "Yes" : "No"}</Table.Td>
-              <RequireRoleInAnyProject requiredRole="system_admin">
-                <Table.Td
+          {data.data.map((user) => {
+            const isCurrentUser = user.id === userData.id;
+            const roleMsg = user.role ? user.role === "instance_admin" ? "System Admin" : "User" : "No role assigned";
+            return (
+              <Table.Tr key={user.id}>
+                <Table.Td>
+                  <Group>
+                    <p>{user.name || "<No name>"}</p>
+                    {isCurrentUser && <Badge color="violet">Me</Badge>}
+                  </Group>
+                </Table.Td>
+                <Table.Td>{user.email}</Table.Td>
+                <Table.Td>{roleMsg}</Table.Td>
+                <Table.Td>{user.isSystemAdmin ? "Yes" : "No"}</Table.Td>
+                <RequireRoleInAnyProject requiredRole="system_admin">
+                  <Table.Td
                   style={{
-                    visibility: user.id === userData.id ? "hidden" : "visible",
+                    visibility: isCurrentUser ? "hidden" : "visible",
                   }}
                 >
                   <Menu withArrow arrowSize={15} shadow="sm">
@@ -248,7 +259,7 @@ const UsersList = () => {
                 </Table.Td>
               </RequireRoleInAnyProject>
             </Table.Tr>
-          ))}
+          )})}
         </Table.Tbody>
       </Table>
       <ConfirmDialog
@@ -268,12 +279,7 @@ const UsersList = () => {
       />
       <ConfirmDialog
         title="Are you sure?"
-        children={
-          <span>
-            Are you sure you want to {openPromoteDialog.type}{" "}
-            <b>{openPromoteDialog.user?.name}</b>?
-          </span>
-        }
+        children={promotionMessage}
         open={openPromoteDialog.open}
         onClose={() =>
           setOpenPromoteDialog({ open: false, user: null, type: "promote" })

@@ -1,6 +1,6 @@
 import { useEditorSearchbarStore } from "@/store/editor";
 import { Box } from "@mantine/core";
-import React, { useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import SearchBlockItem from "./searchBlocktem";
 import blocksForSearch, { categoryList } from "../../blocks/searchList";
 import { BlockCanvasContext } from "@/context/blockCanvas";
@@ -28,7 +28,7 @@ const BlockSearchList = () => {
         block.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         block.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         block.tags.filter((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
+          tag.toLowerCase().includes(searchQuery.toLowerCase()),
         ).length > 0
       );
     });

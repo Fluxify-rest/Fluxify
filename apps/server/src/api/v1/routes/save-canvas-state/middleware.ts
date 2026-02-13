@@ -30,10 +30,12 @@ import {
   nativeDbBlockSchema,
   transactionDbBlockSchema,
   updateDbBlockSchema,
+  errorHandlerBlockSchema,
 } from "@fluxify/blocks";
 import { Context, Next } from "hono";
 import { ValidationError } from "../../../../errors/validationError";
 import { BadRequestError } from "../../../../errors/badRequestError";
+import { cloudLogsBlockSchema } from "@fluxify/blocks/builtin/log/cloudLogs";
 
 export async function requestBodyValidator(ctx: Context, next: Next) {
   const jsonData = await ctx.req.json();
@@ -141,6 +143,17 @@ function blockDataValidator(data: z.infer<typeof requestBodySchema>) {
       case BlockTypes.sticky_note:
         schema = stickyNotesSchema;
         break;
+      case BlockTypes.errorHandler:
+        schema = errorHandlerBlockSchema;
+        if (block.id === block.data.next) {
+          throw new BadRequestError(
+            "Error handler block cannot be connected to itself",
+          );
+        }
+        break;
+      case BlockTypes.cloudLogs:
+        schema = cloudLogsBlockSchema;
+        break;
     }
     if (!schema) throw new BadRequestError("Invalid block type");
     const result = schema.safeParse(block.data);
@@ -156,7 +169,7 @@ function blockDataValidator(data: z.infer<typeof requestBodySchema>) {
       errorBlocks.map((id) => ({
         field: id,
         message: "Invalid block data",
-      }))
+      })),
     );
   }
 }

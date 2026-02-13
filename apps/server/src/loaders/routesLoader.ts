@@ -1,6 +1,6 @@
 import { HttpRouteParser } from "@fluxify/lib";
 import { db } from "../db";
-import { routesEntity } from "../db/schema";
+import { projectsEntity, routesEntity } from "../db/schema";
 import {
   CHAN_ON_ROUTE_CHANGE,
   deleteCacheKey,
@@ -36,7 +36,10 @@ async function fetchRoutes() {
       method: routesEntity.method,
       path: routesEntity.path,
       routeId: routesEntity.id,
+      projectId: routesEntity.projectId,
+      projectName: projectsEntity.name,
     })
     .from(routesEntity)
+    .leftJoin(projectsEntity, eq(routesEntity.projectId, projectsEntity.id))
     .where(eq(routesEntity.active, true));
 }

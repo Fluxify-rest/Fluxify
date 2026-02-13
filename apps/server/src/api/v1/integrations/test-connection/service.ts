@@ -1,17 +1,35 @@
 import { z } from "zod";
 import { requestBodySchema, responseSchema } from "./dto";
-import { databaseVariantSchema, integrationsGroupSchema } from "../schemas";
+import {
+  aiVariantSchema,
+  databaseVariantSchema,
+  integrationsGroupSchema,
+  lokiVariantConfigSchema,
+  observabilityVariantSchema,
+  openObserveVariantConfigSchema,
+  postgresVariantConfigSchema,
+} from "../schemas";
 import { getAppConfigKeysFromData } from "../create/service";
 import { getAppConfigs } from "./repository";
 import { parsePostgresUrl } from "../../../../lib/parsers/postgres";
-import { PostgresAdapter } from "@fluxify/adapters";
+import {
+  AnthropicIntegration,
+  extractPgConnectionInfo,
+  GeminiIntegration,
+  LokiLogger,
+  MistralIntegration,
+  OpenAICompatibleIntegration,
+  OpenAIIntegration,
+  OpenObserve,
+  PostgresAdapter,
+} from "@fluxify/adapters";
 import { EncryptionService } from "../../../../lib/encryption";
 import { getSchema } from "../helpers";
 
 export async function testIntegrationConnection(
   group: z.infer<typeof integrationsGroupSchema>,
   variant: string,
-  config: any
+  config: any,
 ): Promise<z.infer<typeof responseSchema>> {
   const schema = getSchema(group, variant);
   if (!schema) {
@@ -21,6 +39,7 @@ export async function testIntegrationConnection(
     };
   }
   const result = schema.safeParse(config);
+
   if (!result.success) {
     return {
       success: false,
@@ -37,9 +56,11 @@ export async function testIntegrationConnection(
     case "kv":
       break;
     case "ai":
-      break;
+      return testAiConnection(variant, config, appConfigs);
     case "baas":
       break;
+    case "observability":
+      return testObservibilityConnection(variant, config, appConfigs);
     default:
       return {
         success: false,
@@ -53,7 +74,7 @@ export async function testIntegrationConnection(
 }
 
 export default async function handleRequest(
-  body: z.infer<typeof requestBodySchema>
+  body: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
   const { group, variant, config: data } = body;
   return testIntegrationConnection(group, variant, data);
@@ -62,11 +83,16 @@ export default async function handleRequest(
 async function testDatabasesConnection(
   variant: string,
   config: any,
-  appConfigs: Map<string, string>
+  appConfigs: Map<string, string>,
 ) {
   switch (variant as z.infer<typeof databaseVariantSchema>) {
     case "PostgreSQL":
-      const pgConfig = extractPgConnectionInfo(config, appConfigs);
+      const pgConfig = extractPgConnectionInfo(
+        config,
+        appConfigs,
+        parsePostgresUrl,
+      );
+
       if (!pgConfig) {
         return {
           success: false,
@@ -89,34 +115,90 @@ async function testDatabasesConnection(
   }
 }
 
-function extractPgConnectionInfo(config: any, appConfigs: Map<string, string>) {
-  if (config.source === "url") {
-    config.url = config.url.startsWith("cfg:")
-      ? appConfigs.get(config.url.slice(4)) || ""
-      : config.url;
-    const result = parsePostgresUrl(config.url);
-    if (result === null) {
-      return null;
-    }
-    return {
-      host: result.host,
-      port: result.port,
-      database: result.database,
-      username: result.username,
-      password: result.password,
-      ssl: result.ssl === true,
-      dbType: result.dbType,
-    };
+async function testObservibilityConnection(
+  variant: string,
+  config: any,
+  appConfigs: Map<string, string>,
+) {
+  switch (variant as z.infer<typeof observabilityVariantSchema>) {
+    case "Open Observe":
+      const openObserveResult = await OpenObserve.TestConnection(
+        config,
+        appConfigs,
+      );
+      return {
+        success: openObserveResult,
+        error: openObserveResult ? "" : "Failed to connect to Open Observe",
+      };
+    case "Loki":
+      if (!lokiVariantConfigSchema.safeParse(config).success) {
+        return { success: false, error: "Invalid configuration" };
+      }
+      const lokiResult = await LokiLogger.TestConnection(config, appConfigs);
+      return {
+        success: lokiResult,
+        error: lokiResult ? "" : "Failed to connect to Loki",
+      };
+    default:
+      return { success: false, error: "Invalid variant" };
   }
-  for (const key in config) {
-    const value = config[key].toString();
-    if (value.startsWith("cfg:")) {
-      config[key] = appConfigs.get(value.slice(4)) || "";
-    } else {
-      config[key] = value;
-    }
+}
+
+export async function testAiConnection(
+  variant: string,
+  config: any,
+  appConfigs: Map<string, string>,
+) {
+  switch (variant as z.infer<typeof aiVariantSchema>) {
+    case "OpenAI":
+      const openAiResult = await OpenAIIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!openAiResult) {
+        return { success: false, error: "Failed to connect to OpenAI" };
+      }
+      return { success: true, error: "" };
+    case "Anthropic":
+      const anthropicResult = await AnthropicIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!anthropicResult) {
+        return { success: false, error: "Failed to connect to Anthropic" };
+      }
+      return { success: true, error: "" };
+    case "Gemini":
+      const geminiResult = await GeminiIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!geminiResult) {
+        return { success: false, error: "Failed to connect to Gemini" };
+      }
+      return { success: true, error: "" };
+    case "Mistral":
+      const mistralResult = await MistralIntegration.TestConnection(
+        config,
+        appConfigs,
+      );
+      if (!mistralResult) {
+        return { success: false, error: "Failed to connect to Mistral" };
+      }
+      return { success: true, error: "" };
+    case "OpenAI Compatible":
+      const openAiCompatibleResult =
+        await OpenAICompatibleIntegration.TestConnection(config, appConfigs);
+      if (!openAiCompatibleResult) {
+        return {
+          success: false,
+          error: "Failed to connect to OpenAI Compatible",
+        };
+      }
+      return { success: true, error: "" };
+    default:
+      return { success: false, error: "Invalid variant" };
   }
-  return config;
 }
 
 async function decodeAppConfig(keys: string[]) {
@@ -126,13 +208,13 @@ async function decodeAppConfig(keys: string[]) {
     if (config.isEncrypted) {
       config.value = EncryptionService.decodeData(
         config.value!,
-        config.encodingType!
+        config.encodingType!,
       );
       config.value = EncryptionService.decrypt(config.value);
     } else {
       config.value = EncryptionService.decodeData(
         config.value!,
-        config.encodingType!
+        config.encodingType!,
       );
     }
     configMap.set(config.key!, config.value!);

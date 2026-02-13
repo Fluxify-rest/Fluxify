@@ -13,15 +13,15 @@ export enum OperatorResult {
 }
 
 export class ConditionEvaluator {
-  public static evaluateOperatorsList(
+  public static async evaluateOperatorsList(
     conditions: z.infer<typeof conditionSchema>[],
     vm: JsVM,
     params?: any,
-  ): boolean {
+  ): Promise<boolean> {
     const operatorResults: OperatorResult[] = [];
     for (const condition of conditions) {
       const { lhs, rhs, operator, js, chain } = condition;
-      const operatorResult = ConditionEvaluator.evaluateOperator(
+      const operatorResult = await ConditionEvaluator.evaluateOperator(
         lhs,
         rhs,
         operator,
@@ -58,14 +58,29 @@ export class ConditionEvaluator {
     }
     return totalTrues == totalOperators - checkpoint;
   }
-  public static evaluateOperator(
+  public static async evaluateScript(lhs: any, rhs: any, vm: JsVM) {
+    lhs =
+      typeof lhs === "string"
+        ? lhs.startsWith("js:")
+          ? await vm.run(lhs.slice(3))
+          : lhs
+        : lhs;
+    rhs =
+      typeof rhs === "string"
+        ? rhs.startsWith("js:")
+          ? await vm.run(rhs.slice(3))
+          : rhs
+        : rhs;
+    return { lhs, rhs };
+  }
+  public static async evaluateOperator(
     lhs: any,
     rhs: any,
     operator: z.infer<typeof operatorSchema>,
     vm: JsVM,
     js?: string,
     extras?: any,
-  ): boolean {
-    return evaluateOperator(vm, lhs, rhs, operator, js, extras);
+  ): Promise<boolean> {
+    return await evaluateOperator(vm, lhs, rhs, operator, js, extras);
   }
 }

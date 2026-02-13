@@ -1,3 +1,4 @@
+"use server";
 import AppConfigList from "@/components/panels/appConfigList";
 import { AppConfigProvider } from "@/context/appConfigPage";
 import { authClient } from "@/lib/auth";

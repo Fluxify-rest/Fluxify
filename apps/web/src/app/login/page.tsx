@@ -1,3 +1,4 @@
+"use server";
 import LoginForm from "@/components/forms/login";
 import { authClient } from "@/lib/auth";
 import { Center, Stack, Text } from "@mantine/core";

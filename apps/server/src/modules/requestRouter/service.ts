@@ -1,6 +1,17 @@
 import { getCookie, setCookie } from "hono/cookie";
-import { HttpClient, HttpRoute, HttpRouteParser } from "@fluxify/lib";
-import { Context as BlockContext, ContextVarsType } from "@fluxify/blocks";
+import {
+  AbstractLogger,
+  ConsoleLoggerProvider,
+  EmptyLoggerProvider,
+  HttpClient,
+  HttpRoute,
+  HttpRouteParser,
+} from "@fluxify/lib";
+import {
+  Context as BlockContext,
+  BlockOutput,
+  ContextVarsType,
+} from "@fluxify/blocks";
 import { Context } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { JsVM } from "@fluxify/lib";
@@ -14,15 +25,17 @@ export type HandleRequestType = {
   status: ContentfulStatusCode;
 };
 
+export const RESPONSE_TIMEOUT = 4 * 1000;
+
 export async function handleRequest(
   ctx: Context,
-  parser: HttpRouteParser
+  parser: HttpRouteParser,
 ): Promise<HandleRequestType> {
-  const pathId = parser.getRouteId(
+  const path = parser.getRouteId(
     ctx.req.path,
-    ctx.req.method as HttpRoute["method"]
+    ctx.req.method as HttpRoute["method"],
   );
-  if (!pathId) {
+  if (!path) {
     return {
       status: 404,
       data: {
@@ -32,17 +45,26 @@ export async function handleRequest(
   }
 
   let requestBody = await getRequestBody(ctx);
-  const vars = setupContextVars(ctx, requestBody, pathId.routeParams);
+  const vars = setupContextVars(ctx, requestBody, path.routeParams);
   const vm = createJsVM(vars);
   const dbFactory = createDbFactory(vm);
-  const context = createContext(pathId, ctx, requestBody, vm, vars, dbFactory);
-  const executionResult = await startBlocksExecution(pathId.id, context);
+  const context = createContext(path, ctx, requestBody, vm, vars, dbFactory);
+
+  const timeoutId = setTimeout(() => {
+    context.abortController.abort();
+  }, RESPONSE_TIMEOUT);
+
+  const executionResult = await startBlocksExecution(
+    {
+      projectId: path.projectId!,
+      routeId: path.id,
+      projectName: path.projectName,
+    },
+    context,
+  );
+  clearTimeout(timeoutId);
   if (executionResult) {
-    return {
-      status: executionResult.output?.httpCode || 200,
-      data:
-        executionResult.output?.body || executionResult?.output || "NO RESULT",
-    };
+    return parseResult(executionResult);
   }
   return {
     status: 500,
@@ -52,22 +74,41 @@ export async function handleRequest(
   };
 }
 
+function parseResult(executionResult: BlockOutput) {
+  return {
+    status:
+      executionResult.output?.httpCode || (executionResult.error ? 500 : 200),
+    data:
+      executionResult.output?.body ||
+      executionResult?.output ||
+      (!executionResult.successful
+        ? { error: executionResult.error?.toString() || "Unknown error" }
+        : "NO RESULT"),
+  };
+}
+
 function createContext(
-  pathId: { id: string; routeParams?: Record<string, string> },
+  path: { id: string; routeParams?: Record<string, string>; projectId: string },
   ctx: Context<any, any, {}>,
   requestBody: any,
   vm: JsVM,
   vars: ContextVarsType & Record<string, any>,
-  dbFactory: DbFactory
+  dbFactory: DbFactory,
 ): BlockContext {
   return {
-    apiId: pathId.id,
+    apiId: path.id,
     route: ctx.req.path,
+    projectId: path.projectId,
     requestBody,
     vm,
     vars,
     dbFactory,
     httpClient: createHttpClient(),
+    abortController: new AbortController(),
+    stopper: {
+      timeoutEnd: 0,
+      duration: RESPONSE_TIMEOUT,
+    },
   };
 }
 
@@ -82,9 +123,17 @@ function createDbFactory(vm: JsVM) {
 function setupContextVars(
   ctx: Context,
   body: any,
-  params?: Record<string, string>
+  params?: Record<string, string>,
 ): BlockContext["vars"] {
+  let logger: AbstractLogger = null!;
+  if (process.env.NODE_ENV === "development") {
+    logger = new ConsoleLoggerProvider();
+  } else {
+    // TODO: require configuration from user.
+    logger = new EmptyLoggerProvider();
+  }
   return {
+    logger,
     getCookie(key) {
       return getCookie(ctx, key) || "";
     },
@@ -92,13 +141,13 @@ function setupContextVars(
       return appConfigCache[key];
     },
     setCookie(name, options) {
-      setCookie(ctx, name, options?.value || "", {
+      setCookie(ctx, name, options?.value.toString() || "", {
         domain: options?.domain,
         path: options?.path,
-        expires: options?.expiry as Date,
+        expires: new Date(options?.expiry),
         httpOnly: options?.httpOnly,
         secure: options?.secure,
-        sameSite: options?.samesite,
+        sameSite: options?.samesite || "Strict",
       });
     },
     getHeader(key) {

@@ -21,9 +21,13 @@ import {
   TbMatrix,
 } from "react-icons/tb";
 import { VscSymbolParameter, VscSymbolMisc } from "react-icons/vsc";
-import { MdDataObject, MdHttp } from "react-icons/md";
+import {
+  MdDataObject,
+  MdHttp,
+  MdOutlineReportGmailerrorred,
+} from "react-icons/md";
 import { BlockCategory, BlockTypes } from "@/types/block";
-import { LuDatabaseZap } from "react-icons/lu";
+import { LuDatabaseZap, LuFileText } from "react-icons/lu";
 
 const iconStyles: React.CSSProperties = {};
 
@@ -301,11 +305,24 @@ const blocksForSearch = [
     type: BlockTypes.db_native,
     category: BlockCategory.Database,
   },
+  {
+    id: crypto.randomUUID(),
+    title: "Log to Server",
+    description:
+      "Send logs directly to central log store such as Loki, Open Observe, etc. ",
+    icon: <LuFileText size={iconSize} />,
+    tags: ["cloud", "logging", "logs", "loki"],
+    type: BlockTypes.cloudLogs,
+    category: BlockCategory.Logging,
+  },
 ].sort((a, b) => (a.title > b.title ? 1 : -1));
 
 export const blockIcons: Record<string, React.ReactNode> = {};
 blockIcons[BlockTypes.entrypoint] = <TbWorldCode size={iconSize} />;
 blockIcons[BlockTypes.stickynote] = <TbNote size={iconSize} />;
+blockIcons[BlockTypes.errorHandler] = (
+  <MdOutlineReportGmailerrorred size={iconSize} />
+);
 blocksForSearch.forEach((block) => {
   blockIcons[block.type] = block.icon;
 });

@@ -5,7 +5,6 @@
   "files": [
     "dist"
   ],
-  "main": "dist/index.js",
   "author": "",
   "license": "ISC",
   "description": "",
@@ -16,11 +15,11 @@
   },
   "scripts": {
     "test": "vitest run",
-    "build": "tsc -p tsconfig.json"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@fluxify/adapters": "../adapters",
-    "@fluxify/lib": "../lib",
+    "@fluxify/adapters": "workspace:*",
+    "@fluxify/lib": "workspace:*",
     "dayjs": "^1.11.19",
     "zod": "^4.0.17"
   }

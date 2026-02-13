@@ -27,6 +27,8 @@ import Transaction from "./builtin/database/transaction";
 import Native from "./builtin/database/native";
 import Console from "./builtin/logging/console";
 import StickyNote from "./builtin/stickyNote";
+import ErrorHandlerBlock from "./builtin/errorHandler";
+import CloudLogBlock from "./builtin/logging/cloud";
 
 const blocksList: NodeTypes = {
   [BlockTypes.entrypoint]: Entrypoint,
@@ -56,6 +58,8 @@ const blocksList: NodeTypes = {
   [BlockTypes.db_transaction]: Transaction,
   [BlockTypes.db_native]: Native,
   [BlockTypes.stickynote]: StickyNote,
+  [BlockTypes.errorHandler]: ErrorHandlerBlock,
+  [BlockTypes.cloudLogs]: CloudLogBlock,
 };
 
 export { blocksList };

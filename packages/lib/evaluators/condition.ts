@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { JsVM } from "../vm";
+import { is } from "zod/v4/locales";
 
 export const operatorSchema = z
-  .enum(["eq", "neq", "gt", "gte", "lt", "lte", "js"])
+  .enum(["eq", "neq", "gt", "gte", "lt", "lte", "js", "is_empty", "is_not_empty"])
   .describe("The operator to use for comparison");
 
 export const conditionSchema = z.object({
@@ -23,23 +24,23 @@ export const conditionSchema = z.object({
     .describe("condition chain to use for evaluation"),
 });
 
-export function evaluateOperator(
+export async function evaluateOperator(
   vm: JsVM,
   lhs: any,
   rhs: any,
   operator: z.infer<typeof operatorSchema>,
   js?: string,
   extras?: any
-): boolean {
+): Promise<boolean> {
   const isLhsScript = typeof lhs == "string" && lhs.startsWith("js:");
   const isRhsScript = typeof rhs == "string" && rhs.startsWith("js:");
 
   if (operator == "js" && !!js) {
-    const result = vm.run(js.startsWith("js:") ? js.slice(3) : js, extras);
+    const result = await vm.run(js.startsWith("js:") ? js.slice(3) : js, extras);
     return vm.truthy(result);
   } else if (isLhsScript || isRhsScript) {
-    lhs = isLhsScript ? vm.run(lhs.slice(3), extras) : lhs;
-    rhs = isRhsScript ? vm.run(rhs.slice(3), extras) : rhs;
+    lhs = isLhsScript ? await vm.run(lhs.slice(3), extras) : lhs;
+    rhs = isRhsScript ? await vm.run(rhs.slice(3), extras) : rhs;
     return evaluateOperator(vm, lhs, rhs, operator);
   } else {
     switch (operator) {
@@ -55,8 +56,27 @@ export function evaluateOperator(
         return lhs < rhs;
       case "lte":
         return lhs <= rhs;
+      case "is_empty":
+        return isNull(lhs);
+      case "is_not_empty":
+        return !isNull(lhs);
       default:
         return false;
     }
   }
+}
+
+function isNull(value: any): boolean {
+  return value === null || isUndefined(value) || isNaN(value) || value === "" || isObjectEmpty(value) || isArrayEmpty(value);
+}
+
+function isUndefined(value: any): boolean {
+  return value === undefined;
+}
+
+function isObjectEmpty(obj: any): boolean {
+  return (typeof obj === "object" && Object.keys(obj).length === 0);
+}
+function isArrayEmpty(obj: any): boolean {
+  return Array.isArray(obj) && obj.length === 0;
 }

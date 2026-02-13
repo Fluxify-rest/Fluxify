@@ -1,7 +1,7 @@
 "use client";
 
 import { integrationsQuery } from "@/query/integrationsQuery";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import QueryLoader from "../query/queryLoader";
 import QueryError from "../query/queryError";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ import {
   getIntegrationsGroups,
   getIntegrationsVariants,
   getDefaultVariantValue,
+  humanReadableConnectorNames,
 } from "@fluxify/server/src/api/v1/integrations/helpers";
 import { getZodValidatedErrors } from "@/lib/forms";
 import PostgresForm from "./databases/postgres";
@@ -27,6 +28,9 @@ import { TbTrash } from "react-icons/tb";
 import ConfirmDialog from "../dialog/confirmDialog";
 import { useDisclosure } from "@mantine/hooks";
 import RequireRoleInAnyProject from "../auth/requireRoleInAnyProject";
+import OpenObserveIntegrationForm from "./observability/openObserve";
+import LokiIntegrationForm from "./observability/loki";
+import GenericAiIntegrationForm from "./observability/genericAi";
 
 type PropTypes = {
   onSubmit?: (data: any) => void;
@@ -44,6 +48,7 @@ type PropTypes = {
 
 const IntegrationForm = (props: PropTypes) => {
   const useQuery = integrationsQuery.getById.query;
+  const variantSelectorRef = useRef<HTMLInputElement>(null);
   const {
     data: loadedData,
     isLoading,
@@ -63,7 +68,15 @@ const IntegrationForm = (props: PropTypes) => {
       config: data?.config,
     },
     onValuesChange(values, previous) {
-      if (previous.variant !== values.variant) {
+      if (values.group !== previous.group) {
+        form.setValues({
+          name: values.name,
+          group: values.group,
+          variant: "",
+          config: {},
+        });
+      }
+      if (previous.variant !== values.variant && values.variant) {
         form.setValues({
           ...values,
           config: (getDefaultVariantValue(values.variant as any) as any) ?? {},
@@ -111,13 +124,16 @@ const IntegrationForm = (props: PropTypes) => {
           description="Choose from a range of connectors to get started"
           {...form.getInputProps("group")}
           value={form.values.group}
-          data={getIntegrationsGroups()}
+          data={getIntegrationsGroups().map((grp) => ({
+            label: humanReadableConnectorNames[grp],
+            value: grp,
+          }))}
         />
         {form.values.group && (
           <Select
+            ref={variantSelectorRef}
             label="Select Variant"
             readOnly={props.disableButtons?.includes("variant")}
-            value={form.values.variant}
             description="Select the service you want to configure & connect to"
             {...form.getInputProps("variant")}
             data={getIntegrationsVariants(form.values.group as any)}
@@ -125,6 +141,31 @@ const IntegrationForm = (props: PropTypes) => {
         )}
         {form.values.group === "database" &&
           form.values.variant === "PostgreSQL" && <PostgresForm form={form} />}
+        {form.values.group === "observability" &&
+          form.values.variant === "Open Observe" && (
+            <OpenObserveIntegrationForm form={form} />
+          )}
+
+        {/* AI */}
+        {form.values.group === "ai" && form.values.variant === "OpenAI" && (
+          <GenericAiIntegrationForm form={form} />
+        )}
+        {form.values.group === "ai" && form.values.variant === "Anthropic" && (
+          <GenericAiIntegrationForm form={form} />
+        )}
+        {form.values.group === "ai" && form.values.variant === "Gemini" && (
+          <GenericAiIntegrationForm form={form} />
+        )}
+        {form.values.group === "ai" && form.values.variant === "Mistral" && (
+          <GenericAiIntegrationForm form={form} />
+        )}
+        {form.values.group === "ai" &&
+          form.values.variant === "OpenAI Compatible" && (
+            <GenericAiIntegrationForm form={form} showBaseUrl />
+          )}
+
+        {form.values.group === "observability" &&
+          form.values.variant === "Loki" && <LokiIntegrationForm form={form} />}
         <Group justify="space-between">
           {props.showTestConnection &&
             form.values.group &&

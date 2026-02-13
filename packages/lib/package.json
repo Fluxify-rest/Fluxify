@@ -2,19 +2,19 @@
   "name": "@fluxify/lib",
   "version": "1.0.0",
   "keywords": [],
-  "files": [
-    "dist"
-  ],
-  "main": "dist/index.js",
+  "exports": {
+    ".": "./index.ts"
+  },
   "author": "",
   "license": "MIT",
   "description": "",
   "scripts": {
     "test": "vitest run",
-    "build": "tsc -p tsconfig.json"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "axios": "^1.13.1",
+    "pino": "^10.3.0",
     "uuidv7": "^1.0.2",
     "zod": "^4.0.17"
   },

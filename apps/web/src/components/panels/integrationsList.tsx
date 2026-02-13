@@ -30,11 +30,11 @@ const IntegrationsList = () => {
     if (!data) return [];
     if (filterVariant)
       return data.filter(
-        (integration) => integration.variant === filterVariant
+        (integration) => integration.variant === filterVariant,
       );
     if (searchQuery)
       return data.filter((integration) =>
-        integration.name.toLowerCase().includes(searchQuery.toLowerCase())
+        integration.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     return data;
   }, [data, filterVariant, searchQuery]);
@@ -71,7 +71,11 @@ const IntegrationsList = () => {
       });
       notifications.show({
         title: "Integration updated",
-        message: `Integration ${name} has been updated.`,
+        message: (
+          <Text c={"dark"} size="sm">
+            Integration <b>{name}</b> has been updated.
+          </Text>
+        ),
         color: "green",
       });
     } catch (error: any) {

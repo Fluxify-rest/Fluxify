@@ -1,5 +1,7 @@
 export type HttpRoute = {
   routeId: string;
+  projectId: string;
+  projectName: string;
   path: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
 };
@@ -9,6 +11,8 @@ export type RouteTree = {
   isParam: boolean;
   children: Record<string, RouteTree>;
   id?: string;
+  projectId?: string;
+  projectName?: string;
 };
 
 export class HttpRouteParser {
@@ -54,13 +58,20 @@ export class HttpRouteParser {
         isParam: false,
         subPath: "",
         id: route.routeId,
+        projectId: route.projectId,
+        projectName: route.projectName,
       };
     }
   }
   public getRouteId(
     path: string,
-    method: HttpRoute["method"]
-  ): { id: string; routeParams?: Record<string, string> } | null {
+    method: HttpRoute["method"],
+  ): {
+    id: string;
+    routeParams?: Record<string, string>;
+    projectId: string;
+    projectName: string;
+  } | null {
     const parts = path.split("/").filter((p) => p.trim() != "");
     let current = this.routesTree;
     const params: Record<string, string> = {};
@@ -89,6 +100,8 @@ export class HttpRouteParser {
       return {
         id: current["<ID>"].id!,
         routeParams: params,
+        projectId: current["<ID>"].projectId!,
+        projectName: current["<ID>"].projectName!,
       };
     }
     return null;

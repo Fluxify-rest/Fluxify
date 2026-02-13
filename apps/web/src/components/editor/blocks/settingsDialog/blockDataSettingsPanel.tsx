@@ -26,6 +26,7 @@ import { GetAllBlockDataSettingsPanel } from "../builtin/database/getAll";
 import { DeleteBlockDataSettingsPanel } from "../builtin/database/delete";
 import { TransactionBlockDataSettingsPanel } from "../builtin/database/transaction";
 import { NativeBlockDataSettingsPanel } from "../builtin/database/native";
+import { CloudSettingsPanel } from "../builtin/logging/cloud";
 
 type Props = {
   blockData: {
@@ -128,6 +129,8 @@ const BlockDataSettingsPanel = (props: Props) => {
       return (
         <NativeBlockDataSettingsPanel blockData={blockData} blockId={blockId} />
       );
+    case BlockTypes.cloudLogs:
+      return <CloudSettingsPanel blockData={blockData} blockId={blockId} />;
     default:
       return (
         <Center>No Data is available to edit for this type of block</Center>

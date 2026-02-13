@@ -1,3 +1,4 @@
+"use server";
 import OverviewTabs from "@/components/overviewTabs";
 import { authClient } from "@/lib/auth";
 import { Group, Stack, Text } from "@mantine/core";

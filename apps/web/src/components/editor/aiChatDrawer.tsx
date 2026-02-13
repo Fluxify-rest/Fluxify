@@ -7,8 +7,6 @@ import {
   Center,
   Divider,
   Group,
-  Kbd,
-  Menu,
   Paper,
   Skeleton,
   Stack,
@@ -17,54 +15,24 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import Link from "next/link";
-import React from "react";
-import { BiBrush, BiMessageDetail } from "react-icons/bi";
+import { BiBrush } from "react-icons/bi";
 import { IoMdReturnLeft } from "react-icons/io";
 import { MdErrorOutline } from "react-icons/md";
-import {
-  TbArrowsExchange,
-  TbDots,
-  TbMessage2Plus,
-  TbSend,
-} from "react-icons/tb";
-import QueryError from "../query/queryError";
+import { TbMessage2Plus, TbSend } from "react-icons/tb";
 
 const AiChatDrawer = () => {
   return (
     <Paper h={"100%"} withBorder>
       <Stack gap={"xs"} h={"100%"}>
-        <Group justify="center" align="center" w={"100%"}>
-          <Center>
-            <img
-              src="/_/admin/ui//ai_window_logo.webp"
-              style={{ width: "80px" }}
-              alt=""
-            />
-          </Center>
-          <Menu>
-            <Menu.Target>
-              <ActionIcon
-                style={{ position: "absolute", right: "1em", top: "1em" }}
-                variant="outline"
-                color="violet"
-              >
-                <TbDots />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item leftSection={<TbArrowsExchange />}>
-                Change Provider
-              </Menu.Item>
-              <Menu.Item
-                color="red.8"
-                leftSection={
-                  <BiBrush style={{ transform: "rotate(180deg)" }} />
-                }
-              >
-                Clear Chat
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+        <Group justify="space-between" px={"md"} align="center" w={"100%"}>
+          <img
+            src="/_/admin/ui/ai_window_logo.webp"
+            style={{ width: "80px" }}
+            alt=""
+          />
+          <ActionIcon title="Clear Chat" variant="light" color="red.9">
+            <BiBrush style={{ transform: "rotate(180deg)" }} />
+          </ActionIcon>
         </Group>
         <Divider />
         <Box style={{ flex: 1, height: "100%" }}>
@@ -100,7 +68,7 @@ const AiChatDrawer = () => {
 };
 
 type ChatListRendererProps = {
-  chatMessages: {}[];
+  chatMessages: { role: "user" | "ai"; content: string }[];
   aiProviderExist?: boolean;
   loading?: boolean;
 };

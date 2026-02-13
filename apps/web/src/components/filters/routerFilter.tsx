@@ -9,7 +9,6 @@ import {
   Select,
   Stack,
 } from "@mantine/core";
-import React from "react";
 import { TbFilterCog } from "react-icons/tb";
 import DebouncedTextInput from "../editors/debouncedTextInput";
 

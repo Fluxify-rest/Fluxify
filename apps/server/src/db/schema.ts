@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
   json,
   jsonb,
   pgEnum,
@@ -39,7 +40,41 @@ export const projectsEntity = pgTable(
   (table) => [
     index("idx_projects_name").on(table.name),
     index("idx_projects_updated_at").on(table.updatedAt),
-  ]
+  ],
+);
+
+export const aiChatEntity = pgTable(
+  "ai_chat",
+  {
+    id: varchar({ length: 50 }).primaryKey().default(generateID()),
+    role: varchar({ length: 50 }),
+    content: text(),
+    userId: varchar("user_id", { length: 50 }).references(() => user.id, {
+      onDelete: "cascade",
+    }),
+    metadata: jsonb("metadata").$type<{
+      type: "general" | "builder_proposal" | "clarification_needed";
+      nodes?: any[];
+      edges?: any[];
+      reason?: string; // If build failed
+    }>(),
+    // any action to perform in ui (to track for duplication or future use)
+    // available: pending, implemented
+    actionState: varchar("action_state", { length: 50 }).default("pending"),
+    routeId: varchar("route_id", { length: 50 }).references(
+      () => routesEntity.id,
+      {
+        onDelete: "cascade",
+      },
+    ),
+    tokenUsage: integer("token_usage").default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_ai_chat_route_id").on(table.routeId),
+    index("idx_ai_chat_created_at").on(table.createdAt),
+    index("idx_ai_chat_user_id").on(table.userId),
+  ],
 );
 
 export const routesEntity = pgTable(
@@ -65,7 +100,7 @@ export const routesEntity = pgTable(
   (table) => [
     index("idx_routes_project_id").on(table.projectId),
     index("idx_routes_path").on(table.path),
-  ]
+  ],
 );
 
 export const blocksEntity = pgTable(
@@ -81,10 +116,10 @@ export const blocksEntity = pgTable(
       () => routesEntity.id,
       {
         onDelete: "cascade",
-      }
+      },
     ),
   },
-  (table) => [index("idx_blocks_route_id").on(table.routeId)]
+  (table) => [index("idx_blocks_route_id").on(table.routeId)],
 );
 
 export const edgesEntity = pgTable(
@@ -103,14 +138,14 @@ export const edgesEntity = pgTable(
       () => routesEntity.id,
       {
         onDelete: "cascade",
-      }
+      },
     ),
   },
   (table) => [
     index("idx_edges_from").on(table.from),
     index("idx_edges_to").on(table.to),
     index("idx_edges_route_id").on(table.routeId),
-  ]
+  ],
 );
 
 export const encodingTypeEnum = pgEnum("encoding_types", [
@@ -150,7 +185,7 @@ export const appConfigEntity = pgTable(
     index("idx_app_config_key_name").on(table.keyName),
     index("idx_app_config_is_encrypted").on(table.isEncrypted),
     index("idx_app_config_encoding_type").on(table.encodingType),
-  ]
+  ],
 );
 
 export const integrationsEntity = pgTable(
@@ -166,7 +201,7 @@ export const integrationsEntity = pgTable(
     index("idx_integrations_name").on(table.name),
     index("idx_integrations_group").on(table.group),
     index("idx_integrations_variant").on(table.variant),
-  ]
+  ],
 );
 
 export const accessControlRoleEnum = pgEnum("access_control_roles", [
@@ -194,7 +229,7 @@ export const accessControlEntity = pgTable(
       () => projectsEntity.id,
       {
         onDelete: "cascade",
-      }
+      },
     ),
     role: accessControlRoleEnum("role"),
     createdAt: timestamp("created_at").defaultNow(),
@@ -205,5 +240,5 @@ export const accessControlEntity = pgTable(
   (table) => [
     index("idx_access_control_user_id").on(table.userId),
     index("idx_access_control_project_id").on(table.projectId),
-  ]
+  ],
 );

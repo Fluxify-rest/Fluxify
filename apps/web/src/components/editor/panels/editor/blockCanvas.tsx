@@ -61,7 +61,7 @@ const BlockCanvas = (props: Props) => {
     },
   } = useCanvasActionsStore();
   const { data: routeData } = routesQueries.getById.useQuery(
-    props.routeId || ""
+    props.routeId || "",
   );
   const projectId = routeData?.projectId || "";
   const { updateBlockData, deleteBlockData } = useBlockDataActionsStore();
@@ -91,7 +91,7 @@ const BlockCanvas = (props: Props) => {
       return;
     }
     const confirmed = confirm(
-      "You have unsaved changes, are you sure you want to leave?"
+      "You have unsaved changes, are you sure you want to leave?",
     );
     if (confirmed) {
       return;
@@ -120,7 +120,6 @@ const BlockCanvas = (props: Props) => {
         });
         return;
       }
-      console.log(deconstructed.data);
     } catch (error) {}
   }
   function insertNewBlocks() {}
@@ -139,10 +138,10 @@ const BlockCanvas = (props: Props) => {
     edgesToCopy.forEach((edge) => {
       const newId = generateID();
       const srcHandle = edge.sourceHandle.slice(
-        edge.sourceHandle.lastIndexOf("-") + 1
+        edge.sourceHandle.lastIndexOf("-") + 1,
       );
       const tgtHandle = edge.targetHandle.slice(
-        edge.targetHandle.lastIndexOf("-") + 1
+        edge.targetHandle.lastIndexOf("-") + 1,
       );
       const newSrc = oldIdToNewIdMap.get(edge.source);
       const newTgt = oldIdToNewIdMap.get(edge.target);
@@ -199,7 +198,7 @@ const BlockCanvas = (props: Props) => {
     id: string,
     position: { x: number; y: number },
     block: BlockTypes,
-    data?: any
+    data?: any,
   ) {
     data = data || createBlockData(block);
     addBlock({
@@ -237,8 +236,8 @@ const BlockCanvas = (props: Props) => {
           variant: "edge",
           actionType: "add",
           ...edge,
-        })
-      )
+        }),
+      ),
     );
     addEdge(edge);
   }
@@ -250,7 +249,16 @@ const BlockCanvas = (props: Props) => {
   }
   function duplicateBlock(id: string) {
     const block = blocks.find((block) => block.id === id);
-    if (!block || block.type === BlockTypes.entrypoint) {
+    if (
+      !block ||
+      block.type === BlockTypes.entrypoint ||
+      block.type === BlockTypes.errorHandler
+    ) {
+      showNotification({
+        message: "Cannot duplicate Entrypoint/Error handler block",
+        color: "red",
+        id: "duplicate-block-error-notification",
+      });
       return;
     }
     const position = { x: block.position.x + 50, y: block.position.y + 50 };

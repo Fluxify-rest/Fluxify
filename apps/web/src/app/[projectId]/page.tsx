@@ -1,3 +1,4 @@
+"use server";
 import OverviewTabs from "@/components/overviewTabs";
 import ProjectPageOverview from "@/components/panels/projectPageOverview";
 import ProjectSettings from "@/components/project/settings";
@@ -21,14 +22,14 @@ const Page = async (params: any) => {
   const hasAccess = canAccessProject(
     (session.data as any).acl,
     projectId,
-    "viewer"
+    "viewer",
   );
   if (!hasAccess) {
     redirect("/");
   }
 
   const role = (session.data as any).acl.filter(
-    (entry: any) => entry.projectId === projectId || entry.projectId === "*"
+    (entry: any) => entry.projectId === projectId || entry.projectId === "*",
   )[0].role;
   const showTabs =
     roleHierarchy[role as AccessControlRole] >= roleHierarchy["creator"];

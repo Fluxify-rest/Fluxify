@@ -71,7 +71,7 @@ export function UpdateBlockDataSettingsPanel(props: {
     });
   }
   function onConditionsChange(
-    value: { lhs: any; rhs: any; operator: any; chain: any }[]
+    value: { lhs: any; rhs: any; operator: any; chain: any }[],
   ) {
     updateBlockData(props.blockId, {
       conditions: value.map((x) => ({
@@ -158,6 +158,7 @@ export function UpdateBlockDataSettingsPanel(props: {
               rhs: condition.value,
             })) ?? []
           }
+          ignoreOperators={["is_empty", "is_not_empty"]}
           onChange={onConditionsChange}
           disableJsConditions
         />

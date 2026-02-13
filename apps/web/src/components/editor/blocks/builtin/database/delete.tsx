@@ -55,7 +55,7 @@ export function DeleteBlockDataSettingsPanel(props: {
     });
   }
   function onConditionsChange(
-    value: { lhs: any; rhs: any; operator: any; chain: any }[]
+    value: { lhs: any; rhs: any; operator: any; chain: any }[],
   ) {
     updateBlockData(props.blockId, {
       conditions: value.map((x) => ({
@@ -98,6 +98,7 @@ export function DeleteBlockDataSettingsPanel(props: {
           }
           onChange={onConditionsChange}
           disableJsConditions
+          ignoreOperators={["is_empty", "is_not_empty"]}
         />
       </Stack>
     </Stack>

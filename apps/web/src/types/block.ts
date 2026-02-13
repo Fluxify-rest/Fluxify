@@ -28,6 +28,8 @@ export enum BlockTypes {
   db_native = "db_native",
   db_transaction = "db_transaction",
   stickynote = "sticky_note",
+  errorHandler = "error_handler",
+  cloudLogs = "cloud_logs",
 }
 
 export enum BlockCategory {
@@ -68,7 +70,7 @@ export const bulkInsertSchema = z.object({
       }),
       type: z.enum(Object.values(BlockTypes)),
       data: z.any(),
-    })
+    }),
   ),
   edges: z.array(
     z.object({
@@ -78,7 +80,7 @@ export const bulkInsertSchema = z.object({
       sourceHandle: z.string(),
       targetHandle: z.string(),
       type: z.literal("custom"),
-    })
+    }),
   ),
 });
 

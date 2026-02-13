@@ -1,7 +1,11 @@
-import React from "react";
+import { Stack, Text } from "@mantine/core";
 
 const ExecutionPanel = () => {
-  return <div>ExecutionPanel</div>;
+  return (
+    <Stack>
+      <Text>TODO: Execution Panel need to implement</Text>
+    </Stack>
+  );
 };
 
 export default ExecutionPanel;

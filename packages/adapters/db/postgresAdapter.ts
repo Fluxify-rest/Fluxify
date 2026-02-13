@@ -7,7 +7,10 @@ export class PostgresAdapter implements IDbAdapter {
   private transaction: Knex.Transaction | null = null;
   private readonly HARD_LIMIT = 1000;
 
-  constructor(private readonly connection: Knex, private readonly vm: JsVM) {}
+  constructor(
+    private readonly connection: Knex,
+    private readonly vm: JsVM,
+  ) {}
   public static async testConnection(connection: Connection) {
     const conn = knex({
       client: "pg",
@@ -40,7 +43,7 @@ export class PostgresAdapter implements IDbAdapter {
     conditions: DBConditionType[],
     limit: number = this.HARD_LIMIT,
     offset: number = 0,
-    sort: { attribute: string; direction: "asc" | "desc" }
+    sort: { attribute: string; direction: "asc" | "desc" },
   ): Promise<unknown[]> {
     const conn = this.getConnection()!;
     let queryBuilder = conn(table);
@@ -55,7 +58,7 @@ export class PostgresAdapter implements IDbAdapter {
   }
   async getSingle(
     table: string,
-    conditions: DBConditionType[]
+    conditions: DBConditionType[],
   ): Promise<unknown | null> {
     const conn = this.getConnection()!;
     let queryBuilder = conn(table);
@@ -80,7 +83,7 @@ export class PostgresAdapter implements IDbAdapter {
   async update(
     table: string,
     data: unknown,
-    conditions: DBConditionType[]
+    conditions: DBConditionType[],
   ): Promise<any> {
     const conn = this.getConnection()!;
     let queryBuilder = conn(table);
@@ -112,14 +115,11 @@ export class PostgresAdapter implements IDbAdapter {
   }
   private buildQuery(
     conditions: DBConditionType[],
-    builder: Knex.QueryBuilder
+    builder: Knex.QueryBuilder,
   ) {
     for (let condition of conditions) {
       const operator = this.getNativeOperator(condition.operator);
-      const value =
-        typeof condition.value === "string" && condition.value.startsWith("js:")
-          ? this.vm.run(condition.value.slice(3))
-          : condition.value;
+      const value = condition.value;
 
       if (condition.chain == "or") {
         builder = builder.orWhere(condition.attribute, operator, value);
@@ -130,7 +130,7 @@ export class PostgresAdapter implements IDbAdapter {
     return builder;
   }
   private getNativeOperator(
-    operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte"
+    operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte",
   ) {
     if (operator == "eq") return "=";
     else if (operator == "neq") return "<>";
@@ -146,4 +146,38 @@ export class PostgresAdapter implements IDbAdapter {
     }
     return this.connection;
   }
+}
+
+export function extractPgConnectionInfo(
+  config: any,
+  appConfigs: Map<string, string>,
+  pgUrlParser: (url: string) => Connection | null,
+) {
+  if (config.source === "url") {
+    config.url = config.url.startsWith("cfg:")
+      ? appConfigs.get(config.url.slice(4)) || ""
+      : config.url;
+    const result = pgUrlParser(config.url);
+    if (result === null) {
+      return null;
+    }
+    return {
+      host: result.host,
+      port: result.port,
+      database: result.database,
+      username: result.username,
+      password: result.password,
+      ssl: result.ssl === true,
+      dbType: result.dbType,
+    };
+  }
+  for (const key in config) {
+    const value = config[key].toString();
+    if (value.startsWith("cfg:")) {
+      config[key] = appConfigs.get(value.slice(4)) || "";
+    } else {
+      config[key] = value;
+    }
+  }
+  return config;
 }
