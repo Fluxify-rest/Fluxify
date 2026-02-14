@@ -2,6 +2,7 @@ import { BaseAiIntegration } from "@fluxify/adapters";
 import { StateSchema } from "@langchain/langgraph";
 import { AIMessage, HumanMessage, SystemMessage } from "langchain";
 import z from "zod";
+import { integrationsGroupSchema } from "../../api/v1/integrations/schemas";
 
 export const ClassificationIntent = z.enum(["DISCUSSION", "BUILD"]);
 
@@ -25,10 +26,8 @@ export const AgentStateSchema = new StateSchema({
         .object({
           status: z.enum(["success", "vague", "impossible"]),
           reasoning: z.string(),
-          clarificationQuestion: z.string().optional(),
-          plannedBlockIds: z.array(z.string()).default([]),
-          plannedIntegrationIds: z.array(z.string()).default([]),
-          plannedConfigIds: z.array(z.string()).default([]),
+          clarificationQuestion: z.string().nullable(),
+          plannedBlockNames: z.array(z.string()).default([]),
         })
         .optional(),
       builderOutput: z.object({}).optional(),
@@ -46,6 +45,8 @@ export const AgentStateSchema = new StateSchema({
       z.object({
         id: z.string(),
         name: z.string(),
+        group: integrationsGroupSchema,
+        variant: z.string(),
       }),
     ),
     configsList: z.array(
