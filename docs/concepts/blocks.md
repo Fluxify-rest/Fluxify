@@ -3,14 +3,16 @@ title: Blocks
 description: High-level concept of Blocks in Fluxify.
 ---
 
-# Blocks Concept
+# Blocks
+Blocks are the basic building modules of Fluxify. Each block is designed to perform one specific task, like  fetching data from a database, or checking a condition.
 
-In the context of the Fluxify architecture, a **Block** is an abstraction of a unit of work.
+By connecting these blocks together, you create a visual graph that defines the logic of your API.
 
-## Structure
+## How they work
+Every block has:
+- **Inputs**: What the block needs to work (e.g., a URL for an HTTP request).
+- **Outputs**: What the block produces after it finishes (available as `input` in the next block).
+- **Settings**: Configuration that defines how the block behaves.
+- **Connections**: Edges that define the flow of execution.
 
-Under the hood (in the codebase), a Block is a TypeScript class extending `BaseBlock`. It implements an `executeAsync` method that receives the context and inputs.
-
-## Extensibility
-
-Because Blocks are modular classes, it is easy for developers to add new types of blocks by creating a new class in the `packages/blocks` directory and registering it. This makes Fluxify highly extensible.
+You can customize block behavior using js expressions.

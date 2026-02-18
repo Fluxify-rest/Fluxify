@@ -8,7 +8,7 @@ import { ServerError } from "../../../../errors/serverError";
 
 export default async function handleRequest(
   id: string,
-  body: z.infer<typeof requestBodySchema>
+  body: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
   const data = await db.transaction(async (tx) => {
     const existingProjects = await getProjectByIdName(id, body.name ?? "", tx);
@@ -37,6 +37,8 @@ export default async function handleRequest(
 
   return {
     ...data,
+    name: data.name ?? "",
+    hidden: data.hidden ?? false,
     createdAt: data.createdAt.toISOString(),
     updatedAt: data.updatedAt.toISOString(),
   };

@@ -4,17 +4,9 @@ description: Connecting blocks to form logic.
 ---
 
 # Edges
-
-**Edges** are the connectors between blocks. While they visually appear as lines on the canvas, they represent the flow of control in the execution engine.
+**Edges** are the visual lines that connect one block to another. They determine the order in which your blocks will execute.
 
 ## Types of Connections
-
-1.  **Standard Flow**: The default connection (Output -> Input). The next block runs immediately after the previous one succeeds.
-2.  **Conditional Flow**: Used in blocks like **If Condition**.
-    - **True Path**: Executed if the condition is met.
-    - **False Path**: Executed if the condition fails.
-3.  **Error Flow**: Used by the **Error Handler**. If a block fails, control is passed along this edge to manage the error.
-
-## Concept
-
-Edges define the *Directed Acyclic Graph (DAG)* that represents your workflow. The execution engine traverses this graph to run your logic.
+- **Direct Flow**: A simple line between two blocks. The second block runs as soon as the first one finishes successfully.
+- **Decision Paths**: Used by blocks like **If Condition**. You can connect the "True" output to one path and the "False" output to another.
+- **Error Paths**: Used to handle situations where something goes wrong. If a block fails, you can direct the workflow to an **Error Handler** block to keep your application running.

@@ -13,6 +13,7 @@ import { auth, initializeAuth } from "./lib/auth";
 import authenticationRouter from "./api/auth/register";
 import { AccessControlRole } from "./db/schema";
 import { setSession } from "./middlewares/session";
+import { initDocsSearch } from "./lib/docs";
 
 const app = new Hono<{
   Variables: {
@@ -27,7 +28,6 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      // Allow requests from localhost on common development ports
       if (origin?.startsWith("http://localhost:")) {
         return origin;
       }
@@ -36,18 +36,19 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization", "Accept"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     credentials: true,
-    maxAge: 86400, // Cache preflight for 24 hours
-  })
+    maxAge: 86400,
+  }),
 );
 
 async function main() {
-  const adminRoutesEnabled = Boolean(process.env.ENABLE_ADMIN);
+  const adminRoutesEnabled = process.env.ENABLE_ADMIN == "true";
   app.onError(errorHandler);
   const db = await drizzleInit();
   await initializeRedis();
   await loadAppConfig();
   await loadIntegrations();
   if (adminRoutesEnabled) {
+    await initDocsSearch();
     app.use("*", setSession);
     initializeAuth(db);
     authenticationRouter.registerHandler(app);

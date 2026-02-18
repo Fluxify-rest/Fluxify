@@ -13,11 +13,15 @@ describe("Testing routing parser", () => {
         routeId: "1",
         path: "/api/users",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
       {
         routeId: "2",
         path: "/api/posts",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
     ]);
     expect(parser.getRouteId("/api/users", "GET")?.id).toBe("1");
@@ -28,11 +32,15 @@ describe("Testing routing parser", () => {
         routeId: "1",
         path: "/api/users",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
       {
         routeId: "2",
         path: "/api/posts",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
     ]);
     expect(parser.getRouteId("/api/users/123", "GET")).toBeNull();
@@ -44,21 +52,29 @@ describe("Testing routing parser", () => {
         routeId: "1",
         path: "/api/users/:id",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
       {
         routeId: "333",
         path: "/api/posts/:id/comments",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
       {
         routeId: "2",
         path: "/api/posts",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
       {
         routeId: "555",
         path: "/api/:tenant/users/:id",
         method: "GET",
+        projectId: "",
+        projectName: "",
       },
     ]);
     const result = parser.getRouteId("/api/users/123", "GET");
