@@ -91,13 +91,16 @@ export class ArrayOperationsBlock extends BaseBlock {
         array.unshift(value);
         break;
       case "filter":
-        array = array.filter(async (item) =>
-          await ConditionEvaluator.evaluateOperatorsList(
-            input.filterConditions || [],
-            this.context.vm,
-            item,
+        const results = await Promise.all(
+          array.map((item) =>
+            ConditionEvaluator.evaluateOperatorsList(
+              input.filterConditions || [],
+              this.context.vm,
+              item,
+            ),
           ),
         );
+        array = array.filter((_, index) => results[index]);
         this.context.vars[input.datasource] = array;
         break;
     }

@@ -1,14 +1,9 @@
 import { ConditionalEdgeRouter, GraphNode } from "@langchain/langgraph";
-import { AgentStateSchema, ClassificationIntent } from "../state";
-import z from "zod";
+import { AgentStateSchema } from "../state";
+import { ClassifierOutputSchema } from "../schemas";
 import { withRetry } from "../../agentRetry";
 import { PLANNER_NODE_ID } from "./planner";
 import { DISCUSSION_NODE_ID } from "./discussion";
-
-const classifierSchema = z.object({
-  intent: ClassificationIntent,
-  reasoning: z.string(),
-});
 
 export const CLASSIFIER_NODE_ID = "classifier";
 
@@ -22,7 +17,7 @@ export const ClassifierNode: GraphNode<typeof AgentStateSchema> = async (
       const response = await model.invoke(history);
       return response.content.toString();
     },
-    classifierSchema,
+    ClassifierOutputSchema,
     [
       ...messages,
       [

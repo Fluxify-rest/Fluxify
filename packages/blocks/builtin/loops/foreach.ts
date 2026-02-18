@@ -23,6 +23,8 @@ export const foreachLoopAiDescription = {
   name: "foreach_loop",
   description: `iterates over a list of values (or input params) and executes a child block for each item`,
   jsonSchema: JSON.stringify(z.toJSONSchema(forEachLoopBlockSchema)),
+  handleInfo:
+    "handle type 'executor' for the child block to be executed in each iteration (right aligned)",
 };
 
 export class ForEachLoopBlock extends ForLoopBlock {

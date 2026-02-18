@@ -26,6 +26,8 @@ export const ifConditionAiDescription = {
   name: "if_condition",
   description: `conditional block that evaluates list of conditions and directs the flow based on the result`,
   jsonSchema: JSON.stringify(z.toJSONSchema(ifBlockSchema)),
+  handleInfo:
+    "handle type 'success' for successful evaluation (left aligned) and handle type 'failure' for failed evaluation (right aligned). No handle type 'source' exist for if_condition block",
 };
 
 export class IfBlock extends BaseBlock {

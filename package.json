@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "concurrently 'bun run dev:server' 'bun run dev:web'",
     "dev:server": "bun run --env-file=./apps/server/.env --watch ./apps/server/deployments/standalone.ts",
     "dev:web": "turbo run dev --filter=@fluxify/web",
     "lint": "turbo run lint",
@@ -28,6 +28,7 @@
     "http-proxy": "^1.18.1"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "turbo": "^2.5.5"
   }
 }

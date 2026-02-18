@@ -3,8 +3,13 @@ import { StateSchema } from "@langchain/langgraph";
 import { AIMessage, HumanMessage, SystemMessage } from "langchain";
 import z from "zod";
 import { integrationsGroupSchema } from "../../api/v1/integrations/schemas";
-
-export const ClassificationIntent = z.enum(["DISCUSSION", "BUILD"]);
+import {
+  BlockSchema,
+  BuilderOutputSchema,
+  ClassifierOutputSchema,
+  DiscussionOutputSchema,
+  PlannerOutputSchema,
+} from "./schemas";
 
 export const AgentStateSchema = new StateSchema({
   messages: z.array(
@@ -16,29 +21,14 @@ export const AgentStateSchema = new StateSchema({
   interruption: z.boolean().default(false),
   clarificationQuestion: z.string().optional(),
   userPrompt: z.string(),
-  classifierOutput: z.object({
-    intent: ClassificationIntent,
-    reasoning: z.string(),
-  }),
+  classifierOutput: ClassifierOutputSchema,
   buildMode: z
     .object({
-      plannerOutput: z
-        .object({
-          status: z.enum(["success", "vague", "impossible"]),
-          reasoning: z.string(),
-          clarificationQuestion: z.string().nullable(),
-          plannedBlockNames: z.array(z.string()).default([]),
-        })
-        .optional(),
-      builderOutput: z.object({}).optional(),
+      plannerOutput: PlannerOutputSchema.optional(),
+      builderOutput: BuilderOutputSchema.optional(),
     })
     .optional(),
-  discussionMode: z
-    .object({
-      output: z.string(),
-      redirect: z.boolean(),
-    })
-    .optional(),
+  discussionMode: DiscussionOutputSchema.optional(),
   modelFactory: z.instanceof(BaseAiIntegration),
   metadata: z.object({
     integrationsList: z.array(
@@ -55,7 +45,13 @@ export const AgentStateSchema = new StateSchema({
         description: z.string(),
       }),
     ),
-    routeId: z.string(),
+    route: z.object({
+      id: z.string(),
+      name: z.string(),
+      method: z.string(),
+      path: z.string(),
+      canvasItems: z.array(BlockSchema),
+    }),
     userId: z.string(),
   }),
 });

@@ -6,6 +6,8 @@ import {
   routeExist,
   upsertBlocks,
   insertEdges,
+  getBlocksCountByType,
+  setUpdatedAtTimeForRoute,
 } from "../repository";
 import { db } from "../../../../../db";
 import { NotFoundError } from "../../../../../errors/notFoundError";
@@ -27,10 +29,14 @@ const mockDeleteEdges = vi.mocked(deleteEdges);
 const mockUpsertBlocks = vi.mocked(upsertBlocks);
 const mockInsertEdges = vi.mocked(insertEdges);
 const mockPublishMessage = vi.mocked(publishMessage);
+const mockGetBlocksCountByType = vi.mocked(getBlocksCountByType);
+const mockSetUpdatedAtTimeForRoute = vi.mocked(setUpdatedAtTimeForRoute);
 
 describe("save-canvas-state service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetBlocksCountByType.mockResolvedValue([]);
+    mockSetUpdatedAtTimeForRoute.mockResolvedValue(undefined);
   });
 
   it("should save canvas state successfully", async () => {
@@ -94,7 +100,7 @@ describe("save-canvas-state service", () => {
 
     const acl: AuthACL[] = [{ projectId: "proj1", role: "creator" }];
     await expect(handleRequest("nonexistent", data, acl)).rejects.toThrow(
-      NotFoundError
+      NotFoundError,
     );
 
     expect(mockUpsertBlocks).not.toHaveBeenCalled();
@@ -146,7 +152,7 @@ describe("save-canvas-state service", () => {
       actionsToPerform: { blocks: [], edges: [] },
     };
 
-    const acl: AuthACL[] = [{ projectId: "*", role: "admin" }];
+    const acl: AuthACL[] = [{ projectId: "*", role: "system_admin" }];
     await handleRequest("route1", data, acl);
 
     expect(mockRouteExist).toHaveBeenCalledWith("route1", ["*"]);

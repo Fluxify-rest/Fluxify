@@ -1,17 +1,11 @@
-import { GraphNode } from "@langchain/langgraph";
+import { ConditionalEdgeRouter, END, GraphNode } from "@langchain/langgraph";
 import { withRetry } from "../../agentRetry";
 import { AgentStateSchema } from "../state";
-import z from "zod";
+import { PlannerOutputSchema } from "../schemas";
 import { blockAiDescriptions } from "@fluxify/blocks";
+import { BUILDER_NODE_ID } from "./builder";
 
 export const PLANNER_NODE_ID = "planner";
-
-const plannerSchema = z.object({
-  status: z.enum(["success", "vague", "impossible"]),
-  reasoning: z.string(),
-  clarificationQuestion: z.string().nullable(),
-  plannedBlockNames: z.array(z.string()).default([]),
-});
 
 const blockListStr = blockAiDescriptions
   .map((b) => `- ${b.name}: ${b.description}`)
@@ -35,7 +29,7 @@ export const PlannerNode: GraphNode<typeof AgentStateSchema> = async (
       const response = await model.invoke(history);
       return response.content.toString();
     },
-    plannerSchema,
+    PlannerOutputSchema,
     [
       ...messages,
       [
@@ -98,4 +92,12 @@ Name | Description
     state.buildMode = { plannerOutput: result };
   }
   return state;
+};
+
+export const PlannerConditionalNodeRouter: ConditionalEdgeRouter<
+  typeof AgentStateSchema
+> = (state) => {
+  return state.buildMode?.plannerOutput?.status === "success"
+    ? BUILDER_NODE_ID
+    : END;
 };

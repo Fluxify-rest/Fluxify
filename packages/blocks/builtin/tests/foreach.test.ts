@@ -14,36 +14,45 @@ describe("testing foreach block", () => {
     const context: Context = {
       apiId: "api_id",
       route: "/route",
+      projectId: "proj_id",
       vars: vars as ContextVarsType,
       vm,
+      abortController: new AbortController(),
+      stopper: { timeoutEnd: 0, duration: 1000 },
     };
     const interceptorFn = vi.fn((context: Context) => {
       expect(context.vars.fruit).toBeDefined();
       expect(values.includes(context.vars.fruit)).toBe(true);
     });
-    const engine = new Engine({
-      set_var: new SetVarBlock(
+    const engine = new Engine(
+      {
+        set_var: new SetVarBlock(
+          context,
+          {
+            key: "fruit",
+            value: "$0", // This will be replaced by the current element in the array
+            blockName: "set_var",
+            blockDescription: "set_var",
+          },
+          "itc",
+          true,
+        ),
+        itc: new InterceptorBlock(context, undefined, interceptorFn),
+      },
+      {
+        errorHandlerId: "error_handler",
         context,
-        {
-          key: "fruit",
-          value: "$0",  // This will be replaced by the current element in the array
-          blockName: "set_var",
-          blockDescription: "set_var",
-        },
-        "itc",
-        true
-      ),
-      itc: new InterceptorBlock(context, undefined, interceptorFn),
-    }, "error_handler");
+      },
+    );
     const sut = new ForEachLoopBlock(
       context,
       {
         values,
-        block: "set_var",  // This tells the loop to use the set_var block
+        block: "set_var", // This tells the loop to use the set_var block
         blockName: "foreach",
         blockDescription: "foreach",
       },
-      engine
+      engine,
     );
     const result = await sut.executeAsync();
     expect(result.successful).toBe(true);

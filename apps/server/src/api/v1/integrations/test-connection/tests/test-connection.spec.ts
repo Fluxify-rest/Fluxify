@@ -8,6 +8,7 @@ vi.mock("@fluxify/adapters", async () => {
     PostgresAdapter: {
       testConnection: vi.fn(),
     },
+    extractPgConnectionInfo: vi.fn((config) => config),
   };
 });
 vi.mock("../../../../../lib/encryption", () => ({
@@ -22,7 +23,7 @@ const mockGetAppConfigs = vi.mocked(getAppConfigs);
 describe("testConnection service", () => {
   beforeAll(() => {
     process.env.MASTER_ENCRYPTION_KEY = Buffer.from("a".repeat(32)).toString(
-      "base64"
+      "base64",
     );
   });
 

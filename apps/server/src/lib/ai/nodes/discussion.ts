@@ -1,15 +1,10 @@
 import { GraphNode } from "@langchain/langgraph";
 import { AgentStateSchema } from "../state";
+import { DiscussionOutputSchema } from "../schemas";
 import { withRetry } from "../../agentRetry";
-import z from "zod";
 import { searchDocsTool, readDocsContentTool } from "../tools/docs";
 
 export const DISCUSSION_NODE_ID = "discussion";
-
-const discussionSchema = z.object({
-  output: z.string(),
-  redirect: z.boolean(),
-});
 
 export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
   state,
@@ -22,7 +17,7 @@ export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
       const response = await model.invoke(history);
       return response.content.toString();
     },
-    discussionSchema,
+    DiscussionOutputSchema,
     [
       ...messages,
       [

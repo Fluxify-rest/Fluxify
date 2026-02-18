@@ -5,33 +5,58 @@ description: Variables and functions available to your scripts.
 
 # Scripting Context
 
-When your script runs, it has access to a `context` object containing helpful data and utilities. Here is what is available:
+When your script runs (within a **JS Runner** block or a `js:` expression), it has access to a variety of global variables and helper functions. 
 
 ## Global Variables
 
-- **`input`**: The data passed to the current block. In block inputs (prefixed with `js:`), this often refers to the specific field's logical input or the output of the preceding block.
-- **`vars`**: A global collection of variables set via the **Set Variable** block. You can read and modify these to pass data across your workflow.
+- **`input`**: The data passed to the current block. 
+    - In a **JS Runner** or **Transformer**, this is the output of the preceding block.
+    - In a conditional field (e.g., `js: input.id === 5`), this is the data available to that field.
+- **`vars`**: The global variable store. Any variable you create with the **Set Variable** block is permanently stored here and can be accessed or modified by scripts using `vars.myVariableName`.
 
-## HTTP Helpers
+---
 
-Functions to interact with the incoming HTTP request and prepare the response:
+## HTTP Request Helpers
 
-- **`getQueryParam(key)`**: Get a value from the URL query string (e.g., `?search=term`).
-- **`getRouteParam(key)`**: Get a value from the URL path pattern (e.g., `/users/:id`).
-- **`getHeader(key)`**: Get a generic request header.
-- **`setHeader(key, value)`**: Set a header on the outgoing response.
-- **`getCookie(key)`**: Retrieve a specific cookie.
-- **`setCookie(name, { value, domain, path, expiry, httpOnly, secure, samesite })`**: Set a cookie on the response.
-- **`getRequestBody()`**: Get the parsed body of the incoming request.
+These functions allow you to read data from the incoming request that triggered the workflow:
 
-## System Utilities
+| Function | Description |
+| :--- | :--- |
+| **`getQueryParam(key)`** | Returns the value of a URL query parameter (e.g., `?id=123`). |
+| **`getRouteParam(key)`** | Returns the value of a dynamic URL path segment (e.g., `/users/:id`). |
+| **`getHeader(key)`** | Returns the value of an incoming HTTP request header. |
+| **`getCookie(key)`** | Returns the value of a specific cookie sent with the request. |
+| **`getRequestBody()`** | Returns the parsed body of the request (JSON, Form Data, or Text). |
+| **`httpRequestMethod`** | (String) The method of the request (e.g., `GET`, `POST`). |
+| **`httpRequestRoute`** | (String) The full path of the request being handled. |
 
-- **`logger`**: Access logging functions.
-    - `logger.logInfo(message)`
-    - `logger.logWarn(message)`
-    - `logger.logError(message)`
-- **`getConfig(key)`**: Retrieve application-level configuration values (e.g., API keys stored in environment variables or config maps).
+---
 
-## Database (Native Block Only)
+## HTTP Response Helpers
 
-- **`dbQuery(sql)`**: When using the **DB Native** block, this function allows you to execute raw SQL queries against your connected database.
+Used to prepare the response that will be sent back when the workflow completes:
+
+| Function | Description |
+| :--- | :--- |
+| **`setHeader(key, value)`** | Sets a custom HTTP header on the outgoing response. |
+| **`setCookie(name, options)`** | Sets a cookie on the response. The second argument is an object containing `value`, `domain`, `path`, `expiry`, and flags like `httpOnly` or `secure`. |
+
+---
+
+## Utility Helpers
+
+| Function | Description |
+| :--- | :--- |
+| **`logger`** | Access to the logging system. Functions: `logger.logInfo()`, `logger.logWarn()`, `logger.logError()`. These logs appear in the server console or cloud log store. |
+| **`getConfig(key)`** | Accesses sensitive configuration or secrets defined in the **App Config** (e.g., `getConfig("STRIPE_KEY")`). |
+
+---
+
+## Database (DB Native Block Only)
+
+- **`dbQuery(sql)`**: This function is **only** available within the **DB Native** block. It allows you to execute raw SQL queries directly against the database integration selected for that block.
+
+---
+
+## Technical Note for LLMs
+The scripting environment is an isolated **V8 Sandbox** instance. All properties of the `vars` object are injected as top-level globals. Standard Node.js global objects (like `process` or `fs`) are **not** accessible for security reasons. Scripts have a maximum execution time of **4 seconds**.

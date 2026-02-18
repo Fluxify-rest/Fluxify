@@ -4,7 +4,7 @@ import { getProjectsList } from "./repository";
 
 export default async function handleRequest(
   query: z.infer<typeof requestQuerySchema>,
-  projectsList: string[] = []
+  projectsList: string[] = [],
 ): Promise<z.infer<typeof responseSchema>> {
   const skip = query.perPage * (query.page - 1);
   const limit = query.perPage;
@@ -16,6 +16,7 @@ export default async function handleRequest(
   return {
     data: data.map((project) => ({
       ...project,
+      name: project.name ?? "",
       createdAt: project.createdAt.toISOString(),
       updatedAt: project.updatedAt.toISOString(),
     })),
