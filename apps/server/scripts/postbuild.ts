@@ -9,6 +9,8 @@ const docsIndexPath = path.join(
   isRelativeToApp ? "./" : "./apps/server/",
   "docs_index",
 );
-
 const docsSearch = new DocSearch();
 await docsSearch.build(docsPath, docsIndexPath);
+
+console.log("Building docs index from:", docsPath);
+console.log("Building docs index to:", docsIndexPath);

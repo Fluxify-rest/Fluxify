@@ -99,7 +99,9 @@ export class DocSearch {
         );
         clearTimeout(timer);
         timer = setTimeout(() => {
-          console.log(`✅ Build Complete. ${idCounter} docs indexed.`);
+          console.log(
+            `✅ Build Complete. ${idCounter} docs indexed and stored at ${destinationIndexFolder}`,
+          );
           resolve();
         }, 500);
       });

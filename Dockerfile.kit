@@ -1,4 +1,4 @@
-FROM oven/bun:alpine AS base
+FROM oven/bun:canary-alpine AS base
 
 FROM base AS build
 WORKDIR /app
@@ -7,7 +7,7 @@ COPY package.json package.json
 COPY . .
 RUN bun install
 
-# Build server
+# Build everything
 RUN bun run build
 
 # Prepare Next.js standalone build
@@ -29,7 +29,7 @@ RUN apk add tini
 # Copy server standalone build
 COPY --from=build /app/apps/server/dist/standalone.js /app/server/standalone.js
 COPY --from=build /app/apps/server/package.json /app/server/package.json
-COPY --from=build /app/docs_index /app/docs_index
+COPY --from=build /app/apps/server/docs_index /app/server/docs_index
 
 # Copy Next.js standalone build
 COPY --from=build /app/apps/web/.next/standalone /app/web
