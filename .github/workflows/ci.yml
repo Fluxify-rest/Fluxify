@@ -22,7 +22,7 @@ jobs:
 
   build-and-push:
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'Fluxify-rest'
     runs-on: ubuntu-latest
     permissions:
       contents: read
