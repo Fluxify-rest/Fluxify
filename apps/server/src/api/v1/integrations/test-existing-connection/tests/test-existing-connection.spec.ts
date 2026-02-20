@@ -1,5 +1,8 @@
-import { describe, it, mock, spyOn, type Mock } from "bun:test";
+import { describe, it } from "bun:test";
 
-describe("unit tests for test-existing-connection", () => {
-  it("test 01", () => {});
+describe("unit tests for test-connection", () => {
+  it("test 01", () => {
+    // No unit tests will be written for this endpoint
+    // only integration tests will be written for this endpoint
+  });
 });
