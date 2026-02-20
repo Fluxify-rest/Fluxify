@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "bun:test";
 import { ForEachLoopBlock } from "../loops/foreach";
 import { JsVM } from "@fluxify/lib";
 import { Engine } from "../../engine";
@@ -17,7 +17,6 @@ describe("testing foreach block", () => {
       projectId: "proj_id",
       vars: vars as ContextVarsType,
       vm,
-      abortController: new AbortController(),
       stopper: { timeoutEnd: 0, duration: 1000 },
     };
     const interceptorFn = vi.fn((context: Context) => {

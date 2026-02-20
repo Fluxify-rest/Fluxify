@@ -1,4 +1,4 @@
-import { beforeEach, it, expect, describe } from "vitest";
+import { beforeEach, it, expect, describe } from "bun:test";
 import { HttpRouteParser } from "../routing/parser";
 
 describe("Testing routing parser", () => {

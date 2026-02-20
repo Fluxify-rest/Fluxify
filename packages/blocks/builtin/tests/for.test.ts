@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "bun:test";
 import { ForLoopBlock } from "../loops/for";
 import { Engine } from "../../engine";
 import { SetVarBlock } from "../setVar";
@@ -18,7 +18,7 @@ describe("testing for loop block", () => {
         end: n,
         step: 1,
       },
-      {} as any
+      {} as any,
     );
     let idx = 0;
     const callback = vi.fn((i) => {
@@ -45,7 +45,7 @@ describe("testing for loop block", () => {
         blockName: "",
         blockDescription: "",
       },
-      {} as any
+      {} as any,
     );
     let idx = 0;
     const callback = vi.fn((i) => {
@@ -66,20 +66,23 @@ describe("testing for loop block", () => {
       vm: new JsVM(vars),
     };
     const mockFn = vi.fn();
-    const engine = new Engine({
-      interceptor: new InterceptorBlock(context, "index_var_block", mockFn),
-      index_var_block: new SetVarBlock(
-        context,
-        {
-          key: "index",
-          value: "js:return index;",
-          blockName: "",
-          blockDescription: "",
-        },
-        undefined,
-        true
-      ),
-    }, "");
+    const engine = new Engine(
+      {
+        interceptor: new InterceptorBlock(context, "index_var_block", mockFn),
+        index_var_block: new SetVarBlock(
+          context,
+          {
+            key: "index",
+            value: "js:return index;",
+            blockName: "",
+            blockDescription: "",
+          },
+          undefined,
+          true,
+        ),
+      },
+      "",
+    );
     const sut = new ForLoopBlock(
       context,
       {
@@ -89,7 +92,7 @@ describe("testing for loop block", () => {
         blockName: "interceptor",
         blockDescription: "",
       },
-      engine
+      engine,
     );
     const result = await sut.executeAsync();
     expect(result.successful).toBe(true);

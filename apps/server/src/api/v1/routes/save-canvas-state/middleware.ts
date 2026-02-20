@@ -1,4 +1,4 @@
-import z, { ZodType } from "zod";
+import z from "zod";
 import { requestBodySchema } from "./dto";
 import { ConflictError } from "../../../../errors/conflictError";
 import {
@@ -35,7 +35,7 @@ import {
 import { Context, Next } from "hono";
 import { ValidationError } from "../../../../errors/validationError";
 import { BadRequestError } from "../../../../errors/badRequestError";
-import { cloudLogsBlockSchema } from "@fluxify/blocks/builtin/log/cloudLogs";
+import { cloudLogsBlockSchema } from "@fluxify/blocks";
 
 export async function requestBodyValidator(ctx: Context, next: Next) {
   const jsonData = await ctx.req.json();
@@ -60,7 +60,7 @@ function blockDataValidator(data: z.infer<typeof requestBodySchema>) {
 
   for (const block of data.changes.blocks) {
     if (deleteIds.has(block.id)) continue;
-    let schema: ZodType = null!;
+    let schema: z.ZodType = null!;
     switch (block.type as BlockTypes) {
       case BlockTypes.entrypoint:
         schema = entrypointBlockSchema;

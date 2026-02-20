@@ -9,21 +9,27 @@ export class JsVM {
 
   run(code: string, extras?: any, insideIIFE = true): any {
     const script = new Script(
-      insideIIFE ? `(function () {${code}}).bind(this)();` : code
+      insideIIFE ? `(function () {${code}}).bind(this)();` : code,
     );
     this.context["input"] = extras;
-    return script.runInNewContext(this.context, {timeout: JsVM.DEFAULT_TIMEOUT});
+    return script.runInNewContext(this.context, {
+      timeout: JsVM.DEFAULT_TIMEOUT,
+    });
   }
   async runAsync(code: string, extras?: any, insideIIFE = true): Promise<any> {
-    return new Promise((resolve) => {
-      resolve(
-        this.run(
-          insideIIFE ? `(async function () {${code}}).bind(this)();` : code,
-          extras,
-          false
-        )
+    const result = this.run(code, extras, insideIIFE); // vm timeout handles sync infinite loops
+
+    // If it returned a Promise (async code), race it against a timeout
+    if (result instanceof Promise) {
+      const timeout = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("JavaScript execution timeout")),
+          JsVM.DEFAULT_TIMEOUT,
+        ),
       );
-    });
+      return Promise.race([result, timeout]);
+    }
+    return result;
   }
   truthy(value: any) {
     const type = typeof value;

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "bun:test";
 import { GetHttpHeaderBlock } from "../http/getHttpHeader";
 import { SetHttpHeaderBlock } from "../http/setHttpHeader";
 import { GetHttpParamBlock } from "../http/getHttpParam";
@@ -50,7 +50,6 @@ function createContext(overrides: Partial<Context> = {}): Context {
     projectId: "proj-1",
     vars: vars as any,
     requestBody: { name: "Alice" },
-    abortController: new AbortController(),
     stopper: { timeoutEnd: 0, duration: 5000 },
     ...overrides,
   };

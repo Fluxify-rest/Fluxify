@@ -9,8 +9,8 @@
   "license": "MIT",
   "description": "",
   "scripts": {
-    "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "test": "bun test --concurrent",
+    "lint": "tsgo --noEmit"
   },
   "dependencies": {
     "axios": "^1.13.1",
@@ -19,6 +19,7 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1"
+    "@types/node": "^24.10.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260219.1"
   }
 }

@@ -28,9 +28,8 @@ type PropTypes = {
 };
 
 const RouteForm = (props: PropTypes) => {
-  const isPersonalPage = usePathname() === "/";
   const params = useParams();
-  const projectId = isPersonalPage ? "personal" : params.projectId?.toString();
+  const projectId = params.projectId?.toString() || "";
   const form = useForm({
     mode: "uncontrolled",
     initialValues: {
@@ -81,15 +80,6 @@ const RouteForm = (props: PropTypes) => {
         data={["GET", "POST", "PUT", "DELETE"]}
         {...form.getInputProps("method")}
       />
-      {props.newForm && isPersonalPage && (
-        <Paper p={"md"} my={"md"} shadow="sm" bg={"yellow"}>
-          <Text size="sm">
-            Route created here will use personal project.
-            <br />
-            Select a project if you want a route associated with a project.
-          </Text>
-        </Paper>
-      )}
       {props.actionSection}
     </form>
   );

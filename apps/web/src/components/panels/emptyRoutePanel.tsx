@@ -4,7 +4,7 @@ import { CreateRouteForm } from "../createNewMenu";
 import FormDialog from "../dialog/formDialog";
 import { useDisclosure } from "@mantine/hooks";
 
-const EmptyRoutePanel = () => {
+const EmptyRoutePanel = ({ projectId }: { projectId?: string }) => {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <Stack
@@ -19,15 +19,19 @@ const EmptyRoutePanel = () => {
       <Text size="xl" fw={500}>
         No Routes Found
       </Text>
-      <Text c="gray.7" size="md" fw={500}>
-        Create a new route to get started
-      </Text>
-      <Button color="dark" variant="outline" onClick={open}>
-        Add New Route
-      </Button>
-      <FormDialog title="Create New Route" open={opened} onClose={close}>
-        <CreateRouteForm close={close} />
-      </FormDialog>
+      {projectId && (
+        <>
+          <Text c="gray.7" size="md" fw={500}>
+            Create a new route to get started
+          </Text>
+          <Button color="dark" variant="outline" onClick={open}>
+            Add New Route
+          </Button>
+          <FormDialog title="Create New Route" open={opened} onClose={close}>
+            <CreateRouteForm close={close} />
+          </FormDialog>
+        </>
+      )}
     </Stack>
   );
 };

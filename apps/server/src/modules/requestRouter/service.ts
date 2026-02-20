@@ -50,10 +50,6 @@ export async function handleRequest(
   const dbFactory = createDbFactory(vm);
   const context = createContext(path, ctx, requestBody, vm, vars, dbFactory);
 
-  const timeoutId = setTimeout(() => {
-    context.abortController.abort();
-  }, RESPONSE_TIMEOUT);
-
   const executionResult = await startBlocksExecution(
     {
       projectId: path.projectId!,
@@ -62,7 +58,6 @@ export async function handleRequest(
     },
     context,
   );
-  clearTimeout(timeoutId);
   if (executionResult) {
     return parseResult(executionResult);
   }
@@ -104,7 +99,6 @@ function createContext(
     vars,
     dbFactory,
     httpClient: createHttpClient(),
-    abortController: new AbortController(),
     stopper: {
       timeoutEnd: 0,
       duration: RESPONSE_TIMEOUT,

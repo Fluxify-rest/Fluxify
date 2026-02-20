@@ -33,5 +33,7 @@ export * from "./builtin/db/native";
 export * from "./builtin/db/transaction";
 export * from "./builtin/db/update";
 export * from "./builtin/log";
+export * from "./builtin/log/cloudLogs";
+export * from "./builtin/log/console";
 export * from "./builtin/blockAiDescriptions";
 export * from "./builtin/errorHandler";

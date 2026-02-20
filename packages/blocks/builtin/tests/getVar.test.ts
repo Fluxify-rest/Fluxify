@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { GetVarBlock } from "../getVar";
 import { Context } from "../../baseBlock";
 import { JsVM } from "@fluxify/lib";
@@ -14,7 +14,6 @@ describe("GetVarBlock", () => {
       apiId: "api-1",
       projectId: "proj-1",
       vars: vars as any,
-      abortController: new AbortController(),
       stopper: { timeoutEnd: 0, duration: 5000 },
     };
   });

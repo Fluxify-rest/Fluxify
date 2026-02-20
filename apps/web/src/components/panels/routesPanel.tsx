@@ -69,7 +69,9 @@ const RoutesPanel = (props: PropTypes) => {
           projectId={route.projectId!}
         />
       ))}
-      {data?.data.length === 0 && <EmptyRoutePanel />}
+      {data?.data.length === 0 && (
+        <EmptyRoutePanel projectId={props.projectId} />
+      )}
     </Stack>
   );
 };

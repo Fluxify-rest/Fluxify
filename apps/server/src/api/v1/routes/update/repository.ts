@@ -8,7 +8,7 @@ const updateRouteSchema = createUpdateSchema(routesEntity);
 
 export async function updateRoute(
   data: z.infer<typeof updateRouteSchema>,
-  tx?: DbTransactionType
+  tx?: DbTransactionType,
 ) {
   const id = data.id!;
   delete data.id;
@@ -25,7 +25,7 @@ export async function getRouteByNameOrPath(
   name: string,
   path: string,
   method: HttpMethod,
-  tx?: DbTransactionType
+  tx?: DbTransactionType,
 ) {
   const result = await (tx ?? db)
     .select()
@@ -34,8 +34,8 @@ export async function getRouteByNameOrPath(
       or(
         eq(routesEntity.id, id),
         eq(routesEntity.name, name),
-        and(eq(routesEntity.path, path), eq(routesEntity.method, method))
-      )
+        and(eq(routesEntity.path, path), eq(routesEntity.method, method)),
+      ),
     )
     .limit(1);
   return result.length > 0 ? result[0] : null;

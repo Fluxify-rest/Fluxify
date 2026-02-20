@@ -1,7 +1,13 @@
 import z from "zod";
-import { baseBlockDataSchema, BlockOutput, Context } from "../../baseBlock";
+import {
+  baseBlockDataSchema,
+  BlockOptions,
+  BlockOutput,
+  Context,
+} from "../../baseBlock";
 import { Engine } from "../../engine";
 import { ForLoopBlock, forLoopBlockSchema } from "./for";
+import { ExecutionTimeoutError } from "../../errors/timeout";
 
 const valuesSchema = z.array(z.any());
 
@@ -58,7 +64,10 @@ export class ForEachLoopBlock extends ForLoopBlock {
     this.values = input.values;
   }
 
-  override async executeAsync(params?: any): Promise<BlockOutput> {
+  override async executeAsync(
+    params?: any,
+    options?: BlockOptions,
+  ): Promise<BlockOutput> {
     const paramValues = valuesSchema.safeParse(params);
     if (this.foreachInput.useParam && (!params || !paramValues.success)) {
       return {
@@ -80,9 +89,16 @@ export class ForEachLoopBlock extends ForLoopBlock {
       input.end = params.length;
     }
     const array = this.foreachInput.useParam ? paramValues.data! : this.values;
-    await super.executeAsync(async (i) => {
-      await this.childEngine.start(input.block!, array[i]);
-    }, false);
+    await super.executeAsync(
+      async (i) => {
+        if (options?.timedOut) {
+          throw new ExecutionTimeoutError("Execution timed out");
+        }
+        await this.childEngine.start(input.block!, array[i]);
+      },
+      options,
+      false,
+    );
     return {
       continueIfFail: true,
       successful: true,

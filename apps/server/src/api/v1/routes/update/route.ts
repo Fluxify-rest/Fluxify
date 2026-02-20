@@ -63,6 +63,6 @@ export default function (app: HonoServer) {
       const acl = c.get("acl") || [];
       const result = await handleRequest(id, data, acl);
       return c.json(result);
-    }
+    },
   );
 }
