@@ -9,7 +9,7 @@ import { BlockCanvasContext } from "@/context/blockCanvas";
 import JsTextInput from "@/components/editors/jsTextInput";
 import { LuFileText } from "react-icons/lu";
 import IntegrationSelector from "@/components/editors/integrationSelector";
-import { cloudLogsBlockSchema } from "@fluxify/blocks/builtin/log/cloudLogs";
+import { cloudLogsBlockSchema } from "@fluxify/blocks";
 
 const CloudLogBlock = (props: NodeProps) => {
   return (

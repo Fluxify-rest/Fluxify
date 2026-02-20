@@ -12,7 +12,7 @@ import { ForbiddenError } from "../../../../errors/forbidError";
 export default async function handleRequest(
   id: string,
   data: z.infer<typeof requestBodySchema>,
-  acl: AuthACL[] = []
+  acl: AuthACL[] = [],
 ): Promise<z.infer<typeof responseSchema>> {
   const result = await db.transaction(async (tx) => {
     const existingRoute = await getRouteByNameOrPath(
@@ -20,14 +20,14 @@ export default async function handleRequest(
       data.name,
       data.path,
       data.method,
-      tx
+      tx,
     );
     if (!existingRoute) {
       throw new NotFoundError("Route not found");
     }
     const hasAccess = acl.some(
       (entry) =>
-        entry.projectId === existingRoute.projectId || entry.projectId === "*"
+        entry.projectId === existingRoute.projectId || entry.projectId === "*",
     );
     if (!hasAccess) {
       throw new ForbiddenError();
@@ -35,10 +35,13 @@ export default async function handleRequest(
     if (existingRoute.id !== id) {
       throw new ConflictError("Route already exists");
     }
-    return await updateRoute({
-      id,
-      ...data,
-    });
+    return await updateRoute(
+      {
+        id,
+        ...data,
+      },
+      tx,
+    );
   });
   if (!result) {
     throw new ServerError("Something went wrong while updating the route");

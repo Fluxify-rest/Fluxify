@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { BlockBuilder, blockDTOSchema, edgeDTOSchema } from "../../builder";
 import { BlockTypes } from "../../blockTypes";
 import { Context } from "../../baseBlock";
@@ -32,7 +32,6 @@ function createContext(): Context {
     apiId: "api-1",
     projectId: "proj-1",
     vars: vars as any,
-    abortController: new AbortController(),
     stopper: { timeoutEnd: 0, duration: 10000 },
   };
 }

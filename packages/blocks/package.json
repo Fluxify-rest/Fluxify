@@ -5,17 +5,20 @@
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": "./index.ts"
+  },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@types/node": "^24.2.1",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "@typescript/native-preview": "^7.0.0-dev.20260219.1",
+    "typescript": "^5.9.2"
   },
   "scripts": {
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "tsgo --noEmit"
   },
   "dependencies": {
     "@fluxify/adapters": "workspace:*",

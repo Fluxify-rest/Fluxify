@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "bun:test";
 import { Engine, EngineOptions } from "../../engine";
 import { BaseBlock, BlockOutput, Context } from "../../baseBlock";
 import { ErrorHandlerBlock } from "../errorHandler";
@@ -12,7 +12,6 @@ function createContext(): Context {
     apiId: "api-1",
     projectId: "proj-1",
     vars: vars as any,
-    abortController: new AbortController(),
     stopper: { timeoutEnd: 0, duration: 10000 },
   };
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { ArrayOperationsBlock } from "../arrayOperations";
 import { Context } from "../../baseBlock";
 import { JsVM } from "@fluxify/lib";

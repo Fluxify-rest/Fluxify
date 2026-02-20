@@ -14,10 +14,10 @@ export async function requestBodyValidator(ctx: Context, next: Next) {
 }
 
 function integrationConfigValidator(
-  jsonData: z.infer<typeof requestBodySchema>
+  jsonData: z.infer<typeof requestBodySchema>,
 ) {
   const config = jsonData.config;
-  let schema: ZodType | null = getSchema(jsonData.group, jsonData.variant);
+  let schema: z.ZodType | null = getSchema(jsonData.group, jsonData.variant);
   if (!schema) {
     throw new BadRequestError("Invalid variant");
   }

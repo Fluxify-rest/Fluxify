@@ -12,7 +12,6 @@ export interface Context {
   requestBody?: any;
   dbFactory?: DbFactory;
   httpClient?: HttpClient;
-  abortController: AbortController;
   stopper: {
     timeoutEnd: number;
     duration: number;
@@ -85,11 +84,18 @@ export const baseBlockDataSchema = z.object({
   blockDescription: z.string().optional().default("Description"),
 });
 
+export type BlockOptions = {
+  timedOut: boolean;
+};
+
 export abstract class BaseBlock {
   constructor(
     protected readonly context: Context,
     protected readonly input?: any,
     public readonly next?: string,
   ) {}
-  public abstract executeAsync(params?: any): Promise<BlockOutput>;
+  public abstract executeAsync(
+    params?: any,
+    options?: BlockOptions,
+  ): Promise<BlockOutput>;
 }

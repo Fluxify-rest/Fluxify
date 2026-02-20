@@ -3,7 +3,17 @@ import { JsVM } from "../vm";
 import { is } from "zod/v4/locales";
 
 export const operatorSchema = z
-  .enum(["eq", "neq", "gt", "gte", "lt", "lte", "js", "is_empty", "is_not_empty"])
+  .enum([
+    "eq",
+    "neq",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "js",
+    "is_empty",
+    "is_not_empty",
+  ])
   .describe("The operator to use for comparison");
 
 export const conditionSchema = z.object({
@@ -30,13 +40,16 @@ export async function evaluateOperator(
   rhs: any,
   operator: z.infer<typeof operatorSchema>,
   js?: string,
-  extras?: any
+  extras?: any,
 ): Promise<boolean> {
   const isLhsScript = typeof lhs == "string" && lhs.startsWith("js:");
   const isRhsScript = typeof rhs == "string" && rhs.startsWith("js:");
 
   if (operator == "js" && !!js) {
-    const result = await vm.run(js.startsWith("js:") ? js.slice(3) : js, extras);
+    const result = await vm.run(
+      js.startsWith("js:") ? js.slice(3) : js,
+      extras,
+    );
     return vm.truthy(result);
   } else if (isLhsScript || isRhsScript) {
     lhs = isLhsScript ? await vm.run(lhs.slice(3), extras) : lhs;
@@ -59,6 +72,7 @@ export async function evaluateOperator(
       case "is_empty":
         return isNull(lhs);
       case "is_not_empty":
+        console.log(lhs);
         return !isNull(lhs);
       default:
         return false;
@@ -67,7 +81,14 @@ export async function evaluateOperator(
 }
 
 function isNull(value: any): boolean {
-  return value === null || isUndefined(value) || isNaN(value) || value === "" || isObjectEmpty(value) || isArrayEmpty(value);
+  return (
+    value === null ||
+    isUndefined(value) ||
+    isNaN(value) ||
+    value === "" ||
+    isObjectEmpty(value) ||
+    isArrayEmpty(value)
+  );
 }
 
 function isUndefined(value: any): boolean {
@@ -75,7 +96,7 @@ function isUndefined(value: any): boolean {
 }
 
 function isObjectEmpty(obj: any): boolean {
-  return (typeof obj === "object" && Object.keys(obj).length === 0);
+  return typeof obj === "object" && Object.keys(obj).length === 0;
 }
 function isArrayEmpty(obj: any): boolean {
   return Array.isArray(obj) && obj.length === 0;

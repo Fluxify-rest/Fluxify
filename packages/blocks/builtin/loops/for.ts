@@ -4,8 +4,10 @@ import {
   BaseBlock,
   BlockOutput,
   Context,
+  BlockOptions,
 } from "../../baseBlock";
 import { Engine } from "../../engine";
+import { ExecutionTimeoutError } from "../../errors/timeout";
 
 export const forLoopBlockSchema = z
   .object({
@@ -53,6 +55,7 @@ export class ForLoopBlock extends BaseBlock {
 
   override async executeAsync(
     callback?: (i: number) => void,
+    options?: BlockOptions,
     useEngine: boolean = true,
   ): Promise<BlockOutput> {
     const { data: input, success } = forLoopBlockSchema.safeParse(this.input);
@@ -82,6 +85,9 @@ export class ForLoopBlock extends BaseBlock {
           )) as number)
         : input.end;
     for (let i = start; i < end; i += step) {
+      if (options?.timedOut) {
+        throw new ExecutionTimeoutError("Execution timed out");
+      }
       if (input.block && useEngine) {
         await this.childEngine.start(input.block, i);
       }

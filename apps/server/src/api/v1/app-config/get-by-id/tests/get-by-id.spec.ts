@@ -1,11 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  type MockInstance,
-} from "vitest";
+import { describe, it, expect, beforeEach, mock, type Mock } from "bun:test";
 import { getAppConfigById } from "../repository";
 import { responseSchema } from "../dto";
 import handleRequest from "../service";
@@ -13,7 +6,16 @@ import { BadRequestError } from "../../../../../errors/badRequestError";
 import { NotFoundError } from "../../../../../errors/notFoundError";
 
 // Mock the repository and encryption service
-vi.mock("../repository");
+mock.module("../repository", () => ({
+  getAppConfigById: mock(),
+}));
+
+mock.module("../../../../../lib/encryption", () => ({
+  EncryptionService: {
+    maskValue: mock((val) => val.replace(/./g, "*")),
+    decodeData: mock((val) => val),
+  },
+}));
 
 describe("getAppConfigById service", () => {
   let mockConfig = {
@@ -27,11 +29,11 @@ describe("getAppConfigById service", () => {
     updatedAt: new Date("2023-01-01T00:00:00.000Z"),
   };
 
-  let getAppConfigByIdMock: MockInstance;
+  let getAppConfigByIdMock: Mock<any>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    getAppConfigByIdMock = vi.mocked(getAppConfigById);
+    getAppConfigByIdMock = getAppConfigById as unknown as Mock<any>;
+    getAppConfigByIdMock.mockClear();
   });
 
   it("should return app config with correct structure when found", async () => {
@@ -57,7 +59,7 @@ describe("getAppConfigById service", () => {
     });
 
     const result = await handleRequest(1);
-    // The encrypted value should be masked
+    // The encrypted value should be masked (mock implementation replaces with '*')
     expect(result.value.split("").every((x) => x === "*")).toBe(true);
     expect(result.isEncrypted).toBe(true);
   });
