@@ -20,6 +20,12 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
+      - name: Run Lint
+        run: bun run lint
+
+      - name: Run Analyzer
+        run: bun run analyze
+
       - name: Run Tests
         run: bun test
 
