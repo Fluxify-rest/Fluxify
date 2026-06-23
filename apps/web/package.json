@@ -23,6 +23,7 @@
 		"@xyflow/react": "^12.9.0",
 		"axios": "^1.13.2",
 		"better-auth": "^1.4.3",
+		"dayjs": "^1.11.21",
 		"elkjs": "^0.11.0",
 		"es-set-tostringtag": "^2.1.0",
 		"immer": "^10.1.3",

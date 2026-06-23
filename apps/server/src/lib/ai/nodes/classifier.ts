@@ -12,6 +12,7 @@ export const ClassifierNode: GraphNode<typeof AgentStateSchema> = async (
 ) => {
   const { userPrompt, messages, modelFactory } = state;
   const model = modelFactory.createModel();
+  await state.tracker?.update(1, "started", "Classifier");
   const result = await withRetry(
     async (history) => {
       const response = await model.invoke(history);
@@ -46,6 +47,9 @@ export const ClassifierNode: GraphNode<typeof AgentStateSchema> = async (
   );
   if (result) {
     state.classifierOutput = result;
+    await state.tracker?.update(1, "success", "Classifier", {
+      classifierOutput: result,
+    });
   }
   return state;
 };

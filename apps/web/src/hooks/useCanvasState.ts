@@ -81,6 +81,7 @@ export function useCanvasSave(routeId: string) {
 			});
 
 			changeTracker.reset();
+			console.log("Successfully saved");
 			notifications.update({
 				id: notificationId,
 				loading: false,
@@ -89,7 +90,8 @@ export function useCanvasSave(routeId: string) {
 				withCloseButton: true,
 			});
 			await routesQueries.getById.invalidate(queryClient, routeId);
-		} catch {
+		} catch (error) {
+			console.error(error);
 			notifications.update({
 				id: notificationId,
 				loading: false,

@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { createAgent, DynamicTool } from "langchain";
+import { createAgent, DynamicStructuredTool, Tool } from "langchain";
 import { BaseAiIntegration } from "./baseAiIntegration";
 type OpenAICompatibleVariantConfig = {
   apiKey: string;
@@ -12,11 +12,12 @@ export class OpenAICompatibleIntegration extends BaseAiIntegration {
     super();
   }
 
-  override createAgent(tools?: any[]) {
+  override createAgent(systemPrompt: string, tools: DynamicStructuredTool[]) {
     const model = this.createModel();
     return createAgent({
       model,
       tools,
+      systemPrompt,
     });
   }
 

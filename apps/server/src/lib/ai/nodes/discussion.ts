@@ -6,23 +6,7 @@ import { searchDocsTool, readDocsContentTool } from "../tools/docs";
 
 export const DISCUSSION_NODE_ID = "discussion";
 
-export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
-  state,
-) => {
-  const { userPrompt, messages, modelFactory } = state;
-  const model = modelFactory.createModel();
-  model.bindTools([searchDocsTool, readDocsContentTool]);
-  const result = await withRetry(
-    async (history) => {
-      const response = await model.invoke(history);
-      return response.content.toString();
-    },
-    DiscussionOutputSchema,
-    [
-      ...messages,
-      [
-        "system",
-        `You are Fluxi, a helpful Discussion Agent for Fluxify.
+const systemPrompt = `You are Fluxi, a helpful Discussion Agent for Fluxify, if the user prompt references message history, please make sure you use it to answer the question.
   
 <instructions>
 1. Answer user questions about Fluxify using the provided tools.
@@ -38,13 +22,33 @@ export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
   "output": "Your answer text here...",
   "redirect": boolean
 }
-</output_format>`,
-      ],
-      ["human", userPrompt],
-    ],
+</output_format>`;
+
+export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
+  state,
+) => {
+  const { userPrompt, messages, modelFactory } = state;
+  const agent = modelFactory.createAgent(systemPrompt, [
+    searchDocsTool,
+    readDocsContentTool,
+  ]);
+  await state.tracker?.update(2, "started", "Discussion");
+  const result = await withRetry(
+    async (history) => {
+      console.log("history", history);
+
+      const response = await agent.invoke({ messages: history });
+      console.log("response", response);
+      return response.structuredResponse;
+    },
+    DiscussionOutputSchema,
+    [...messages, ["human", userPrompt]],
   );
   if (result) {
     state.discussionMode = result;
+    await state.tracker?.update(2, "success", "Discussion", {
+      discussionOutput: result,
+    });
   }
   return state;
 };

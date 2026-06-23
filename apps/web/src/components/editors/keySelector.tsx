@@ -56,11 +56,13 @@ const KeySelector = (props: Props) => {
     >
       <Table withRowBorders highlightOnHover striped>
         <Table.Thead>
-          {!isEmptyData &&
-            props.header.map((header) => (
-              <Table.Th key={header.label}>{header.label}</Table.Th>
-            ))}
-          <Table.Th />
+          <Table.Tr>
+            {!isEmptyData &&
+              props.header.map((header) => (
+                <Table.Th key={header.label}>{header.label}</Table.Th>
+              ))}
+            <Table.Th />
+          </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
           {!props.loading &&

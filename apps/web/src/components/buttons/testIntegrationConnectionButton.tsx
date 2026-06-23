@@ -3,21 +3,26 @@ import { integrationsQuery } from "@/query/integrationsQuery";
 import { Button } from "@mantine/core";
 import { notifications, showNotification } from "@mantine/notifications";
 import React from "react";
-import { TbPlugConnected } from "react-icons/tb";
+import { TbPlayerStopFilled, TbPlugConnected } from "react-icons/tb";
 
 type PropTypes = {
   data: any;
   variant: string;
   group: string;
+  showStop?: boolean;
   onConnectionOk?: () => void;
   onConnectionError?: () => void;
 };
 
 const TestIntegrationConnectionButton = (props: PropTypes) => {
-  const { mutateAsync, isPending } =
+  const { mutateAsync, isPending, reset } =
     integrationsQuery.testConnection.mutation();
 
   async function onClick() {
+    if (isPending && props.showStop) {
+      reset();
+      return;
+    }
     if (!props.variant || !props.group) {
       return;
     }
@@ -29,7 +34,7 @@ const TestIntegrationConnectionButton = (props: PropTypes) => {
       });
       if (res.success) {
         notifications.show({
-          message: "Connection successful",
+          message: "Connection successful " + status,
           color: "green",
         });
       }
@@ -51,11 +56,17 @@ const TestIntegrationConnectionButton = (props: PropTypes) => {
     <Button
       onClick={onClick}
       variant="outline"
-      color="green.8"
-      loading={isPending}
-      leftSection={<TbPlugConnected size={15} />}
+      color={props.showStop && isPending ? "red.8" : "green.8"}
+      loading={!props.showStop && isPending}
+      leftSection={
+        props.showStop && isPending ? (
+          <TbPlayerStopFilled size={15} />
+        ) : (
+          <TbPlugConnected size={15} />
+        )
+      }
     >
-      Test Connection
+      {props.showStop && isPending ? "Stop" : "Test Connection"}
     </Button>
   );
 };

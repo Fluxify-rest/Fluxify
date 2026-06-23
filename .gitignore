@@ -8,3 +8,4 @@ dist
 .env.*
 .next
 docs_index
+.models/

@@ -70,6 +70,7 @@ ENV HOSTNAME=0.0.0.0
 ENV WEB_PORT=3000
 ENV SERVER_PORT=5500
 ENV PROXY_PORT=8080
+ENV ENABLE_AI=false
 
 # Set tini as entrypoint
 ENTRYPOINT ["tini", "--", "sh", "-c"]

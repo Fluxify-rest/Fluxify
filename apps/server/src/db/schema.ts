@@ -16,6 +16,12 @@ import {
 import z from "zod";
 import { user } from "./auth-schema";
 import { createSelectSchema } from "drizzle-zod";
+import {
+	BuilderOutputSchema,
+	ClassifierOutputSchema,
+	DiscussionOutputSchema,
+	PlannerOutputSchema,
+} from "../lib/ai/schemas";
 
 export enum HttpMethod {
 	GET = "GET",
@@ -71,8 +77,7 @@ export const projectSettingsEntity = pgTable(
 	],
 );
 
-// export disabled. feature not ready for production
-const aiChatEntity = pgTable(
+export const aiChatEntity = pgTable(
 	"ai_chat",
 	{
 		id: varchar({ length: 50 })
@@ -83,21 +88,24 @@ const aiChatEntity = pgTable(
 		userId: varchar("user_id", { length: 50 }).references(() => user.id, {
 			onDelete: "cascade",
 		}),
-		metadata: jsonb("metadata").$type<{
-			type: "general" | "builder_proposal" | "clarification_needed";
-			nodes?: any[];
-			edges?: any[];
-			reason?: string; // If build failed
-		}>(),
-		// any action to perform in ui (to track for duplication or future use)
-		// available: pending, implemented
-		actionState: varchar("action_state", { length: 50 }).default("pending"),
 		routeId: varchar("route_id", { length: 50 }).references(
 			() => routesEntity.id,
 			{
 				onDelete: "cascade",
 			},
 		),
+		aiResponse: jsonb("ai_response").$type<{
+			classifierOutput: z.infer<typeof ClassifierOutputSchema>;
+			discussionOutput?: z.infer<typeof DiscussionOutputSchema>;
+			plannerOutput?: z.infer<typeof PlannerOutputSchema>;
+			builderOutput?: z.infer<typeof BuilderOutputSchema>;
+		}>(),
+		toolCalls: jsonb("tool_calls").$type<string[]>(),
+		// 0: pending, 1: discussion, 2: planner, 3: builder, 4: done, -1: error
+		messageStage: integer("message_stage").default(0),
+		// any action to perform in ui (to track for duplication and future use)
+		// available: pending(0), implemented(1)
+		actionState: integer("action_state").default(0),
 		tokenUsage: integer("token_usage").default(0),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},

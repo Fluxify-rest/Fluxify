@@ -75,12 +75,16 @@ const BlockCanvas = ({ readonly, routeId }: Props) => {
 				: actionsStore.redo(currentState);
 
 		if (snapshot) {
+			const snapshotBlockIds = new Set(snapshot.blocks.map((b) => b.id));
+			snapshot.edges = snapshot.edges.filter(
+				(e) => snapshotBlockIds.has(e.source) && snapshotBlockIds.has(e.target),
+			);
+
 			const changedBlocks = new Set<string>();
 			const changedEdges = new Set<string>();
 
 			// Blocks Diff
 			const currentBlockIds = new Set(currentState.blocks.map((b) => b.id));
-			const snapshotBlockIds = new Set(snapshot.blocks.map((b) => b.id));
 
 			currentState.blocks.forEach((b) => {
 				if (!snapshotBlockIds.has(b.id)) {
@@ -163,7 +167,14 @@ const BlockCanvas = ({ readonly, routeId }: Props) => {
 
 				<ReactFlow
 					deleteKeyCode=""
-					onEdgesChange={onEdgeChange}
+					onEdgesChange={(changes) => {
+						changes.forEach((c) => {
+							if (c.type === "remove") {
+								changeTracker.add(c.id, "edge");
+							}
+						});
+						onEdgeChange(changes);
+					}}
 					onNodesChange={onBlockChange}
 					onConnect={(e) => onEdgeConnect(e as any)}
 					nodes={blocks}

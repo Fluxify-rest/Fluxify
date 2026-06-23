@@ -1,21 +1,17 @@
 import { OpenAICompatibleIntegration } from "@fluxify/adapters";
 import { aiAgentGraph } from "./lib/ai";
 import { ToolsContext } from "./lib/ai/schemas";
-
-const localModel = new OpenAICompatibleIntegration({
-  apiKey: "local",
-  model: "Qwen3-4B.gguf",
-  baseUrl: "http://localhost:8090/v1/",
-});
+import { BlockTypes } from "@fluxify/blocks";
+import { mapBuilderOutput } from "./lib/ai/responseMapper";
 
 const cloudModel = new OpenAICompatibleIntegration({
   apiKey: process.env.AI_API_KEY!,
-  model: "mimo-v2-flash",
-  baseUrl: "https://api.xiaomimimo.com/v1",
+  model: "mistral-medium-3-5",
+  baseUrl: "https://api.mistral.ai/v1",
 });
 
-const userPrompt =
-  "build me get single todo item by id from database and use todos table. If the todo is not found, return 404 and a message saying 'Todo not found' else return the todo item.";
+const userPrompt = "what is get single db block";
+//   "build me get single todo item by id from database and use todos table. If the todo is not found, return 404 and a message saying 'Todo not found' else return the todo item.";
 
 const result = await aiAgentGraph.invoke(
   {
@@ -28,7 +24,6 @@ const result = await aiAgentGraph.invoke(
       reasoning: "",
     },
     messages: [],
-    interruption: false,
     metadata: {
       integrationsList: [
         {
@@ -44,7 +39,33 @@ const result = await aiAgentGraph.invoke(
         name: "Get Todos",
         method: "GET",
         path: "/todos/:id",
-        canvasItems: [],
+        canvasItems: [
+          {
+            id: "item_1",
+            blockType: BlockTypes.entrypoint,
+            connections: [{ blockId: "item_2", handle: "source" }],
+            position: {
+              x: 0,
+              y: 0,
+            },
+            blockName: "Entrypoint",
+            blockDescription: "Entrypoint",
+          },
+          {
+            id: "item_2",
+            blockType: BlockTypes.jsrunner,
+            connections: [],
+            position: {
+              x: 0,
+              y: 0,
+            },
+            blockName: "JSRunner",
+            blockDescription: "HTTP",
+            data: {
+              value: "logger.logInfo('Hello World');",
+            },
+          },
+        ],
       },
       userId: "user_1",
     },
@@ -52,8 +73,14 @@ const result = await aiAgentGraph.invoke(
   { context: { toolCalls: new Set() } satisfies ToolsContext },
 );
 
-console.log(
-  result.classifierOutput.intent === "DISCUSSION"
-    ? result.discussionMode!.output
-    : JSON.stringify(result.buildMode?.builderOutput, null, 2),
-);
+console.log(result.discussionMode);
+
+// console.log(
+//   result.classifierOutput.intent === "DISCUSSION"
+//     ? result.discussionMode!.output
+//     : JSON.stringify(
+//         mapBuilderOutput(result.buildMode?.builderOutput!),
+//         null,
+//         2,
+//       ),
+// );
