@@ -10,21 +10,20 @@ import {
 import type z from "zod";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createGoogle } from "@ai-sdk/google";
 import { createMistral } from "@ai-sdk/mistral";
 
-/**
- * Creates an AI model instance based on the project configuration.
- *
- * @param projectId - The ID of the project to retrieve configuration for
- * @returns An instance of the configured AI model
- */
 export async function createAIModelInstanceFromProjectId(projectId: string) {
 	const integrationId = await getProjectSetting(
 		projectId,
 		"settings.ai.agentConnectionId",
 	);
 	const integration = aiIntegrationsCache[integrationId];
+
+	if (!integration) {
+		throw new Error("Integration not found to create AI Model instance");
+	}
 	if (integration.variant === aiVariantSchema.enum.Anthropic) {
 		const config = integration as z.infer<typeof anthropicVariantConfigSchema>;
 		const anthropic = createAnthropic({
@@ -37,8 +36,12 @@ export async function createAIModelInstanceFromProjectId(projectId: string) {
 		const config = integration as z.infer<
 			typeof openAiCompatibleVariantConfigSchema
 		>;
-		const openai = createOpenAI({ apiKey: config.apiKey });
-		return openai(config.model);
+		const openaiCompatible = createOpenAICompatible({
+			name: "openai-compatible",
+			apiKey: config.apiKey,
+			baseURL: config.baseUrl,
+		});
+		return openaiCompatible(config.model);
 	} else if (integration.variant === aiVariantSchema.enum.Gemini) {
 		const config = integration as z.infer<typeof geminiVariantConfigSchema>;
 		const google = createGoogle({ apiKey: config.apiKey });

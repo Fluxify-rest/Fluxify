@@ -5,7 +5,7 @@ import type {
 	WorkflowMetadata,
 	WorkflowContext,
 } from "../../ai";
-import { type ModelMessage, type LanguageModel } from "ai";
+import { type ModelMessage, type LanguageModel, isStepCount } from "ai";
 import { logger } from "@fluxify/common";
 
 import { WorkflowToolName } from "../tools";
@@ -46,8 +46,8 @@ export class DiscussionNode extends BaseNode<
 Your core responsibility is to assist the user by having a meaningful, accurate, and concise discussion about the platform, their current workspace, and the available nodes/blocks.
 
 Capabilities & Tools:
-1. "search_docs": Use this tool whenever the user asks about platform features, how a specific block works, or best practices. Pass a highly relevant natural language query to retrieve documentation chunks.
-2. "get_route_details": Use this tool if the user asks about the current route (the graph in canvas) they are viewing or working on. 
+1. "search_docs": Use this tool whenever the user asks about platform features, how a specific block works, or best practices. Pass a highly relevant keyword search query to retrieve documentation chunks.
+2. "get_route_details": Use this tool *only when necessary* if the user asks about the current route (the graph in canvas) they are viewing or working on. 
 
 CRITICAL INSTRUCTIONS:
 - If the user's query requires knowledge you don't possess, you MUST use the \`search_docs\` tool. Do not hallucinate answers.
@@ -60,11 +60,11 @@ CRITICAL INSTRUCTIONS:
 						[WorkflowToolName.GET_ROUTE_DETAILS]:
 							context.tools[WorkflowToolName.GET_ROUTE_DETAILS],
 					},
-					maxRetries: 3, // Allow up to 3 RTT for tool calls. Automatically throws or stops if exceeded.
+					stopWhen: isStepCount(5),
+					maxRetries: 3,
 				},
 				context,
 			);
-
 			return {
 				status: "success",
 				response: response.text,

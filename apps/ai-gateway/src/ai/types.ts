@@ -37,6 +37,11 @@ export interface ToolExecutionRecord {
 	output: any;
 }
 
+export type NodeEnterCallback = (
+	nodeId: string,
+	input: any,
+) => void | Promise<void>;
+
 export type NodeSuccessCallback = (
 	nodeId: string,
 	input: any,

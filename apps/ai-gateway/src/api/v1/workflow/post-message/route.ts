@@ -1,34 +1,23 @@
 import { Hono } from "hono";
-import {
-	describeRoute,
-	type DescribeRouteOptions,
-	resolver,
-	validator,
-} from "hono-openapi";
-import { responseSchema } from "./dto";
+import { requestQuerySchema, requestBodySchema } from "./dto";
 import handleRequest from "./service";
-
-const openapiRouteOptions: DescribeRouteOptions = {
-	description: "Description",
-	operationId: "identifier",
-	tags: ["TAG"],
-	responses: {
-		200: {
-			description: "Successful",
-			content: {
-				"application/json": {
-					schema: resolver(responseSchema),
-				},
-			},
-		},
-	},
-};
+import { validator } from "hono-openapi";
+import { zodErrorCallbackParser, type User } from "@fluxify/server";
+import { requireWorkflowAccess } from "../middleware";
 
 export default function (app: Hono) {
-	app.get(
-		"/",
-		describeRoute(openapiRouteOptions),
-		// validator("query", SCHEMA),
-		async (c) => {},
+	app.post(
+		"/post-message",
+		validator("query", requestQuerySchema, zodErrorCallbackParser),
+		validator("json", requestBodySchema, zodErrorCallbackParser),
+		requireWorkflowAccess((c: any) => c.req.valid("query")),
+		async (c) => {
+			const query = c.req.valid("query");
+			const body = c.req.valid("json");
+			// @ts-ignore
+			const user = c.get("user") as User;
+			const result = await handleRequest(query, body, user.id);
+			return c.json(result);
+		},
 	);
 }

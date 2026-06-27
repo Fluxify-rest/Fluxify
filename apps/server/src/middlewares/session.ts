@@ -1,4 +1,4 @@
-import { Context, Next } from "hono";
+import { Context, type Next } from "hono";
 import { auth } from "../lib/auth";
 
 export async function setSession(c: Context, next: Next) {

@@ -1,7 +1,6 @@
 import path from "path";
 
-export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
-export const VECTOR_STORE_PATH = path.join(
+export const DOCS_INDEX_PATH = path.join(
 	__dirname,
-	"../dist/ai-gateway/vectors.bin",
+	"./dist/ai-gateway/docs-index.bin",
 );

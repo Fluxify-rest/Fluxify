@@ -28,8 +28,22 @@ export const aiMessagesService = {
 	},
 
 	async postMessage(routeId: string, data: z.infer<typeof requestBodySchema>) {
-		const result = await httpClient.post(`${baseUrl}/${routeId}`, data);
-		return result.data;
+		// const result = await httpClient.post(`${baseUrl}/${routeId}`, data);
+		await fetch(
+			"/_/admin/ai/v1/workflows/post-message?location=canvas&routeId=" +
+				routeId,
+			{
+				method: "POST",
+				body: JSON.stringify({
+					userQuery: data.content.toString(),
+				}),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			},
+		);
+		return null;
+		// return result.data;
 	},
 
 	async clearMessages(

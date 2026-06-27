@@ -20,6 +20,7 @@ import {
 	DbFactory,
 	GeminiIntegration,
 	LokiLogger,
+	MistralIntegration,
 	OpenAICompatibleIntegration,
 	OpenAIIntegration,
 	OpenObserve,
@@ -93,6 +94,11 @@ async function loadFromDB() {
 				);
 			} else if (integration.variant === aiVariantSchema.enum.OpenAI) {
 				config = OpenAIIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			} else if (integration.variant === aiVariantSchema.enum.Mistral) {
+				config = MistralIntegration.ExtractConnectionInfo(
 					integration.config as any,
 					appConfigMap,
 				);

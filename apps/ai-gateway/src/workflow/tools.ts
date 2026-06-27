@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { queryVectorDB } from "../db/vector";
+import { queryDocs } from "../db/vector";
 import { logger } from "@fluxify/common";
 import type { WorkflowMetadata } from "../ai/types";
 
@@ -13,17 +13,18 @@ export function createWorkflowTools(metadata: WorkflowMetadata) {
 	return {
 		[WorkflowToolName.SEARCH_DOCS]: tool({
 			description:
-				"Search the platform documentation using a natural language query.",
+				"Search the platform documentation using keywords. Use relevant terms for e.g. if user asks about filters, use keyword filter/filters.",
 			inputSchema: z.object({
 				searchQuery: z
 					.string()
-					.describe("The search query to find relevant documentation."),
+					.describe("The keywords to find relevant documentation."),
 			}),
 			execute: async ({ searchQuery }) => {
 				logger.info(`[Tools] Searching docs for: ${searchQuery}`);
 				try {
-					const results = await queryVectorDB(searchQuery, 5);
-					return results.map((r) => r.content).join("\n\n---\n\n");
+					const results = await queryDocs(searchQuery, 3);
+					const output = results.map((r) => r.content).join("\n\n--- \n\n");
+					return output;
 				} catch (e) {
 					logger.error("[Tools] Error searching vector DB", { error: e });
 					return "Error retrieving documentation.";

@@ -1,35 +1,31 @@
 import { restoreFromFile } from "@orama/plugin-data-persistence/server";
 import { search } from "@orama/orama";
-import { VECTOR_STORE_PATH } from "../constants";
+import { DOCS_INDEX_PATH } from "../constants";
 import type { AnyOrama } from "@orama/orama";
-import { generateEmbedding } from "../lib/embedding-model";
 import { logger } from "@fluxify/common";
 
 type Document = {
 	id: string;
 	title: string;
-	chunk: number;
 	description: string;
 	content: string;
-	vector: number[];
 };
 
-export interface VectorDB extends AnyOrama<Document> {}
+type DocsDB = AnyOrama;
 
-let vectorDB: VectorDB = null!;
+let docsDB: DocsDB = null!;
 
-export async function initVectorDB() {
-	vectorDB = await restoreFromFile("binary", VECTOR_STORE_PATH);
-	logger.info(`[VectorDB] Initialized vector DB: ${VECTOR_STORE_PATH}`);
+export async function initDocsDB() {
+	docsDB = await restoreFromFile("binary", DOCS_INDEX_PATH);
+	logger.info(`[DocsDB] Initialized docs index: ${DOCS_INDEX_PATH}`);
 }
 
-export async function queryVectorDB(query: string, limit: number = 5) {
-	const embedding = await generateEmbedding(query);
-	const results = await search(vectorDB, {
-		mode: "vector",
-		vector: { value: embedding, property: "embedding" },
-		similarity: 0.85,
+export async function queryDocs(query: string, limit: number = 5) {
+	const results = await search(docsDB, {
+		term: query,
+		properties: ["title", "description", "content"],
 		limit,
 	});
+
 	return results.hits.map((hit) => hit.document as Document);
 }

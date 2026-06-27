@@ -8,15 +8,18 @@ import type {
 	WorkflowMetadata,
 	WorkflowContext,
 	NodeResult,
+	NodeEnterCallback,
 } from "./types";
 
 export class Workflow<TNodeRegistry extends Record<string, any>> {
 	private nodes = new Map<keyof TNodeRegistry, BaseNode<any, any>>();
 	private tools: Record<string, any> = {};
+	private currentNodeId: string | undefined = undefined;
 
 	private nodeExecutionHistory: NodeExecutionRecord[] = [];
 	private toolExecutionHistory: ToolExecutionRecord[] = [];
 
+	private handleNodeEnter?: NodeEnterCallback;
 	private handleNodeSuccess?: NodeSuccessCallback;
 	private handleNodeFailure?: NodeFailureCallback;
 	private handleToolExecution?: ToolExecutionCallback;
@@ -35,6 +38,10 @@ export class Workflow<TNodeRegistry extends Record<string, any>> {
 	}
 
 	// Hook Registration
+	public onNodeEnter(callback: NodeEnterCallback): this {
+		this.handleNodeEnter = callback;
+		return this;
+	}
 	public onNodeSuccess(callback: NodeSuccessCallback): this {
 		this.handleNodeSuccess = callback;
 		return this;
@@ -60,6 +67,9 @@ export class Workflow<TNodeRegistry extends Record<string, any>> {
 	public getToolHistory() {
 		return [...this.toolExecutionHistory];
 	}
+	public getCurrentNode() {
+		return this.currentNodeId;
+	}
 
 	public async start<K extends keyof TNodeRegistry>(
 		initialNodeId: K,
@@ -76,16 +86,18 @@ export class Workflow<TNodeRegistry extends Record<string, any>> {
 	}
 
 	private async runLoop(startNodeId: string, startParams: any) {
-		let currentNodeId: string | undefined = startNodeId;
+		this.currentNodeId = startNodeId;
 		let currentParams = startParams;
 
-		while (currentNodeId) {
-			const node = this.nodes.get(currentNodeId);
+		while (this.currentNodeId) {
+			const node = this.nodes.get(this.currentNodeId);
 			if (!node)
 				throw new Error(
-					`Execution halted: Node '${currentNodeId}' is not registered.`,
+					`Execution halted: Node '${this.currentNodeId}' is not registered.`,
 				);
 
+			if (this.handleNodeEnter)
+				await this.handleNodeEnter(this.currentNodeId, currentParams);
 			// Generate the runtime execution context for this loop pass
 			const context: WorkflowContext = {
 				metadata: this.metadata,
@@ -107,8 +119,12 @@ export class Workflow<TNodeRegistry extends Record<string, any>> {
 			try {
 				const result: NodeResult = await node.execute(currentParams, context);
 
+				if (result.status === "failure") {
+					throw new Error("failed to execute the node " + this.currentNodeId);
+				}
+
 				this.nodeExecutionHistory.push({
-					nodeId: currentNodeId,
+					nodeId: this.currentNodeId!,
 					timestamp: new Date(),
 					input: currentParams,
 					output: result,
@@ -116,14 +132,17 @@ export class Workflow<TNodeRegistry extends Record<string, any>> {
 				});
 
 				if (this.handleNodeSuccess)
-					await this.handleNodeSuccess(currentNodeId, currentParams, result);
-				if (result.status === "failure") return result;
+					await this.handleNodeSuccess(
+						this.currentNodeId,
+						currentParams,
+						result,
+					);
 
-				currentNodeId = result.nextNodeId;
+				this.currentNodeId = result.nextNodeId;
 				currentParams = result;
 			} catch (error) {
 				this.nodeExecutionHistory.push({
-					nodeId: currentNodeId!,
+					nodeId: this.currentNodeId!,
 					timestamp: new Date(),
 					input: currentParams,
 					error: error,
@@ -131,7 +150,11 @@ export class Workflow<TNodeRegistry extends Record<string, any>> {
 				});
 
 				if (this.handleNodeFailure)
-					await this.handleNodeFailure(currentNodeId!, currentParams, error);
+					await this.handleNodeFailure(
+						this.currentNodeId!,
+						currentParams,
+						error,
+					);
 				throw error;
 			}
 		}

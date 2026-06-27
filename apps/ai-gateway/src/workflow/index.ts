@@ -9,12 +9,24 @@ import { generateText, type LanguageModel } from "ai";
 import { type AIWorkflowGatewayData, WORKER_QUEUE_NAME } from "./queue";
 import { Job, Worker } from "bullmq";
 import { createAIModelInstanceFromProjectId } from "./model-factory";
+import { deleteCacheKey, setCache } from "@fluxify/server";
 
 // Define the NodeRegistry for type safety across the workflow
 export interface AIWorkflowRegistry {
 	classifier: ClassifierParams;
 	discussion: DiscussionParams; // Stub for discussion agent
 	builder: any; // Stub for builder agent
+}
+
+export interface ConversationWorkflowStatus {
+	status: "started" | "running" | "error" | "completed";
+	conversationId: string;
+	currentNodeId: string;
+	executionHistory: {
+		name: string;
+		status: "success" | "failure" | "running";
+		type: "tool" | "node";
+	}[];
 }
 
 // Track active workflows in memory
@@ -31,8 +43,8 @@ export interface RunWorkflowParams {
 /**
  * Initializes and schedules an AI Workflow in the background.
  */
-export function runAIWorkflow(params: RunWorkflowParams) {
-	const { metadata, initialQuery, modelFactory, model } = params;
+export async function runAIWorkflow(params: RunWorkflowParams) {
+	const { metadata, initialQuery, modelFactory, model, job } = params;
 	const { conversationId } = metadata;
 
 	if (activeWorkflows.has(conversationId)) {
@@ -46,13 +58,18 @@ export function runAIWorkflow(params: RunWorkflowParams) {
 
 	// Initialize the workflow
 	const workflow = new Workflow<AIWorkflowRegistry>(metadata);
+	const conversationStatus: ConversationWorkflowStatus = {
+		status: "started",
+		conversationId,
+		currentNodeId: "classifier",
+		executionHistory: [],
+	};
 
 	// Register all workflow-level tools
 	const workflowTools = createWorkflowTools(metadata);
 	for (const [toolName, tool] of Object.entries(workflowTools)) {
 		workflow.registerTool(toolName, tool);
 	}
-
 	// Instantiate and register nodes
 	const classifierNode = new ClassifierNode(modelFactory);
 	const discussionNode = new DiscussionNode(modelFactory);
@@ -60,45 +77,76 @@ export function runAIWorkflow(params: RunWorkflowParams) {
 	workflow.addNode(discussionNode);
 	// workflow.addNode(new BuilderNode(...));
 
-	// Setup empty callbacks with logger
+	workflow.onNodeEnter(async (nodeId, input) => {
+		logger.info(`[Workflow] Node ${nodeId} entered`, { input });
+		conversationStatus.status = "running";
+		conversationStatus.currentNodeId = nodeId;
+		conversationStatus.executionHistory.push({
+			name: nodeId,
+			status: "running",
+			type: "node",
+		});
+		trackConversationStatus(conversationId, conversationStatus, job);
+	});
+
 	workflow.onNodeSuccess(async (nodeId, input, output) => {
 		logger.info(`[Workflow] Node ${nodeId} succeeded`, { output });
+		conversationStatus.currentNodeId = nodeId;
+		conversationStatus.executionHistory.push({
+			name: nodeId,
+			status: "success",
+			type: "node",
+		});
+		trackConversationStatus(conversationId, conversationStatus, job);
 	});
 
 	workflow.onNodeFailure(async (nodeId, input, error) => {
 		logger.error(`[Workflow] Node ${nodeId} failed`, { error });
+		conversationStatus.executionHistory.push({
+			name: nodeId,
+			status: "failure",
+			type: "node",
+		});
+		trackConversationStatus(conversationId, conversationStatus, job);
 	});
 
 	workflow.onToolExecution(async (toolName, input, output) => {
 		logger.info(`[Workflow] Tool ${toolName} executed`);
+		conversationStatus.executionHistory.push({
+			name: toolName,
+			status: "success",
+			type: "tool",
+		});
+		trackConversationStatus(conversationId, conversationStatus, job);
 	});
 
 	// Track the workflow in the active map
 	activeWorkflows.set(conversationId, workflow);
 
 	// Schedule the workflow in the background (fire and forget)
-	(async () => {
-		try {
-			// Start the workflow from the classifier node
-			const finalResult = await workflow.start("classifier", {
-				query: initialQuery,
-				messageHistory: metadata.messageHistory,
-				model,
-			});
-
-			logger.info(`[Workflow] Completed for conversation: ${conversationId}`, {
-				finalResult,
-			});
-		} catch (error) {
-			logger.error(`[Workflow] Error in conversation: ${conversationId}`, {
-				error,
-			});
-		} finally {
-			// Clean up the active workflow map upon completion or failure
-			activeWorkflows.delete(conversationId);
-			logger.info(`[Workflow] Removed from active map: ${conversationId}`);
-		}
-	})();
+	try {
+		// Start the workflow from the classifier node
+		const finalResult = await workflow.start("classifier", {
+			query: initialQuery,
+			messageHistory: metadata.messageHistory,
+			model,
+		});
+		conversationStatus.status = "completed";
+		logger.info(`[Workflow] Completed for conversation: ${conversationId}`, {
+			finalResult,
+		});
+		console.log("Final result", finalResult);
+	} catch (error) {
+		logger.error(`[Workflow] Error in conversation: ${conversationId}`, {
+			error,
+		});
+		conversationStatus.status = "error";
+	} finally {
+		// Clean up the active workflow map upon completion or failure
+		activeWorkflows.delete(conversationId);
+		trackConversationStatus(conversationId, conversationStatus, job, true);
+		logger.info(`[Workflow] Removed from active map: ${conversationId}`);
+	}
 
 	return { conversationId, status: "started" };
 }
@@ -114,8 +162,10 @@ export function initializeAIWorkflow() {
 				projectId,
 				location,
 			);
+
 			const modelInstance = await createAIModelInstanceFromProjectId(projectId);
-			runAIWorkflow({
+
+			await runAIWorkflow({
 				job,
 				initialQuery: userQuery,
 				metadata: {
@@ -127,15 +177,17 @@ export function initializeAIWorkflow() {
 					messageHistory: [],
 				},
 				modelFactory: async (config) => {
-					return (runtimeConfig) =>
-						generateText({
+					return (runtimeConfig) => {
+						return generateText({
 							...config,
 							...runtimeConfig,
 							model: modelInstance,
 						});
+					};
 				},
 				model: modelInstance!,
 			});
+			console.log("done workflow");
 		},
 		{
 			connection: {
@@ -146,6 +198,24 @@ export function initializeAIWorkflow() {
 			},
 		},
 	);
+}
+
+export async function trackConversationStatus(
+	conversationId: string,
+	status: ConversationWorkflowStatus,
+	job: Job<AIWorkflowGatewayData>,
+	deleteCache?: boolean,
+) {
+	const key = getConversationKey(conversationId);
+	console.log(status);
+
+	await job.updateProgress(status);
+	if (deleteCache === true) await deleteCacheKey(key);
+	else await setCache(key, JSON.stringify({ status }));
+}
+
+export function getConversationKey(conversationId: string): string {
+	return `workflow:${conversationId}`;
 }
 
 export function buildConversationId(
