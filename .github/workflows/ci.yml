@@ -26,8 +26,11 @@ jobs:
       - name: Run Analyzer
         run: bun run analyze
 
-      - name: Run Tests
-        run: bun test
+      - name: Run Unit Tests
+        run: bun run test:unit
+
+      - name: Run Integration Tests
+        run: bun run test:integration
 
   build-and-push:
     needs: test

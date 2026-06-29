@@ -40,7 +40,7 @@ describe("testing for loop block", () => {
 					fruits: [],
 				} as any,
 				projectId: "",
-				stopper: { duration: 30000, timeoutEnd: 30000 + 2000 },
+				stopper: { duration: 30000, timeoutEnd: 0 },
 			},
 			{
 				start: "js:return idx",
@@ -71,7 +71,7 @@ describe("testing for loop block", () => {
 				fruits: [],
 			} as any,
 			projectId: "",
-			stopper: { duration: 30000, timeoutEnd: 30000 + 2000 },
+			stopper: { duration: 30000, timeoutEnd: 0 },
 		};
 		const mockFn = vi.fn();
 		const engine = new Engine(

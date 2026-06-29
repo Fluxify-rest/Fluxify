@@ -13,7 +13,7 @@ describe("Testing ArrayOperationsBlock", () => {
 				fruits: [],
 			} as any,
 			projectId: "",
-			stopper: { duration: 30000, timeoutEnd: 30000 + 2000 },
+			stopper: { duration: 30000, timeoutEnd: 0 },
 		};
 		beforeEach(() => {
 			context.vars.fruits = [];
@@ -115,7 +115,7 @@ describe("Testing ArrayOperationsBlock", () => {
 				fruits: [],
 			} as any,
 			projectId: "",
-			stopper: { duration: 30000, timeoutEnd: 30000 + 2000 },
+			stopper: { duration: 30000, timeoutEnd: 0 },
 		};
 		beforeEach(() => {
 			context.vars.fruits = ["orange", "pineapple"];
@@ -159,7 +159,7 @@ describe("Testing ArrayOperationsBlock", () => {
 				fruits: [],
 			} as any,
 			projectId: "",
-			stopper: { duration: 30000, timeoutEnd: 30000 + 2000 },
+			stopper: { duration: 30000, timeoutEnd: 0 },
 		};
 		beforeEach(() => {
 			context.vars.fruits = [];
@@ -209,7 +209,7 @@ describe("Testing ArrayOperationsBlock", () => {
 				fruits: [],
 			} as any,
 			projectId: "",
-			stopper: { duration: 30000, timeoutEnd: 30000 + 2000 },
+			stopper: { duration: 30000, timeoutEnd: 0 },
 		};
 		beforeEach(() => {
 			context.vars.fruits = ["pineapple", "orange"];
