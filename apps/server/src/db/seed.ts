@@ -3,7 +3,6 @@ import { z } from "zod";
 import { user } from "./auth-schema";
 import { eq } from "drizzle-orm";
 import { PgDatabase } from "drizzle-orm/pg-core";
-import { PgliteDatabase } from "drizzle-orm/pglite";
 import { initializeLogger, logger } from "@fluxify/common";
 
 const seedUserSchema = z.object({
@@ -13,7 +12,7 @@ const seedUserSchema = z.object({
 
 initializeLogger({ serviceName: "fluxify-server-db-seed" });
 
-export async function seedData(db: PgDatabase<any> | PgliteDatabase<any>) {
+export async function seedData(db: PgDatabase<any>) {
 	const email = process.env.SEED_USER_EMAIL;
 	const password = process.env.SEED_USER_PASSWORD;
 	const name = process.env.SEED_USER_NAME || "Admin User";

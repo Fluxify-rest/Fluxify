@@ -13,15 +13,14 @@ Fluxify can be self-hosted on your own infrastructure. Below are the requirement
   - The frontend is written in next.js which is exposed on port 3000
   - The backend api is written in go which is exposed on port 5500
 - Redis is used for caching and pub/sub
-- PostgreSQL/pglite is used for database
-  - pglite is an embedded postgres emulator (used for local development/testing), for persistent data of pglite use `PGLITE_PATH` and mount a volume to it. If PGLITE_PATH is not set, it will use in-memory database (data will be lost on restart).
+- PostgreSQL is used for database
 - Remember to set admin user email and password in .env file to create an admin user on first run. If not set, you will not be able to login. Password can be changed later using the admin panel.
 
 ## Requirements
 
 - Docker
-- PostgreSQL (or embedded pglite will be used, see .env for more info)
-- Redis (as of now it is required, but we are planning to add inmemory KV and pub/sub)
+- PostgreSQL
+- Redis
 
 ## Environment Variables
 
@@ -41,9 +40,6 @@ REDIS_USER=
 REDIS_PASS=
 # disable if dont want to use live reload the routes on save (not recommended*)
 HOT_RELOAD_ROUTES=true
-# postgres | pglite - https://pglite.dev/ (local in-memory postgres emulator for testing)
-DB_VARIANT=postgres
-PGLITE_PATH=./pglite.data # default: memory://
 # example value to get started: vWJkRKH7tUg31TxgMoknTGTBv4xYFjVM
 BETTER_AUTH_SECRET=
 # example value to get started: 2zhJ7KpBp4s6WECoCHsG3ss6SwZuldw6 - for m2m (machine to machine) communication

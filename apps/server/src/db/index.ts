@@ -1,22 +1,16 @@
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import type { PgTransaction } from "drizzle-orm/pg-core";
-import type { PgliteDatabase, PgliteQueryResultHKT } from "drizzle-orm/pglite";
 import type { BunSQLQueryResultHKT, BunSQLDatabase } from "drizzle-orm/bun-sql";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import { migrateDB } from "./migration";
 import { logger } from "@fluxify/common";
 
-let db: PgliteDatabase | BunSQLDatabase = null!;
+let db: BunSQLDatabase = null!;
 
 export async function drizzleInit(migrate: boolean = false) {
-	if (process.env.DB_VARIANT === "pglite") {
-		const pglite = await initializePgLite();
-		migrate && (await migrateDB(pglite, "pglite"));
-	} else {
-		const pg = await initializePostgres();
-		migrate && (await migrateDB(pg, "postgres"));
-	}
+	const pg = await initializePostgres();
+	migrate && (await migrateDB(pg));
 	return db;
 }
 
@@ -41,35 +35,10 @@ async function initializePostgres() {
 	return client;
 }
 
-async function initializePgLite() {
-	const drizzlePgLite = await import("drizzle-orm/pglite");
-	const { PGlite } = await import("@electric-sql/pglite");
-
-	const client = new PGlite(process.env.PGLITE_PATH || "memory://");
-	db = drizzlePgLite.drizzle({ client });
-
-	const result = await db.execute<{ connected: number }>(
-		"select 1 as connected",
-	);
-	if (result.rows[0].connected === 1) {
-		logger.info("pglite db initialized");
-	} else {
-		throw new Error("db connection failed");
-	}
-
-	return client;
-}
-
 export { db };
 
-export type DbTransactionType =
-	| PgTransaction<
-			BunSQLQueryResultHKT,
-			Record<string, never>,
-			ExtractTablesWithRelations<Record<string, never>>
-	  >
-	| PgTransaction<
-			PgliteQueryResultHKT,
-			Record<string, never>,
-			ExtractTablesWithRelations<Record<string, never>>
-	  >;
+export type DbTransactionType = PgTransaction<
+	BunSQLQueryResultHKT,
+	Record<string, never>,
+	ExtractTablesWithRelations<Record<string, never>>
+>;

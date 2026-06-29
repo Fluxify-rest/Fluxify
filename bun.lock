@@ -59,7 +59,6 @@
       "name": "@fluxify/server",
       "version": "1.0.0",
       "dependencies": {
-        "@electric-sql/pglite": "^0.5.3",
         "@fluxify/adapters": "workspace:*",
         "@fluxify/blocks": "workspace:*",
         "@fluxify/common": "workspace:*",

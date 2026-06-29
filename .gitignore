@@ -2,7 +2,6 @@ node_modules
 .turbo
 .vscode
 .env
-pglite/
 settings.json
 dist
 .env.*

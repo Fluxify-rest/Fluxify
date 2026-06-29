@@ -10,7 +10,7 @@
 		"test": "bun test --concurrent",
 		"lint": "tsgo --noEmit",
 		"start": "bun run deployments/standalone.ts",
-		"build": "bun build deployments/standalone.ts --outdir=dist --bundle --target bun --minify --sourcemap=linked --external @electric-sql/pglite",
+		"build": "bun build deployments/standalone.ts --outdir=dist --bundle --target bun --minify --sourcemap=linked",
 		"postbuild": "bun run ./scripts/buildExtras.ts",
 		"db:generate": "bun x drizzle-kit generate",
 		"db:push": "bun x drizzle-kit push"
@@ -34,7 +34,6 @@
 		"typescript": "^6.0.3"
 	},
 	"dependencies": {
-		"@electric-sql/pglite": "^0.5.3",
 		"@fluxify/adapters": "workspace:*",
 		"@fluxify/blocks": "workspace:*",
 		"@fluxify/common": "workspace:*",

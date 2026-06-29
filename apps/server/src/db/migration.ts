@@ -1,13 +1,9 @@
 import { existsSync } from "fs";
 import { join } from "path";
 import { SQL } from "bun";
-import { PGlite } from "@electric-sql/pglite";
 import { logger } from "@fluxify/common";
 
-export async function migrateDB(
-	db: PGlite | SQL,
-	dialect: "pglite" | "postgres",
-) {
+export async function migrateDB(db: SQL) {
 	logger.info("Initializing production schema migration...");
 
 	const isProduction = process.env.ENVIRONMENT === "production";
@@ -31,11 +27,7 @@ export async function migrateDB(
       WHERE table_schema = 'public'
     `;
 
-		if (dialect === "postgres") {
-			result = await (db as SQL).unsafe(tableCountQuery);
-		} else {
-			result = await (db as PGlite).query(tableCountQuery);
-		}
+		result = await (db as SQL).unsafe(tableCountQuery);
 
 		const tableCount = parseInt(result[0]!.count.toString());
 
@@ -49,12 +41,7 @@ export async function migrateDB(
 		logger.info(`Applying schema from ${schemaPath}...`);
 		const schemaSql = await Bun.file(schemaPath).text();
 
-		if (dialect === "postgres") {
-			await (db as SQL).unsafe(schemaSql);
-		} else {
-			await (db as PGlite).exec(schemaSql);
-		}
-
+		await (db as SQL).unsafe(schemaSql);
 		logger.info("Schema applied successfully.");
 	} catch (error) {
 		logger.error("CRITICAL: Failed to apply schema.sql migration.", error);

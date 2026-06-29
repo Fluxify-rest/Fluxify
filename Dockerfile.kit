@@ -36,9 +36,7 @@ COPY --from=build /app/apps/web/.next/standalone /app/web
 COPY --from=build /app/dist/proxy.js /app/proxy.js
 COPY --from=build /app/scripts/config.json /app/config.json
 
-# installing pglite
 WORKDIR /app/server
-RUN bun install @electric-sql/pglite
 
 WORKDIR /app
 

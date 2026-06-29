@@ -51,7 +51,6 @@ app.use(
 function logSystemDetails() {
 	logger.info(`Admin routes enabled: ${process.env.ENABLE_ADMIN}`);
 	logger.info(`Node environment: ${process.env.ENVIRONMENT}`);
-	logger.info(`DB variant: ${process.env.DB_VARIANT}`);
 }
 
 async function main() {
