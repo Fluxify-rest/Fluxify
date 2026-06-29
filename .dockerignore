@@ -1,9 +1,42 @@
+# Dependencies
 node_modules
+
+# Build caches
 .turbo
-.vscode
-.env
-settings.json
+.next
 dist
 out
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files
+.env
 .env.*
-.next
+!env.example
+
+# Git
+.git
+.gitignore
+
+# Documentation & metadata (built inside Docker)
+docs_index
+mkdocs.yml
+CHANGELOG.md
+CONTRIBUTING.md
+Readme.md
+LICENSE
+img
+
+# Docker files (avoid recursive context)
+docker-compose.yml
+Caddyfile.local
+Dockerfile.kit
+
+# Misc
+.llm
+.prettierignore
+settings.json

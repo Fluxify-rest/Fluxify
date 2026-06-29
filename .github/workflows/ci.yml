@@ -62,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile.kit
+          file: docker/kit/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ steps.owner.outputs.owner }}/fluxify-kit:${{ steps.commit.outputs.short_sha }}

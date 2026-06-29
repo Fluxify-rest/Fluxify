@@ -5,6 +5,7 @@ import { mapMcpServer } from "./mcp";
 import { logger } from "@fluxify/common";
 import { registerRoutes } from "./api/register";
 import { db, errorHandler, initializeAuth, setSession } from "@fluxify/server";
+import { AI_GATEWAY_PORT } from "./lib/env";
 
 export async function runMain() {
 	const app = new Hono<any>();
@@ -27,7 +28,7 @@ export async function runMain() {
 
 	const server = serve({
 		fetch: app.fetch,
-		port: 8001,
+		port: AI_GATEWAY_PORT,
 	});
 
 	logger.info(

@@ -15,3 +15,4 @@ export const REDIS_HOST = process.env.REDIS_HOST!;
 export const REDIS_PORT = process.env.REDIS_PORT!;
 export const REDIS_USER = process.env.REDIS_USER!;
 export const REDIS_PASS = process.env.REDIS_PASS!;
+export const AI_GATEWAY_PORT = Number(process.env.AI_GATEWAY_PORT) || 8001;

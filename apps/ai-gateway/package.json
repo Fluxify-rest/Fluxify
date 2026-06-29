@@ -8,6 +8,7 @@
 	},
 	"scripts": {
 		"dev": "bun --watch run src/index.ts",
+		"build": "bun build src/index.ts --outdir=dist --bundle --target bun --minify",
 		"gather": "bun ./src/scripts/gather.ts",
 		"lint": "tsgo --noEmit"
 	},
