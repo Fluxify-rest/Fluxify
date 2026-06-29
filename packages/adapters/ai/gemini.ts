@@ -1,5 +1,10 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { createAgent, DynamicTool } from "langchain";
+import {
+  createAgent,
+  DynamicStructuredTool,
+  DynamicTool,
+  Tool,
+} from "langchain";
 import { BaseAiIntegration } from "./baseAiIntegration";
 
 type GeminiVariantConfig = {
@@ -12,11 +17,12 @@ export class GeminiIntegration extends BaseAiIntegration {
     super();
   }
 
-  override createAgent(tools?: DynamicTool[]) {
+  override createAgent(systemPrompt: string, tools: DynamicStructuredTool[]) {
     const model = this.createModel();
     return createAgent({
       model,
       tools,
+      systemPrompt,
     });
   }
 

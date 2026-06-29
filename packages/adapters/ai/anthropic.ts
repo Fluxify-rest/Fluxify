@@ -1,5 +1,5 @@
 import { ChatAnthropic } from "@langchain/anthropic";
-import { createAgent, DynamicTool } from "langchain";
+import { createAgent, DynamicStructuredTool, Tool } from "langchain";
 import { BaseAiIntegration } from "./baseAiIntegration";
 
 type AnthropicVariantConfig = {
@@ -12,11 +12,12 @@ export class AnthropicIntegration extends BaseAiIntegration {
     super();
   }
 
-  override createAgent(tools?: DynamicTool[]) {
+  override createAgent(systemPrompt: string, tools: DynamicStructuredTool[]) {
     const model = this.createModel();
     return createAgent({
       model,
       tools,
+      systemPrompt,
     });
   }
 

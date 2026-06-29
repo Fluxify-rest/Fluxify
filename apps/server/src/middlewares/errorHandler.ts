@@ -1,6 +1,6 @@
 import { Context, Hono } from "hono";
 import { HttpError } from "../errors/httpError";
-import { ContentfulStatusCode } from "hono/utils/http-status";
+import { type ContentfulStatusCode } from "hono/utils/http-status";
 import { CustomError } from "../errors/customError";
 import { ValidationError } from "../errors/validationError";
 import { APIError } from "better-auth";

@@ -27,6 +27,16 @@ services:
       - ./Caddyfile.local:/etc/caddy/Caddyfile
     networks:
       - default
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    container_name: openobserve
+    ports:
+      - 5080:5080
+    environment:
+      - ZO_ROOT_USER_EMAIL=root@example.com
+      - ZO_ROOT_USER_PASSWORD=Root@Example123
+    networks:
+      - default
 
 volumes:
   pg_cbe:

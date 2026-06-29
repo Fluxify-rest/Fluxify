@@ -4,7 +4,7 @@ import path from 'path';
 // The starting directory (current folder)
 const rootDir = process.cwd();
 
-const foldersToDelete = ['dist', '.next', 'docs_index', 'pglite'];
+const foldersToDelete = ['dist', '.next', 'docs_index'];
 
 function deleteDistFolders(currentDir) {
   // Read directory contents

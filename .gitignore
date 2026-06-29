@@ -2,9 +2,9 @@ node_modules
 .turbo
 .vscode
 .env
-pglite/
 settings.json
 dist
 .env.*
 .next
 docs_index
+.models/

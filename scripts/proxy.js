@@ -16,7 +16,7 @@ const server = http.createServer((req, res) => {
     }
   }
   res.writeHead(404);
-  res.end("Not found");
+  res.end(JSON.stringify({ message: "Not found" }));
 });
 
 server.listen(port, () => {

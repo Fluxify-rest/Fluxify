@@ -13,22 +13,34 @@ import {
 	integrationsGroupSchema,
 	databaseVariantSchema,
 	observabilityVariantSchema,
+	aiVariantSchema,
 } from "../api/v1/integrations/schemas";
-import { DbFactory, LokiLogger, OpenObserve } from "@fluxify/adapters";
+import {
+	AnthropicIntegration,
+	DbFactory,
+	GeminiIntegration,
+	LokiLogger,
+	MistralIntegration,
+	OpenAICompatibleIntegration,
+	OpenAIIntegration,
+	OpenObserve,
+} from "@fluxify/adapters";
+import { logger } from "@fluxify/common";
 
 export let dbIntegrationsCache: Record<string, any> = {};
 export let kvIntegrationsCache: Record<string, any> = {};
 export let observabilityIntegrationsCache: Record<string, any> = {};
+export let aiIntegrationsCache: Record<string, any> = {};
 
 export async function loadIntegrations() {
 	await loadFromDB();
 	subscribeToChannel(CHAN_ON_INTEGRATION_CHANGE, async () => {
-		console.log("integrations reloaded");
+		logger.info("integrations reloaded");
 		await loadFromDB();
 		await DbFactory.ResetConnections();
 	});
 	subscribeToChannel(CHAN_ON_APPCONFIG_CHANGE, async () => {
-		console.log("integrations reloaded");
+		logger.info("integrations reloaded");
 		await loadFromDB();
 		await DbFactory.ResetConnections();
 	});
@@ -43,14 +55,12 @@ async function loadFromDB() {
 		if (integration.group === integrationsGroupSchema.enum.database) {
 			if (integration.variant === databaseVariantSchema.enum.PostgreSQL) {
 				config = mapIntegrationToPgConnectionData(integration.config as any);
-				dbIntegrationsCache[integration.id] = config;
 			} else if (variant === databaseVariantSchema.enum.MySQL) {
 				config = mapIntegrationToMysqlConnectionData(integration.config as any);
-				dbIntegrationsCache[integration.id] = config;
 			} else if (variant === databaseVariantSchema.enum.MongoDB) {
 				config = mapIntegrationToMongoConnectionData(integration.config as any);
-				dbIntegrationsCache[integration.id] = config;
 			}
+			dbIntegrationsCache[integration.id] = config;
 		} else if (
 			integration.group === integrationsGroupSchema.enum.observability
 		) {
@@ -70,12 +80,51 @@ async function loadFromDB() {
 				);
 			}
 			observabilityIntegrationsCache[integration.id] = config;
+		} else if (integration.group === integrationsGroupSchema.enum.ai) {
+			const appConfigMap = convertObjectToMap(appConfigCache);
+			if (integration.variant === aiVariantSchema.enum.Anthropic) {
+				config = AnthropicIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			} else if (integration.variant === aiVariantSchema.enum.Gemini) {
+				config = GeminiIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			} else if (integration.variant === aiVariantSchema.enum.OpenAI) {
+				config = OpenAIIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			} else if (integration.variant === aiVariantSchema.enum.Mistral) {
+				config = MistralIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			} else if (
+				integration.variant === aiVariantSchema.enum["OpenAI Compatible"]
+			) {
+				config = OpenAICompatibleIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			}
+			aiIntegrationsCache[integration.id] = config;
 		}
 		if (config) {
 			config["variant"] = variant;
 			config["group"] = group;
 		}
 	}
+}
+
+function convertObjectToMap(config: Record<string, any>) {
+	let map = new Map<string, string>();
+	for (let key in config) {
+		map.set(key, config[key]);
+	}
+	return map;
 }
 
 function mapIntegrationToPgConnectionData(config: Record<string, string>) {
@@ -88,7 +137,7 @@ function mapIntegrationToPgConnectionData(config: Record<string, string>) {
 		if (parsed) {
 			connectionDetails = parsed;
 		} else {
-			console.log("Failed to load integration");
+			logger.info("Failed to load integration");
 		}
 	} else {
 		for (let key in config) {
@@ -111,7 +160,7 @@ function mapIntegrationToMysqlConnectionData(config: Record<string, string>) {
 		if (parsed) {
 			connectionDetails = parsed;
 		} else {
-			console.log("Failed to load integration");
+			logger.info("Failed to load integration");
 		}
 	} else {
 		for (let key in config) {
@@ -134,7 +183,7 @@ function mapIntegrationToMongoConnectionData(config: Record<string, string>) {
 		if (parsed) {
 			connectionDetails = parsed;
 		} else {
-			console.log("Failed to load integration");
+			logger.info("Failed to load integration");
 		}
 	} else {
 		for (let key in config) {

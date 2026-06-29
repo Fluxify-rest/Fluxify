@@ -9,93 +9,105 @@ const insertBlocksSchema = createInsertSchema(blocksEntity);
 const insertEntitySchema = createInsertSchema(edgesEntity);
 
 export async function upsertBlocks(
-  blocks: z.infer<typeof insertBlocksSchema>[],
-  tx?: DbTransactionType,
+	blocks: z.infer<typeof insertBlocksSchema>[],
+	tx?: DbTransactionType,
 ) {
-  await (tx ?? db)
-    .insert(blocksEntity)
-    .values(blocks)
-    .onConflictDoUpdate({
-      target: blocksEntity.id,
-      set: {
-        type: sql`excluded.type`,
-        position: sql`excluded.position`,
-        data: sql`excluded.data`,
-        updatedAt: sql`excluded.updated_at`,
-        routeId: sql`excluded.route_id`,
-      },
-    });
+	await (tx ?? db)
+		.insert(blocksEntity)
+		.values(blocks)
+		.onConflictDoUpdate({
+			target: blocksEntity.id,
+			set: {
+				type: sql`excluded.type`,
+				position: sql`excluded.position`,
+				data: sql`excluded.data`,
+				updatedAt: sql`excluded.updated_at`,
+				routeId: sql`excluded.route_id`,
+			},
+		});
 }
 
 export async function getBlocksCountByType(
-  routeId: string,
-  blocks: BlockTypes[],
-  tx?: DbTransactionType,
+	routeId: string,
+	blocks: BlockTypes[],
+	tx?: DbTransactionType,
 ) {
-  const duplicateBlocks = await (tx ?? db)
-    .select({ count: count(blocksEntity.id), type: blocksEntity.type })
-    .from(blocksEntity)
-    .where(
-      and(
-        eq(blocksEntity.routeId, routeId),
-        inArray(blocksEntity.type, blocks),
-      ),
-    )
-    .groupBy(blocksEntity.type);
+	const duplicateBlocks = await (tx ?? db)
+		.select({ count: count(blocksEntity.id), type: blocksEntity.type })
+		.from(blocksEntity)
+		.where(
+			and(
+				eq(blocksEntity.routeId, routeId),
+				inArray(blocksEntity.type, blocks),
+			),
+		)
+		.groupBy(blocksEntity.type);
 
-  return duplicateBlocks;
+	return duplicateBlocks;
 }
 
 export async function deleteBlocks(blockIds: string[], tx?: DbTransactionType) {
-  await (tx ?? db)
-    .delete(blocksEntity)
-    .where(
-      and(
-        inArray(blocksEntity.id, blockIds),
-        ne(blocksEntity.type, BlockTypes.entrypoint),
-        ne(blocksEntity.type, BlockTypes.errorHandler),
-      ),
-    );
+	await (tx ?? db)
+		.delete(blocksEntity)
+		.where(
+			and(
+				inArray(blocksEntity.id, blockIds),
+				ne(blocksEntity.type, BlockTypes.entrypoint),
+				ne(blocksEntity.type, BlockTypes.errorHandler),
+			),
+		);
 }
 
 export async function setUpdatedAtTimeForRoute(
-  routeId: string,
-  tx?: DbTransactionType,
+	routeId: string,
+	tx?: DbTransactionType,
 ) {
-  await (tx ?? db)
-    .update(routesEntity)
-    .set({ updatedAt: sql`now()` })
-    .where(eq(routesEntity.id, routeId));
+	await (tx ?? db)
+		.update(routesEntity)
+		.set({ updatedAt: sql`now()` })
+		.where(eq(routesEntity.id, routeId));
 }
 
 export async function insertEdges(
-  edges: z.infer<typeof insertEntitySchema>[],
-  tx?: DbTransactionType,
+	edges: z.infer<typeof insertEntitySchema>[],
+	tx?: DbTransactionType,
 ) {
-  await (tx ?? db).insert(edgesEntity).values(edges);
+	await (tx ?? db)
+		.insert(edgesEntity)
+		.values(edges)
+		.onConflictDoUpdate({
+			target: edgesEntity.id,
+			set: {
+				from: sql`excluded.from`,
+				to: sql`excluded.to`,
+				fromHandle: sql`excluded.from_handle`,
+				toHandle: sql`excluded.to_handle`,
+				routeId: sql`excluded.route_id`,
+			},
+		});
 }
 
 export async function deleteEdges(edgeIds: string[], tx?: DbTransactionType) {
-  await (tx ?? db).delete(edgesEntity).where(inArray(edgesEntity.id, edgeIds));
+	await (tx ?? db).delete(edgesEntity).where(inArray(edgesEntity.id, edgeIds));
 }
 
 export async function routeExist(
-  routeId: string,
-  projectIds: string[] = [],
-  tx?: DbTransactionType,
+	routeId: string,
+	projectIds: string[] = [],
+	tx?: DbTransactionType,
 ) {
-  const isSystemAdmin = projectIds.some((id) => id === "*");
-  const route = await (tx ?? db)
-    .select({
-      id: routesEntity.id,
-    })
-    .from(routesEntity)
-    .where(
-      and(
-        eq(routesEntity.id, routeId),
-        isSystemAdmin ? undefined : inArray(routesEntity.projectId, projectIds),
-      ),
-    )
-    .limit(1);
-  return route.length > 0;
+	const isSystemAdmin = projectIds.some((id) => id === "*");
+	const route = await (tx ?? db)
+		.select({
+			id: routesEntity.id,
+		})
+		.from(routesEntity)
+		.where(
+			and(
+				eq(routesEntity.id, routeId),
+				isSystemAdmin ? undefined : inArray(routesEntity.projectId, projectIds),
+			),
+		)
+		.limit(1);
+	return route.length > 0;
 }
