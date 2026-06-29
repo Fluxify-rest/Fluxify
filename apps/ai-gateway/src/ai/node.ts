@@ -1,5 +1,30 @@
-import type { GenerateTextFn, ModelFactory, NodeResult } from ".";
+import type { ModelFactory, NodeResult } from ".";
 import type { WorkflowContext } from "./types";
+import {
+	type GenerateTextResult,
+	type LanguageModelCallOptions,
+	type RequestOptions,
+	type Prompt,
+	type ToolSet,
+	Output,
+} from "ai";
+
+/**
+ * Options accepted by `callModel`. This mirrors the shape of `generateText`'s
+ * parameters but keeps the OUTPUT generic so structured-output types flow through.
+ */
+type CallModelOptions<
+	TOOLS extends ToolSet = ToolSet,
+	OUTPUT extends Output.Output = Output.Output<string, string>,
+> = LanguageModelCallOptions &
+	RequestOptions<TOOLS> &
+	Prompt & {
+		model: Parameters<Awaited<ReturnType<ModelFactory>>>[0]["model"];
+		tools?: TOOLS;
+		output?: OUTPUT;
+		[key: string]: unknown;
+	};
+
 export abstract class BaseNode<TParams, TReturnType extends NodeResult> {
 	public readonly id: string;
 	protected modelFactory: ModelFactory;
@@ -14,18 +39,23 @@ export abstract class BaseNode<TParams, TReturnType extends NodeResult> {
 		context: WorkflowContext,
 	): Promise<TReturnType>;
 
-	protected async callModel(
-		options: Parameters<GenerateTextFn>[0],
+	protected async callModel<
+		TOOLS extends ToolSet = ToolSet,
+		OUTPUT extends Output.Output = Output.Output<string, string>,
+	>(
+		options: CallModelOptions<TOOLS, OUTPUT>,
 		context: WorkflowContext,
-	) {
+	): Promise<GenerateTextResult<TOOLS, any, OUTPUT>> {
 		const generate = await this.modelFactory();
 
 		// Auto-inject registered workflow tools if the node doesn't explicitly override them
 		if (!options.tools && Object.keys(context.tools).length > 0) {
-			options.tools = context.tools;
+			options.tools = context.tools as TOOLS;
 		}
 
-		const result = await generate(options);
+		const result = await generate(
+			options as Parameters<typeof generate>[0],
+		);
 
 		// Native Telemetry Interception
 		const logTools = (toolResults?: any[]) => {
@@ -42,6 +72,6 @@ export abstract class BaseNode<TParams, TReturnType extends NodeResult> {
 			logTools(result.toolResults);
 		}
 
-		return result;
+		return result as unknown as GenerateTextResult<TOOLS, any, OUTPUT>;
 	}
 }

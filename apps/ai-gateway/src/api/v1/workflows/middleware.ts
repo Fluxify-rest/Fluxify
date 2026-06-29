@@ -5,19 +5,26 @@ import {
 	hasRoleAccess,
 	hasProjectAccess,
 } from "@fluxify/server";
-import type { User, AuthACL } from "@fluxify/server";
+import type {
+	User,
+	AuthACL,
+	aiConversationLocationEnum,
+} from "@fluxify/server";
 import { getProjectIdByRouteId } from "./post-message/repository";
+import type z from "zod";
 
 export function requireWorkflowAccess(
-	selector: (c: Context) => Promise<{
-		location?: "canvas" | "project" | "integrations" | "appconfig" | null;
-		routeId?: string | null;
-		projectId?: string | null;
-	}> | {
-		location?: "canvas" | "project" | "integrations" | "appconfig" | null;
-		routeId?: string | null;
-		projectId?: string | null;
-	}
+	selector: (c: Context) =>
+		| Promise<{
+				location?: z.infer<typeof aiConversationLocationEnum> | null;
+				routeId?: string | null;
+				projectId?: string | null;
+		  }>
+		| {
+				location?: z.infer<typeof aiConversationLocationEnum> | null;
+				routeId?: string | null;
+				projectId?: string | null;
+		  },
 ) {
 	return async (c: Context, next: Next) => {
 		const user = c.get("user") as (User & { isSystemAdmin: boolean }) | null;
@@ -43,16 +50,15 @@ export function requireWorkflowAccess(
 				throw new ForbiddenError("Route ID is required for canvas location");
 			}
 			const resolvedProjectId = await getProjectIdByRouteId(routeId);
-			if (!resolvedProjectId || !hasProjectAccess(user, acl, resolvedProjectId, "creator")) {
+			if (
+				!resolvedProjectId ||
+				!hasProjectAccess(user, acl, resolvedProjectId, "creator")
+			) {
 				throw new ForbiddenError("Access denied for this route's project");
 			}
-		} else if (location === "project") {
+		} else if (location === "ai_window") {
 			if (!projectId || !hasProjectAccess(user, acl, projectId, "creator")) {
 				throw new ForbiddenError("Access denied for this project");
-			}
-		} else if (location === "integrations" || location === "appconfig") {
-			if (!hasRoleAccess(user, acl, "creator")) {
-				throw new ForbiddenError("Access denied. Creator role required");
 			}
 		} else {
 			throw new ForbiddenError("Invalid or missing location");

@@ -17,7 +17,9 @@ export const logger = winston.createLogger({
 			format: winston.format.combine(
 				winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
 				winston.format.printf((info) => {
-					return `${info.timestamp} [${info.level.toUpperCase()}]: ${info.message}`;
+					const { timestamp, level, message, service, ...meta } = info;
+					const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : "";
+					return `${timestamp} [${level.toUpperCase()}]: ${message}${metaStr}`;
 				}),
 			),
 		}),
@@ -38,7 +40,9 @@ export function initializeLogger(config: LoggerConfig = {}): void {
 			format: winston.format.combine(
 				winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
 				winston.format.printf((info) => {
-					return `${info.timestamp} ${serviceName && `[${serviceName}]`} [${info.level.toUpperCase()}]: ${info.message}`;
+					const { timestamp, level, message, service, ...meta } = info;
+					const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : "";
+					return `${timestamp} ${serviceName ? `[${serviceName}] ` : ""}[${level.toUpperCase()}]: ${message}${metaStr}`;
 				}),
 			),
 		}),

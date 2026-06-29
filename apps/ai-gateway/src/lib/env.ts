@@ -1,7 +1,7 @@
 type LogLevel = "info" | "warn" | "error";
 type EnvType = "development" | "production" | "testing" | "staging";
 
-export const OTLP_ENDPOINT = process.env.OTLP_ENDPOINT!;
+export const OTLP_ENDPOINT = process.env.OTLP_LOGS_ENDPOINT!;
 export const PG_URL = process.env.PG_URL!;
 export const OTLP_AUTH_HEADER_NAME = process.env.OTLP_AUTH_HEADER_NAME!;
 export const OTLP_AUTH_HEADER_VALUE = process.env.OTLP_AUTH_HEADER_VALUE!;

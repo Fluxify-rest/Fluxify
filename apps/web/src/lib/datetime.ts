@@ -5,5 +5,5 @@ dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
 export function getTimeAgo(date: Date | string) {
-  return dayjs(date).toNow();
+	return dayjs(date).fromNow();
 }

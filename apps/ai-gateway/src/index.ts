@@ -10,6 +10,7 @@ import {
 	OTLP_LOGGER_ENABLED,
 } from "./lib/env";
 import { drizzleInit, initializeRedis } from "@fluxify/server";
+import { initializeWorkflowQueue } from "./workflow/queue";
 
 initializeLogger({
 	serviceName: isMainThread
@@ -20,8 +21,11 @@ initializeLogger({
 	otlpHeaders: { [OTLP_AUTH_HEADER_NAME]: OTLP_AUTH_HEADER_VALUE },
 	useOtlp: OTLP_LOGGER_ENABLED === "true",
 });
+
 initializeRedis(true);
 await drizzleInit(false);
+
+initializeWorkflowQueue();
 
 if (isMainThread) {
 	// Spawn the worker thread targeting index.ts

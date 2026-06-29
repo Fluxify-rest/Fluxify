@@ -5,8 +5,15 @@ import type {
 	WorkflowMetadata,
 	WorkflowContext,
 } from "../../ai/types";
-import type { ModelMessage, LanguageModel } from "ai";
+import { type ModelMessage, type LanguageModel, Output } from "ai";
 import { logger } from "@fluxify/common";
+import z from "zod";
+
+const classifierSchema = z.object({
+	status: z.boolean(),
+	reasoning: z.string().default(""),
+	data: z.enum(["discussion", "builder"]).optional(),
+});
 
 export interface ClassifierParams {
 	query: string;
@@ -23,6 +30,10 @@ export interface ClassifierResult extends NodeResult {
 	messageHistory?: ModelMessage[];
 	model?: LanguageModel;
 	metadata?: WorkflowMetadata;
+	tokenUsage: {
+		input: number;
+		output: number;
+	};
 }
 
 export class ClassifierNode extends BaseNode<
@@ -42,12 +53,14 @@ export class ClassifierNode extends BaseNode<
 		logger.info("[ClassifierNode] Executing classifier", { query });
 
 		try {
-			// We use callModel which invokes the modelFactory's generateText under the hood.
-			// We instruct the model to respond only with the desired route string.
 			const response = await this.callModel(
 				{
 					model,
 					messages: [...messageHistory, { role: "user", content: query }],
+					output: Output.object({
+						schema: classifierSchema,
+					}),
+					tools: {}, // need to override tools to avoid auto-injection of workflow tools
 					instructions: `You are the primary Router and Classifier Agent for Fluxify - The Open-Source No-Code REST API builder platform.
 Your critical responsibility is to analyze the user's incoming query and decide the absolute best agent to handle the request.
 About Fluxify:
@@ -62,27 +75,18 @@ Available routes:
 
 CRITICAL INSTRUCTIONS:
 - You must carefully analyze the query semantics to determine if the user wants to discuss/learn/greet (discussion) or build/modify (builder).
-- If the query lacks sufficient detail to determine a route, documentation or any query renated to *available routes* requirements, you MUST choose "reject". Fail early rather than guessing.
-- You MUST respond with exactly ONE word from the available routes: "discussion", "builder", or "reject". 
-- Do not include any other text, markdown formatting, punctuation, or reasoning in your response.`,
+- If the query lacks sufficient detail to determine a route, documentation or any query renated to *available routes* requirements, you MUST set status to false and provide meaningful reason in reasoning field. Fail early rather than guessing.
+- You MUST set status to true and **exactly ONE word** from the available routes: "discussion", "builder" or undefined to data field. 
+`,
 				},
 				context,
 			);
-			const responseText = response.text.trim().toLowerCase();
 
-			const isValidRoute = ["discussion", "builder", "reject"].includes(
-				responseText,
-			);
-			const route = isValidRoute
-				? (responseText as "discussion" | "builder" | "reject")
-				: "reject";
-			const reasoning = isValidRoute
-				? "Model classified the route."
-				: `Fallback reject. Model responded with: ${response.text}`;
+			const { status, reasoning, data: route } = response.output;
 
 			logger.info(`[ClassifierNode] Classified route: ${route}`, { reasoning });
 
-			if (route === "reject") {
+			if (!status) {
 				logger.warn("[ClassifierNode] Query rejected by classifier", {
 					reasoning,
 				});
@@ -90,6 +94,10 @@ CRITICAL INSTRUCTIONS:
 					status: "failure", // Stops the workflow
 					route,
 					reasoning,
+					tokenUsage: {
+						input: response.usage.inputTokens || 0,
+						output: response.usage.outputTokens || 0,
+					},
 				};
 			}
 
@@ -103,11 +111,20 @@ CRITICAL INSTRUCTIONS:
 				messageHistory,
 				model,
 				metadata: context.metadata,
+				tokenUsage: {
+					input: response.usage.inputTokens || 0,
+					output: response.usage.outputTokens || 0,
+				},
 			};
 		} catch (error) {
-			console.error("[ClassifierNode] Error during execution", error);
 			logger.error("[ClassifierNode] Error during execution", { error });
-			return { status: "failure" };
+			return {
+				status: "failure",
+				tokenUsage: {
+					input: 0,
+					output: 0,
+				},
+			};
 		}
 	}
 }

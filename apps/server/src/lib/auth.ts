@@ -16,6 +16,7 @@ export function initializeAuth(db: DB) {
       provider: "pg",
       schema: authSchemas,
     }),
+    basePath: "/_/admin/api/auth",
     trustedOrigins: [process.env.SERVER_URL!],
     user: {
       additionalFields: {

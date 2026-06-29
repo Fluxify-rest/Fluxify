@@ -6,7 +6,11 @@ import { DiscussionNode, type DiscussionParams } from "./nodes/discussion";
 import { createWorkflowTools } from "./tools";
 import { logger } from "@fluxify/common";
 import { generateText, type LanguageModel } from "ai";
-import { type AIWorkflowGatewayData, WORKER_QUEUE_NAME } from "./queue";
+import {
+	type AIWorkflowGatewayData,
+	type ConversationWorkflowStatus,
+	WORKER_QUEUE_NAME,
+} from "./queue";
 import { Job, Worker } from "bullmq";
 import { createAIModelInstanceFromProjectId } from "./model-factory";
 import { deleteCacheKey, setCache } from "@fluxify/server";
@@ -16,17 +20,6 @@ export interface AIWorkflowRegistry {
 	classifier: ClassifierParams;
 	discussion: DiscussionParams; // Stub for discussion agent
 	builder: any; // Stub for builder agent
-}
-
-export interface ConversationWorkflowStatus {
-	status: "started" | "running" | "error" | "completed";
-	conversationId: string;
-	currentNodeId: string;
-	executionHistory: {
-		name: string;
-		status: "success" | "failure" | "running";
-		type: "tool" | "node";
-	}[];
 }
 
 // Track active workflows in memory
@@ -132,15 +125,16 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 			model,
 		});
 		conversationStatus.status = "completed";
+		conversationStatus.finalResult = finalResult;
 		logger.info(`[Workflow] Completed for conversation: ${conversationId}`, {
 			finalResult,
 		});
-		console.log("Final result", finalResult);
 	} catch (error) {
 		logger.error(`[Workflow] Error in conversation: ${conversationId}`, {
 			error,
 		});
 		conversationStatus.status = "error";
+		conversationStatus.finalResult = `Error occured while running the agent`;
 	} finally {
 		// Clean up the active workflow map upon completion or failure
 		activeWorkflows.delete(conversationId);
