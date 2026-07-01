@@ -1,4 +1,5 @@
 import { logger } from "@fluxify/common";
+import EventEmitter from "events";
 import { Redis } from "ioredis";
 
 let redisClient: Redis = null!;
@@ -10,6 +11,7 @@ export const CHAN_ON_APPCONFIG_CHANGE = "chan:on-appconfig-change";
 export const CHAN_ON_INTEGRATION_CHANGE = "chan:on-integration-change";
 export const CHAN_AI_WORKER = "chan:ai-worker";
 export const CHAN_AI_SSE_PREFIX = "chan:ai-sse:";
+export const CHAN_ON_PROJECT_SETTING_CHANGE = "chan:on-project-setting-change";
 
 export function initializeRedis(hotReload?: boolean) {
 	const canHotreload = hotReload || process.env.HOT_RELOAD_ROUTES == "true";
@@ -84,4 +86,10 @@ export async function deleteCacheKey(key: string) {
 }
 export async function setCache(key: string, value: string) {
 	await redisClient.set(key, value);
+}
+export async function deleteCacheKeysByPattern(pattern: string) {
+	const keys = await redisClient.keys(pattern);
+	if (keys.length > 0) {
+		await redisClient.del(...keys);
+	}
 }

@@ -1,8 +1,8 @@
 import {
-  describeRoute,
-  DescribeRouteOptions,
-  resolver,
-  validator,
+	describeRoute,
+	DescribeRouteOptions,
+	resolver,
+	validator,
 } from "hono-openapi";
 import { requestQuerySchema, responseSchema } from "./dto";
 import handleRequest from "./service";
@@ -10,44 +10,44 @@ import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { HonoServer } from "../../../../types";
 import { AuthACL } from "../../../../db/schema";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireLoggedIn } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
-  description: "Get all projects with pagination",
-  operationId: "get-all-projects",
-  tags: ["Projects"],
-  responses: {
-    200: {
-      description: "Successful",
-      content: {
-        "application/json": {
-          schema: resolver(responseSchema),
-        },
-      },
-    },
-    400: {
-      description: "Invalid Pagination details",
-      content: {
-        "application/json": {
-          schema: resolver(validationErrorSchema),
-        },
-      },
-    },
-  },
+	description: "Get all projects with pagination",
+	operationId: "get-all-projects",
+	tags: ["Projects"],
+	responses: {
+		200: {
+			description: "Successful",
+			content: {
+				"application/json": {
+					schema: resolver(responseSchema),
+				},
+			},
+		},
+		400: {
+			description: "Invalid Pagination details",
+			content: {
+				"application/json": {
+					schema: resolver(validationErrorSchema),
+				},
+			},
+		},
+	},
 };
 
 export default function (app: HonoServer) {
-  app.get(
-    "/list",
-    describeRoute(openapiRouteOptions),
-    validator("query", requestQuerySchema, zodErrorCallbackParser),
-    requireRoleAccess("viewer"),
-    async (c) => {
-      const query = c.req.valid("query");
-      const acl = c.get("acl")! as AuthACL[];
-      const projectsList = acl.map((a) => a.projectId);
-      const data = await handleRequest(query, projectsList);
-      return c.json(data);
-    }
-  );
+	app.get(
+		"/list",
+		describeRoute(openapiRouteOptions),
+		validator("query", requestQuerySchema, zodErrorCallbackParser),
+		requireLoggedIn(),
+		async (c) => {
+			const query = c.req.valid("query");
+			const acl = (c.get("acl") || []) as AuthACL[];
+			const projectsList = acl.map((a) => a.projectId);
+			const data = await handleRequest(query, projectsList);
+			return c.json(data);
+		},
+	);
 }

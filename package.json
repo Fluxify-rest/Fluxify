@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "concurrently 'bun run dev:server' 'bun run dev:web' 'bun run dev:ai'",
 		"dev:server": "bun run --env-file=./apps/server/.env --watch ./apps/server/deployments/standalone.ts",
-		"dev:ai": "bun run --env-file=./apps/ai-gateway/.env --watch ./apps/ai-gateway/src/index.ts",
+		"dev:ai": "bun run --env-file=./apps/ai-gateway/.env --watch ./apps/ai-gateway/src/server.ts",
 		"dev:web": "turbo run dev --filter=@fluxify/web",
 		"dev:proxy": "bun run --watch ./scripts/proxy.js ./scripts/config.json",
 		"lint": "turbo run lint",

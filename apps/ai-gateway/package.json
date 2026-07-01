@@ -7,8 +7,8 @@
 		"@types/bun": "latest"
 	},
 	"scripts": {
-		"dev": "bun --watch run src/index.ts",
-		"build": "bun build src/index.ts --outdir=dist --bundle --target bun --minify --sourcemap=linked",
+		"dev": "bun --watch run src/server.ts",
+		"build": "bun build src/server.ts --outdir=./dist --bundle --target bun --minify --sourcemap=linked",
 		"gather": "bun ./src/scripts/gather.ts",
 		"lint": "tsgo --noEmit"
 	},

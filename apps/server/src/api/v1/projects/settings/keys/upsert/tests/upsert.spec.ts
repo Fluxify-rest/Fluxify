@@ -20,6 +20,10 @@ mock.module("../../../../../../../db/redis", () => ({
 	setCache: mock(),
 }));
 
+mock.module("../../../../../../../db/redis", () => ({
+	publishMessage: mock(),
+}));
+
 mock.module("../connection", () => ({
 	testConnectionFn: mock(),
 }));
@@ -30,6 +34,7 @@ describe("upsert project settings service", () => {
 		(repository.upsertProjectSettingKey as any).mockClear();
 		(repository.checkProjectExists as any).mockClear();
 		(redis.setCache as any).mockClear();
+		(redis.publishMessage as any).mockClear();
 		(connection.testConnectionFn as any).mockClear();
 		(getAllRepository.getProjectSettingsKeys as any).mockClear();
 	});

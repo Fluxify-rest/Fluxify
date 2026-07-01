@@ -1,4 +1,5 @@
 import { getMessages, countMessages } from "./repository";
+import { getCache, setCacheEx } from "@fluxify/server";
 
 type ConversationParams = {
 	id: string;
@@ -12,6 +13,10 @@ export default async function handleRequest(
 	page: number,
 	perPage: number,
 ) {
+	const cacheKey = `conversations:list_messages:${conversation.id}:${page}:${perPage}`;
+	const cached = await getCache(cacheKey);
+	if (cached) return JSON.parse(cached);
+
 	const offset = (page - 1) * perPage;
 	const [messages, totalCount] = await Promise.all([
 		getMessages(conversation.id, perPage, offset),
@@ -20,7 +25,7 @@ export default async function handleRequest(
 
 	const totalPages = Math.ceil(totalCount / perPage);
 
-	return {
+	const result = {
 		conversation: {
 			title: conversation.title,
 			createdAt: conversation.createdAt,
@@ -33,4 +38,7 @@ export default async function handleRequest(
 			hasNext: page < totalPages,
 		},
 	};
+
+	await setCacheEx(cacheKey, JSON.stringify(result), 120);
+	return result;
 }

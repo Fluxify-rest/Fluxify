@@ -1,6 +1,6 @@
 import z from "zod";
 import { AbstractLogger, HttpBufferedTransport } from "@fluxify/lib";
-import pino from "pino";
+import pino, { stdTimeFunctions } from "pino";
 
 export const openObserveSettings = z.object({
 	baseUrl: z.url(), // e.g. http://localhost:5080/api/<ORG_ID>
@@ -18,27 +18,40 @@ export const openObserveSettings = z.object({
 type ConfigType = Map<string, string | number | boolean> | Record<string, any>;
 
 export class OpenObserve implements AbstractLogger {
+	public static variant = "Open Observe";
 	constructor(private readonly settings: z.infer<typeof openObserveSettings>) {}
 	private logger: pino.Logger = null!;
 
-	public logInfo(value: any) {
-		this.createLogger().info(value);
+	public logInfo(value: any, ...extra: any) {
+		const logItem = {
+			message: value,
+			extra:
+				extra.length === 1 ? extra[0] : extra.length > 1 ? extra : undefined,
+		};
+		this.createLogger().info(logItem);
 	}
-	public logWarn(value: any): void {
-		this.createLogger().warn(value);
+	public logWarn(value: any, ...extra: any) {
+		const logItem = {
+			message: value,
+			extra:
+				extra.length === 1 ? extra[0] : extra.length > 1 ? extra : undefined,
+		};
+		this.createLogger().warn(logItem);
 	}
-	public logError(value: any): void {
-		this.createLogger().error(value);
+	public logError(value: any, ...extra: any) {
+		const logItem = {
+			message: value,
+			extra:
+				extra.length === 1 ? extra[0] : extra.length > 1 ? extra : undefined,
+		};
+		this.createLogger().error(logItem);
 	}
 
 	private createLogger() {
 		if (this.logger) return this.logger;
 		const settings = this.settings;
 		const headers = OpenObserve.getHeaders(settings);
-		settings.projectId = settings.projectId.replaceAll(" ", "_");
-		const baseUrl = new URL(settings.baseUrl);
-		const openObserveBaseUrl = `${baseUrl.protocol}//${baseUrl.host}`;
-		const bulkInsertUrl = `${openObserveBaseUrl}/logs_${settings.projectId}/_multi`; // ND-JSON endpoint
+		const bulkInsertUrl = `${settings.baseUrl}/logs_${settings.projectId}/_multi`; // ND-JSON endpoint
 		const transport = new HttpBufferedTransport({
 			url: bulkInsertUrl,
 			headers,
@@ -47,11 +60,12 @@ export class OpenObserve implements AbstractLogger {
 		});
 		const pinoLogger = pino(
 			{
-				timestamp: () => `,"_timestamp":"${new Date().toISOString()}"`,
+				timestamp: stdTimeFunctions.isoTime,
 				base: {
 					route_id: settings.routeId,
 					project_id: settings.projectId,
 				},
+				nestedKey: "data",
 				formatters: {
 					level(label) {
 						return { level: label };

@@ -34,4 +34,3 @@ if (isMainThread) {
 } else {
 	await runWorker();
 }
-// TODO: REMEMBER TO REMOVE EMBEDDED REDIS & POSTGRES and have support for external ones

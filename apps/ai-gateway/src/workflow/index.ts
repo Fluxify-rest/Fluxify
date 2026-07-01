@@ -13,7 +13,12 @@ import {
 } from "./queue";
 import { Job, Worker } from "bullmq";
 import { createAIModelInstanceFromProjectId } from "./model-factory";
-import { deleteCacheKey, setCache } from "@fluxify/server";
+import {
+	aiChatHistoryEntity,
+	db,
+	deleteCacheKey,
+	setCache,
+} from "@fluxify/server";
 
 // Define the NodeRegistry for type safety across the workflow
 export interface AIWorkflowRegistry {
@@ -78,6 +83,7 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 			name: nodeId,
 			status: "running",
 			type: "node",
+			input,
 		});
 		trackConversationStatus(conversationId, conversationStatus, job);
 	});
@@ -89,6 +95,8 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 			name: nodeId,
 			status: "success",
 			type: "node",
+			input,
+			output,
 		});
 		trackConversationStatus(conversationId, conversationStatus, job);
 	});
@@ -99,6 +107,8 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 			name: nodeId,
 			status: "failure",
 			type: "node",
+			input,
+			output: error,
 		});
 		trackConversationStatus(conversationId, conversationStatus, job);
 	});
@@ -109,6 +119,8 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 			name: toolName,
 			status: "success",
 			type: "tool",
+			input,
+			output,
 		});
 		trackConversationStatus(conversationId, conversationStatus, job);
 	});
@@ -137,9 +149,10 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 		conversationStatus.finalResult = `Error occured while running the agent`;
 	} finally {
 		// Clean up the active workflow map upon completion or failure
-		activeWorkflows.delete(conversationId);
 		trackConversationStatus(conversationId, conversationStatus, job, true);
 		logger.info(`[Workflow] Removed from active map: ${conversationId}`);
+		await saveConversationStatus(conversationStatus);
+		activeWorkflows.delete(conversationId);
 	}
 
 	return { conversationId, status: "started" };
@@ -181,7 +194,6 @@ export function initializeAIWorkflow() {
 				},
 				model: modelInstance!,
 			});
-			console.log("done workflow");
 		},
 		{
 			connection: {
@@ -201,7 +213,6 @@ export async function trackConversationStatus(
 	deleteCache?: boolean,
 ) {
 	const key = getConversationKey(conversationId);
-	console.log(status);
 
 	await job.updateProgress(status);
 	if (deleteCache === true) await deleteCacheKey(key);
@@ -219,6 +230,26 @@ export function buildConversationId(
 	location: string,
 ) {
 	return `${userId}-${routeId}-${projectId}-${location}`;
+}
+
+export async function saveConversationStatus(
+	status: ConversationWorkflowStatus,
+) {
+	await db.insert(aiChatHistoryEntity).values({
+		conversationId: status.conversationId,
+		status: "completed",
+		finalOutput: {
+			nodeId: status.currentNodeId,
+			result: status.finalResult,
+		},
+		workflowExecutionHistory: status.executionHistory.map((history) => ({
+			type: history.type,
+			id: history.name,
+			status: history.status,
+			input: history.input,
+			output: history.output,
+		})),
+	});
 }
 
 // Re-export nodes for external use if necessary

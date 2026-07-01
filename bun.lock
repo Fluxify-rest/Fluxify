@@ -98,6 +98,7 @@
       "name": "@fluxify/web",
       "version": "0.1.0",
       "dependencies": {
+        "@fluxify/ai-gateway": "../ai-gateway/",
         "@fluxify/adapters": "workspace:*",
         "@fluxify/blocks": "workspace:*",
         "@fluxify/lib": "workspace:*",

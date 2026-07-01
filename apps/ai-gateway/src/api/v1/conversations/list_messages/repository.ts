@@ -25,7 +25,6 @@ export async function getMessages(
 			status: aiChatHistoryEntity.status,
 			finalOutput: aiChatHistoryEntity.finalOutput,
 			workflowExecutionHistory: aiChatHistoryEntity.workflowExecutionHistory,
-			updatedAt: aiChatHistoryEntity.updatedAt,
 		})
 		.from(aiChatHistoryEntity)
 		.where(eq(aiChatHistoryEntity.conversationId, conversationId))

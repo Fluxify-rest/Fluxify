@@ -3,7 +3,7 @@ import { queryParamsSchema, routeParamsSchema } from "./dto";
 import handleRequest from "./service";
 import { zodErrorCallbackParser } from "@fluxify/server";
 import { Hono } from "hono";
-import { verifyConversationAccess } from "./middleware";
+import { verifyConversationAccess } from "../middleware";
 
 export default function (app: Hono) {
 	app.get(

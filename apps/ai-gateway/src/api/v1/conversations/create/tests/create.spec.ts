@@ -1,6 +1,6 @@
 import { describe, it, expect, spyOn, mock, afterEach } from "bun:test";
-import { verifyAccessAndProject } from "../middleware";
-import * as repository from "../repository";
+import { verifyCreateConversationAccess } from "../../middleware";
+import * as repository from "../../repository";
 import * as serverModule from "@fluxify/server";
 
 describe("Create Conversation Middleware", () => {
@@ -24,19 +24,19 @@ describe("Create Conversation Middleware", () => {
 
 	it("throws BadRequestError if location is canvas and routeId is missing", async () => {
 		const ctx = getMockContext({ location: "canvas" }) as any;
-		expect(verifyAccessAndProject(ctx, mock())).rejects.toThrow(serverModule.BadRequestError);
+		expect(verifyCreateConversationAccess(ctx, mock())).rejects.toThrow(serverModule.BadRequestError);
 	});
 
 	it("throws NotFoundError if routeId is provided but route does not exist", async () => {
 		spyOn(repository, "getRouteById").mockResolvedValue(undefined as any);
 		const ctx = getMockContext({ routeId: "r_1" }) as any;
-		expect(verifyAccessAndProject(ctx, mock())).rejects.toThrow(serverModule.NotFoundError);
+		expect(verifyCreateConversationAccess(ctx, mock())).rejects.toThrow(serverModule.NotFoundError);
 	});
 
 	it("throws BadRequestError if no projectId is available", async () => {
 		spyOn(repository, "getRouteById").mockResolvedValue({ projectId: null } as any);
 		const ctx = getMockContext({ routeId: "r_1" }) as any;
-		expect(verifyAccessAndProject(ctx, mock())).rejects.toThrow(serverModule.BadRequestError);
+		expect(verifyCreateConversationAccess(ctx, mock())).rejects.toThrow(serverModule.BadRequestError);
 	});
 
 	it("throws ForbiddenError if user lacks creator access", async () => {
@@ -44,7 +44,7 @@ describe("Create Conversation Middleware", () => {
 		spyOn(serverModule, "hasProjectAccess").mockReturnValue(false);
 
 		const ctx = getMockContext({ routeId: "r_1" }) as any;
-		expect(verifyAccessAndProject(ctx, mock())).rejects.toThrow(serverModule.ForbiddenError);
+		expect(verifyCreateConversationAccess(ctx, mock())).rejects.toThrow(serverModule.ForbiddenError);
 	});
 
 	it("calls next and sets projectId on success", async () => {
@@ -54,7 +54,7 @@ describe("Create Conversation Middleware", () => {
 		const ctx = getMockContext({ routeId: "r_1" }) as any;
 		const next = mock();
 
-		await verifyAccessAndProject(ctx, next);
+		await verifyCreateConversationAccess(ctx, next);
 		expect(ctx.set).toHaveBeenCalledWith("projectId", "p_1");
 		expect(next).toHaveBeenCalled();
 	});

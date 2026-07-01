@@ -1,26 +1,26 @@
 export interface AbstractLogger {
-  logInfo(value: any): void;
-  logWarn(value: any): void;
-  logError(value: any): void;
+	logInfo(value: any): void;
+	logWarn(value: any): void;
+	logError(value: any): void;
 }
 
 export class ConsoleLoggerProvider implements AbstractLogger {
-  constructor(private readonly routeId?: string) {}
+	constructor(private readonly routeId?: string) {}
 
-  logInfo(message: any): void {
-    console.log(`[INFO] [ROUTE: ${this.routeId}]`, message);
-  }
+	logInfo(message: any, extra = {}): void {
+		console.log(`[INFO] [ROUTE: ${this.routeId}]`, message, extra);
+	}
 
-  logWarn(message: any): void {
-    console.log(`[WARN] [ROUTE: ${this.routeId}]`, message);
-  }
+	logWarn(message: any, extra = {}): void {
+		console.log(`[WARN] [ROUTE: ${this.routeId}]`, message, extra);
+	}
 
-  logError(message: string): void {
-    console.log(`[ERROR] [ROUTE: ${this.routeId}]`, message);
-  }
+	logError(message: any, extra = {}): void {
+		console.log(`[ERROR] [ROUTE: ${this.routeId}]`, message, extra);
+	}
 }
 export class EmptyLoggerProvider implements AbstractLogger {
-  logInfo(_: any): void {}
-  logWarn(_: any): void {}
-  logError(_: any): void {}
+	logInfo(_: any): void {}
+	logWarn(_: any): void {}
+	logError(_: any): void {}
 }

@@ -148,6 +148,13 @@
       "when": 1782758232558,
       "tag": "0020_red_ink",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1782909557391,
+      "tag": "0021_tough_red_hulk",
+      "breakpoints": true
     }
   ]
 }

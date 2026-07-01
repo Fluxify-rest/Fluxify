@@ -7,6 +7,7 @@ import { drizzleInit } from "./db";
 import { initializeRedis } from "./db/redis";
 import { loadAppConfig } from "./loaders/appconfigLoader";
 import { loadIntegrations } from "./loaders/integrationsLoader";
+import { loadProjectSettings } from "./loaders/projectSettingsLoader";
 import { mapVersionedAdminRoutes } from "./api/register";
 import { errorHandler } from "./middlewares/errorHandler";
 import { auth, initializeAuth } from "./lib/auth";
@@ -81,6 +82,7 @@ async function main() {
 	}
 	await loadAppConfig();
 	await loadIntegrations();
+	await loadProjectSettings();
 	const parser = await loadRoutes();
 	await mapRouter(app, parser);
 }

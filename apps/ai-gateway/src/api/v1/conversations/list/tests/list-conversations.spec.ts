@@ -1,5 +1,5 @@
 import { describe, it, expect, spyOn, mock, afterEach } from "bun:test";
-import { verifyAccessAndProject } from "../middleware";
+import { verifyProjectConversationsAccess } from "../../middleware";
 import * as serverModule from "@fluxify/server";
 
 describe("List Conversations Middleware", () => {
@@ -13,8 +13,8 @@ describe("List Conversations Middleware", () => {
 			if (key === "acl") return acl;
 		}),
 		req: {
-			valid: mock().mockImplementation((key) => {
-				if (key === "param") return param;
+			param: mock().mockImplementation((key) => {
+				if (key === "projectId") return param.projectId;
 			}),
 		},
 	});
@@ -23,7 +23,7 @@ describe("List Conversations Middleware", () => {
 		spyOn(serverModule, "hasProjectAccess").mockReturnValue(false);
 
 		const ctx = getMockContext({ projectId: "p_1" }) as any;
-		expect(verifyAccessAndProject(ctx, mock())).rejects.toThrow(serverModule.ForbiddenError);
+		expect(verifyProjectConversationsAccess(ctx, mock())).rejects.toThrow(serverModule.ForbiddenError);
 	});
 
 	it("calls next on success", async () => {
@@ -32,7 +32,7 @@ describe("List Conversations Middleware", () => {
 		const ctx = getMockContext({ projectId: "p_1" }) as any;
 		const next = mock();
 
-		await verifyAccessAndProject(ctx, next);
+		await verifyProjectConversationsAccess(ctx, next);
 		expect(next).toHaveBeenCalled();
 	});
 });

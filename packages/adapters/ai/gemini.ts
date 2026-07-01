@@ -1,59 +1,61 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
-  createAgent,
-  DynamicStructuredTool,
-  DynamicTool,
-  Tool,
+	createAgent,
+	DynamicStructuredTool,
+	DynamicTool,
+	Tool,
 } from "langchain";
 import { BaseAiIntegration } from "./baseAiIntegration";
 
 type GeminiVariantConfig = {
-  apiKey: string;
-  model: string;
+	apiKey: string;
+	model: string;
 };
 
 export class GeminiIntegration extends BaseAiIntegration {
-  constructor(private readonly config: GeminiVariantConfig) {
-    super();
-  }
+	public static variant = "Gemini";
 
-  override createAgent(systemPrompt: string, tools: DynamicStructuredTool[]) {
-    const model = this.createModel();
-    return createAgent({
-      model,
-      tools,
-      systemPrompt,
-    });
-  }
+	constructor(private readonly config: GeminiVariantConfig) {
+		super();
+	}
 
-  override createModel() {
-    return new ChatGoogleGenerativeAI({
-      apiKey: this.config.apiKey,
-      model: this.config.model,
-    });
-  }
+	override createAgent(systemPrompt: string, tools: DynamicStructuredTool[]) {
+		const model = this.createModel();
+		return createAgent({
+			model,
+			tools,
+			systemPrompt,
+		});
+	}
 
-  static ExtractConnectionInfo(
-    config: GeminiVariantConfig,
-    appConfigs: Map<string, string>,
-  ) {
-    if (config.apiKey.startsWith("cfg:")) {
-      const apiKey = appConfigs.get(config.apiKey.slice(4));
-      if (!apiKey) {
-        throw new Error("API key not found");
-      }
-      config.apiKey = apiKey;
-    }
-    return config;
-  }
+	override createModel() {
+		return new ChatGoogleGenerativeAI({
+			apiKey: this.config.apiKey,
+			model: this.config.model,
+		});
+	}
 
-  static async TestConnection(
-    config: GeminiVariantConfig,
-    appConfigs: Map<string, string>,
-  ) {
-    const extractedConfig = this.ExtractConnectionInfo(config, appConfigs);
-    const llm = new GeminiIntegration(extractedConfig).createModel();
-    const result = await llm.invoke("Say OK");
-    return result.content.length > 0;
-  }
+	static ExtractConnectionInfo(
+		config: GeminiVariantConfig,
+		appConfigs: Map<string, string>,
+	) {
+		if (config.apiKey.startsWith("cfg:")) {
+			const apiKey = appConfigs.get(config.apiKey.slice(4));
+			if (!apiKey) {
+				throw new Error("API key not found");
+			}
+			config.apiKey = apiKey;
+		}
+		return config;
+	}
+
+	static async TestConnection(
+		config: GeminiVariantConfig,
+		appConfigs: Map<string, string>,
+	) {
+		const extractedConfig = this.ExtractConnectionInfo(config, appConfigs);
+		const llm = new GeminiIntegration(extractedConfig).createModel();
+		const result = await llm.invoke("Say OK");
+		return result.content.length > 0;
+	}
 }

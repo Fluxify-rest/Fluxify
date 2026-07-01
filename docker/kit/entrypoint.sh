@@ -10,7 +10,7 @@ bun --cwd=/app/server standalone.js &
 bun --cwd=/app/web apps/web/server.js &
 
 # Start AI Gateway
-bun --cwd=/app/ai-gateway index.js &
+bun --cwd=/app/ai-gateway server.js &
 
 # Start reverse proxy
 caddy run --config /app/Caddyfile &
