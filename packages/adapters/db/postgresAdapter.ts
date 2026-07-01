@@ -7,6 +7,7 @@ import { BunSqlPostgresDialect } from "./kyselySqlDialect";
 export type FluxifyDatabase = Record<string, Record<string, any>>;
 
 export class PostgresAdapter implements IDbAdapter {
+	public static variant = "PostgreSQL";
 	private mode: DbAdapterMode = DbAdapterMode.NORMAL;
 	private readonly HARD_LIMIT = 1000;
 

@@ -1,5 +1,9 @@
 import { upsertProjectSettingKey, checkProjectExists } from "./repository";
-import { setCache } from "../../../../../../db/redis";
+import {
+	CHAN_ON_PROJECT_SETTING_CHANGE,
+	publishMessage,
+	setCache,
+} from "../../../../../../db/redis";
 import { getProjectSettingsKeys } from "../get-all/repository";
 import {
 	projectSettingsKeySchemaMap,
@@ -9,6 +13,7 @@ import { BadRequestError } from "../../../../../../errors/badRequestError";
 import { NotFoundError } from "../../../../../../errors/notFoundError";
 
 import { testConnectionFn } from "./connection";
+import { constructProjectSettingCacheKey } from "../../../../../../lib/project-settings";
 
 export default async function handleRequest(
 	projectId: string,
@@ -48,15 +53,18 @@ export default async function handleRequest(
 
 	await upsertProjectSettingKey(projectId, key, finalValue);
 
-	const cacheKey = `PROJECT-SETTINGS-${projectId}`;
+	const cacheKey = constructProjectSettingCacheKey(projectId);
 	const settings = await getProjectSettingsKeys(projectId);
 
 	const result: Record<string, string> = {};
 	for (const s of settings) {
 		result[s.key] = s.value;
 	}
-
-	await setCache(cacheKey, JSON.stringify(result));
+	const strResult = JSON.stringify(result);
+	await Promise.all([
+		setCache(cacheKey, strResult),
+		publishMessage(CHAN_ON_PROJECT_SETTING_CHANGE, strResult),
+	]);
 
 	return { message: "Setting saved successfully" };
 }

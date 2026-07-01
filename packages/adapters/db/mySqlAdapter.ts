@@ -8,6 +8,7 @@ import { JsVM } from "@fluxify/lib";
 type FluxifyDatabase = Record<string, Record<string, any>>;
 
 export class MySqlAdapter implements IDbAdapter {
+	public static variant = "MySQL";
 	private mode: DbAdapterMode = DbAdapterMode.NORMAL;
 	private readonly HARD_LIMIT = 1000;
 

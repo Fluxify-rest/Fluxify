@@ -21,9 +21,13 @@ import { ContentfulStatusCode } from "hono/utils/http-status";
 import { JsVM } from "@fluxify/lib";
 import { startBlocksExecution } from "../../loaders/blocksLoader";
 import { appConfigCache } from "../../loaders/appconfigLoader";
-import { DbFactory } from "@fluxify/adapters";
-import { dbIntegrationsCache } from "../../loaders/integrationsLoader";
+import { createObservabilityLogger, DbFactory } from "@fluxify/adapters";
+import {
+	dbIntegrationsCache,
+	observabilityIntegrationsCache,
+} from "../../loaders/integrationsLoader";
 import * as zodLib from "zod";
+import { projectSettingsCache } from "../../loaders/projectSettingsLoader";
 
 export type HandleRequestType = {
 	data?: any;
@@ -56,6 +60,7 @@ export async function handleRequest(
 		requestBody,
 		path.id,
 		httpClient,
+		path.projectId,
 		path.routeParams,
 	);
 	const vm = createJsVM(vars);
@@ -140,15 +145,26 @@ function setupContextVars(
 	body: any,
 	routeId: string,
 	httpClient: HttpClient,
+	projectId: string,
 	params?: Record<string, string>,
 ): BlockContext["vars"] {
 	let logger: AbstractLogger = null!;
-	if (process.env.ENVIRONMENT === "development") {
-		logger = new ConsoleLoggerProvider(routeId);
-	} else {
-		// TODO: require configuration from user.
-		logger = new EmptyLoggerProvider();
+
+	const projectSettings = projectSettingsCache[projectId];
+	if ("settings.ai.loggerConnectionId" in projectSettings) {
+		const config =
+			observabilityIntegrationsCache[
+				projectSettings["settings.ai.loggerConnectionId"]
+			];
+		if (!!config) {
+			config.projectId = projectId;
+			config.routeId = routeId;
+			logger = createObservabilityLogger(config["variant"], config)!;
+		} else {
+			logger = new ConsoleLoggerProvider(routeId);
+		}
 	}
+
 	return {
 		jwt: {
 			decode(token, options) {

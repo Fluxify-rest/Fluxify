@@ -3,6 +3,7 @@ import { Connection, DbAdapterMode, DBConditionType, IDbAdapter } from ".";
 import { JsVM } from "@fluxify/lib";
 
 export class MongoAdapter implements IDbAdapter {
+	public static variant = "MongoDB";
 	private mode: DbAdapterMode = DbAdapterMode.NORMAL;
 	private readonly HARD_LIMIT = 1000;
 
