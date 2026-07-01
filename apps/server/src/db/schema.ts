@@ -155,28 +155,26 @@ export const aiChatHistoryEntity = pgTable("ai_chat_history", {
 	id: varchar({ length: 50 })
 		.primaryKey()
 		.$defaultFn(() => generateID()),
-	conversationId: varchar("conversation_id", { length: 50 }).references(
-		() => aiChatConversationsEntity.id,
-		{
+	conversationId: varchar("conversation_id", { length: 50 })
+		.references(() => aiChatConversationsEntity.id, {
 			onDelete: "cascade",
-		},
-	),
+		})
+		.notNull(),
 	status: aiChatConversationStatusEnum("status").default("running"),
 	finalOutput: jsonb("final_output").$type<{
 		nodeId: string;
 		result: any;
 	}>(),
-	workflowExecutionHistory: jsonb("workflow_execution_history").$type<{
-		type: "node" | "tool";
-		id: string;
-		input: any;
-		output: any;
-	}>(),
+	workflowExecutionHistory: jsonb("workflow_execution_history")
+		.$type<{
+			type: "node" | "tool";
+			id: string;
+			input: any;
+			status: "running" | "success" | "failure";
+			output: any;
+		}[]>()
+		.notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.notNull()
-		.$onUpdate(() => new Date()),
 });
 
 export const routesEntity = pgTable(

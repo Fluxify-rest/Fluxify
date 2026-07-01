@@ -3,7 +3,7 @@ import { queryParamsSchema, requestBodySchema } from "./dto";
 import handleRequest from "./service";
 import { zodErrorCallbackParser } from "@fluxify/server";
 import type { User } from "better-auth";
-import { verifyAccessAndProject } from "./middleware";
+import { verifyCreateConversationAccess } from "../middleware";
 import type { Hono } from "hono";
 
 export default function (app: Hono) {
@@ -11,7 +11,7 @@ export default function (app: Hono) {
 		"/",
 		validator("query", queryParamsSchema, zodErrorCallbackParser),
 		validator("json", requestBodySchema, zodErrorCallbackParser),
-		verifyAccessAndProject,
+		verifyCreateConversationAccess,
 		async (c: any) => {
 			const user = c.get("user") as User;
 			const query = c.req.valid("query");

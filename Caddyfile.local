@@ -10,14 +10,14 @@ http://localhost:8080 {
     }
 
     @admin_api path /_/admin/api/*
-    @admin_ai path /_/admin/ai/*
-
-    handle @admin_api {
-        reverse_proxy host.docker.internal:5500
-    }
+    @admin_ai path /_/admin/api/ai/*
 
     handle @admin_ai {
         reverse_proxy host.docker.internal:8001
+    }
+
+    handle @admin_api {
+        reverse_proxy host.docker.internal:5500
     }
 
     handle {

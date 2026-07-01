@@ -10,6 +10,7 @@
 	},
 	"dependencies": {
 		"@fluxify/adapters": "workspace:*",
+		"@fluxify/ai-gateway": "workspace:*",
 		"@fluxify/blocks": "workspace:*",
 		"@fluxify/lib": "workspace:*",
 		"@fluxify/server": "workspace:*",

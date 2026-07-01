@@ -1,7 +1,8 @@
 import { describe, expect, it, mock, beforeEach } from "bun:test";
 import handleRequest from "../service";
-import { verifyConversationAccess } from "../middleware";
+import { verifyConversationAccess } from "../../middleware";
 import * as repository from "../repository";
+import * as globalRepository from "../../repository";
 import * as serverUtils from "@fluxify/server";
 
 mock.module("../repository", () => ({
@@ -10,8 +11,14 @@ mock.module("../repository", () => ({
 	getConversation: mock(),
 }));
 
+mock.module("../../repository", () => ({
+	getConversation: mock(),
+}));
+
 mock.module("@fluxify/server", () => ({
 	hasProjectAccess: mock(),
+	getCache: mock().mockResolvedValue(null),
+	setCacheEx: mock(),
 	ForbiddenError: class ForbiddenError extends Error {},
 	NotFoundError: class NotFoundError extends Error {},
 }));
@@ -85,14 +92,17 @@ describe("list_messages unit tests", () => {
 				},
 				set: (key: string, value: any) => store.set(key, value),
 				req: {
-					valid: () => ({ conversationId }),
+					param: (key: string) => {
+						if (key === "conversationId") return conversationId;
+					},
+					valid: () => ({}),
 				},
 				_store: store,
 			} as any;
 		};
 
 		it("should throw NotFoundError if conversation does not exist", async () => {
-			(repository.getConversation as ReturnType<typeof mock>).mockResolvedValue(undefined);
+			(globalRepository.getConversation as ReturnType<typeof mock>).mockResolvedValue(undefined);
 			const c = getMockContext("conv-1");
 
 			expect(verifyConversationAccess(c, next)).rejects.toThrow(serverUtils.NotFoundError);
@@ -100,7 +110,7 @@ describe("list_messages unit tests", () => {
 		});
 
 		it("should throw ForbiddenError if user lacks viewer access to the project", async () => {
-			(repository.getConversation as ReturnType<typeof mock>).mockResolvedValue({
+			(globalRepository.getConversation as ReturnType<typeof mock>).mockResolvedValue({
 				id: "conv-1",
 				projectId: "proj-1",
 			});
@@ -115,7 +125,7 @@ describe("list_messages unit tests", () => {
 
 		it("should set conversation in context and call next if authorized", async () => {
 			const conv = { id: "conv-1", projectId: "proj-1" };
-			(repository.getConversation as ReturnType<typeof mock>).mockResolvedValue(conv);
+			(globalRepository.getConversation as ReturnType<typeof mock>).mockResolvedValue(conv);
 			(serverUtils.hasProjectAccess as ReturnType<typeof mock>).mockReturnValue(true);
 			
 			const c = getMockContext("conv-1");

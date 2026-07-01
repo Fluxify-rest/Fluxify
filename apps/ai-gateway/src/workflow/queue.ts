@@ -24,6 +24,8 @@ export interface ConversationWorkflowStatus {
 		name: string;
 		status: "success" | "failure" | "running";
 		type: "tool" | "node";
+		input?: any;
+		output?: any;
 	}[];
 	finalResult?: any; // depends on last node's output
 }

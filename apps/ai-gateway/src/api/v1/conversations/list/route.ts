@@ -3,14 +3,14 @@ import { queryParamsSchema, routeParamsSchema } from "./dto";
 import handleRequest from "./service";
 import { zodErrorCallbackParser, type User } from "@fluxify/server";
 import { Hono } from "hono";
-import { verifyAccessAndProject } from "./middleware";
+import { verifyProjectConversationsAccess } from "../middleware";
 
 export default function (app: Hono) {
 	app.get(
 		"/list/:projectId",
 		zValidator("param", routeParamsSchema, zodErrorCallbackParser),
 		zValidator("query", queryParamsSchema, zodErrorCallbackParser),
-		verifyAccessAndProject,
+		verifyProjectConversationsAccess,
 		async (c: any) => {
 			const user = c.get("user") as User;
 			const param = c.req.valid("param");

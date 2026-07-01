@@ -87,3 +87,9 @@ export async function deleteCacheKey(key: string) {
 export async function setCache(key: string, value: string) {
 	await redisClient.set(key, value);
 }
+export async function deleteCacheKeysByPattern(pattern: string) {
+	const keys = await redisClient.keys(pattern);
+	if (keys.length > 0) {
+		await redisClient.del(...keys);
+	}
+}
