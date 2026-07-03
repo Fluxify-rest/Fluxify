@@ -4,7 +4,7 @@ import { authClient } from "@/lib/auth";
 import React, { useState } from "react";
 import QueryLoader from "../query/queryLoader";
 import QueryError from "../query/queryError";
-import { Button, Divider, Stack, TextInput } from "@mantine/core";
+import { Button, Grid, Stack, TextInput } from "@mantine/core";
 import { TbDeviceFloppy } from "react-icons/tb";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { showNotification } from "@mantine/notifications";
@@ -50,29 +50,34 @@ const AccountDetails = () => {
 
   const { email, id } = data!.user;
   return (
-    <Stack w={"min(50%, 500px)"}>
-      <TextInput label="User Id" value={id} disabled />
-      <TextInput
-        label="User name"
-        value={username}
-        description="Name of the user"
-        name="username"
-        onChange={(e) => onNameChange(e.target.value)}
-      />
-      <TextInput label="Email" value={email} readOnly />
-      <Button
-        color="violet"
-        leftSection={<TbDeviceFloppy size={20} />}
-        w={"fit-content"}
-        variant="outline"
-        onClick={onSaveClicked}
-        loading={isPending || isRefetching}
-      >
-        Save
-      </Button>
-      <Divider />
-      <PasswordForm />
-    </Stack>
+    <Grid w="100%" gutter="xl">
+      <Grid.Col span={6}>
+        <Stack>
+          <TextInput label="User Id" value={id} disabled />
+          <TextInput
+            label="User name"
+            value={username}
+            description="Name of the user"
+            name="username"
+            onChange={(e) => onNameChange(e.target.value)}
+          />
+          <TextInput label="Email" value={email} readOnly />
+          <Button
+            color="violet"
+            leftSection={<TbDeviceFloppy size={20} />}
+            w={"fit-content"}
+            variant="outline"
+            onClick={onSaveClicked}
+            loading={isPending || isRefetching}
+          >
+            Save
+          </Button>
+        </Stack>
+      </Grid.Col>
+      <Grid.Col span={6}>
+        <PasswordForm />
+      </Grid.Col>
+    </Grid>
   );
 };
 

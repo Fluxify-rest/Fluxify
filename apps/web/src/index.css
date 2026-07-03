@@ -3,3 +3,29 @@
 .react-flow__attribution {
   display: none !important;
 }
+
+/* Custom Reusable Scrollbar Styling (Applied Globally) */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f3f0ff; /* Light violet track */
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #845ef7; /* Darker violet thumb */
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #7048e8; /* Even darker violet on hover */
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #845ef7 #f3f0ff;
+}
