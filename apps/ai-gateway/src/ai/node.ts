@@ -53,6 +53,17 @@ export abstract class BaseNode<TParams, TReturnType extends NodeResult> {
 			options.tools = context.tools as TOOLS;
 		}
 
+		// Sanitize messages to remove unsupported properties that cause some providers to fail
+		if (options.messages && Array.isArray(options.messages)) {
+			options.messages = options.messages.map((msg: any) => {
+				if (msg.role === "assistant" && (msg.reasoning_content !== undefined || msg.reasoning !== undefined)) {
+					const { reasoning_content, reasoning, ...rest } = msg;
+					return rest;
+				}
+				return msg;
+			}) as any;
+		}
+
 		const result = await generate(
 			options as Parameters<typeof generate>[0],
 		);

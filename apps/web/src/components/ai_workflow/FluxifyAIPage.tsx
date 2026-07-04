@@ -68,9 +68,7 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 		let isMounted = true;
 		let timeoutId: NodeJS.Timeout;
 
-		setWorkflowStatus(null);
-
-		const connect = (retriesLeft: number) => {
+		const connect = (retryCount: number) => {
 			if (!isMounted) return;
 			setIsWatching(true);
 			if (cleanup) cleanup();
@@ -79,17 +77,20 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 				conversationId,
 				(status) => {
 					setWorkflowStatus(status);
-					// Invalidate the messages query to trigger a refetch for partial changes
-					queryClient.invalidateQueries({
-						queryKey: ["ai-conversations", "listMessages", conversationId],
-					});
+					if (status.status === "completed" || status.status === "error") {
+						queryClient.invalidateQueries({
+							queryKey: ["ai-conversations", "listMessages", conversationId],
+						});
+					}
 				},
 				(err) => {
-					if (retriesLeft > 0) {
-						console.log(
-							`Watch connection failed. Retrying... (${retriesLeft} left)`,
-						);
-						timeoutId = setTimeout(() => connect(retriesLeft - 1), 1000);
+					if (retryCount > 0) {
+						const baseDelay = 3000;
+						const backoff = Math.pow(2, 3 - retryCount);
+						const delay = Math.min(baseDelay * backoff, 15000);
+						
+						console.log(`Watch connection failed. Retrying in ${delay}ms... (${retryCount} left)`);
+						timeoutId = setTimeout(() => connect(retryCount - 1), delay);
 					} else {
 						console.error("Workflow watch error after retries", err);
 						setIsWatching(false);
@@ -112,7 +113,7 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 			clearTimeout(timeoutId);
 			if (cleanup) cleanup();
 		};
-	}, [conversationId, queryClient, watchTrigger]);
+	}, [conversationId, watchTrigger]); // Removed queryClient to prevent unnecessary reconnections
 
 	const handleSelectConversation = (id: string) => {
 		router.push(APP_ROUTES.PROJECT_AI_CONVERSATION(projectId, id));
@@ -153,6 +154,36 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 				},
 			);
 		} else {
+			// Optimistic update
+			queryClient.setQueryData(
+				["ai-conversations", "listMessages", conversationId, { page: 1, perPage: 20 }],
+				(old: any) => {
+					if (!old) return old;
+					return {
+						...old,
+						messages: [
+							...(old.messages || []),
+							{
+								id: `temp-${Date.now()}`,
+								userQuery,
+								status: "running",
+								createdAt: new Date().toISOString(),
+							},
+						],
+					};
+				}
+			);
+
+			// Immediately set workflowStatus to show "thinking" UI
+			setWorkflowStatus({
+				status: "started",
+				conversationId,
+				userQuery,
+				currentNodeId: "classifier",
+				executionHistory: [],
+			});
+
+			setWatchTrigger((prev) => prev + 1); // Trigger watch connection immediately
 			postMessageMutation.mutate(
 				{
 					param: { conversationId },
@@ -160,24 +191,32 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 				},
 				{
 					onSuccess: () => {
-						setWatchTrigger((prev) => prev + 1);
+						// Removed from here to prevent missing early SSE events
 					},
 					onError: () => {
 						setMessage(userQuery); // Restore message on error
+						setWorkflowStatus(null); // Clear optimistic workflow state
 						showErrorNotification(new Error("Failed to send message"));
+						// Optionally rollback optimistic update here by invalidating
+						queryClient.invalidateQueries({
+							queryKey: ["ai-conversations", "listMessages", conversationId],
+						});
 					},
 				},
 			);
 		}
 	};
 
-	const isNewOrEmpty =
+	const isConversationEmpty =
 		!conversationId ||
 		(!isLoading && !isError && messagesData?.messages?.length === 0);
+
+	const showFancyUI = isConversationEmpty && !workflowStatus;
+
 	const isActionLoading =
 		postMessageMutation.isPending ||
 		createConversationMutation.isPending ||
-		isWatching;
+		createConversationMutation.isSuccess;
 
 	return (
 		<Group h="100%" gap={0} wrap="nowrap" align="stretch">
@@ -193,13 +232,15 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 					projectId={projectId}
 					activeConversationId={conversationId || null}
 					activeConversationName={
-						conversationId ? "Conversation" : "New Conversation"
+						conversationId
+							? messagesData?.conversation?.title || "Loading..."
+							: "New Conversation"
 					}
 					onSelectConversation={handleSelectConversation}
 					onNewConversation={handleNewConversation}
 				/>
 
-				{isNewOrEmpty ? (
+				{showFancyUI ? (
 					<Center flex={1} style={{ flexDirection: "column" }} px="md">
 						<Stack align="center" gap="xl" w="100%" maw={700}>
 							<Stack align="center" gap="md" mb="md">
@@ -224,18 +265,6 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 									Describe what you need, and let the AI do the heavy lifting.
 								</Text>
 							</Stack>
-
-							<Box w="100%">
-								<AIPromptInput
-									value={message}
-									onChange={setMessage}
-									onSend={handleSend}
-									isLoading={isActionLoading}
-									showSidebarToggle={!!conversationId && !showArtifactPanel}
-									onToggleSidebar={() => setShowArtifactPanel(true)}
-									minRows={2}
-								/>
-							</Box>
 						</Stack>
 					</Center>
 				) : (
@@ -249,18 +278,18 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 					/>
 				)}
 
-				{!isNewOrEmpty && (
-					<Container size="md" w="100%" p={0}>
-						<AIPromptInput
-							value={message}
-							onChange={setMessage}
-							onSend={handleSend}
-							isLoading={isActionLoading}
-							showSidebarToggle={!!conversationId && !showArtifactPanel}
-							onToggleSidebar={() => setShowArtifactPanel(true)}
-						/>
-					</Container>
-				)}
+				<Container size="md" w="100%" p={0}>
+					<AIPromptInput
+						value={message}
+						onChange={setMessage}
+						onSend={handleSend}
+						isLoading={isActionLoading}
+						showSidebarToggle={!!conversationId && !showArtifactPanel}
+						onToggleSidebar={() => setShowArtifactPanel(true)}
+						staticPlaceholder={conversationId ? "Message Fluxify..." : undefined}
+						minRows={2}
+					/>
+				</Container>
 			</Stack>
 
 			{/* Artifact Panel */}

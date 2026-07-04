@@ -107,7 +107,7 @@ const ConversationListPopover = ({
 								</Text>
 							) : (
 								<Stack gap={0}>
-									{data?.map((conv: any) => (
+									{data?.map((conv) => (
 										<Group
 											key={conv.id}
 											wrap="nowrap"
@@ -127,7 +127,7 @@ const ConversationListPopover = ({
 											}}
 										>
 											<Text size="sm" truncate style={{ flex: 1 }}>
-												{conv.name || "New Conversation"}
+												{conv.title || "No title"}
 											</Text>
 											<Menu position="bottom-end" shadow="sm">
 												<Menu.Target>
@@ -148,7 +148,7 @@ const ConversationListPopover = ({
 															e.stopPropagation();
 															setConversationToDelete({
 																id: conv.id,
-																name: conv.name || "Conversation",
+																name: conv.title || "No title",
 															});
 															setDeleteConfirmOpen(true);
 														}}

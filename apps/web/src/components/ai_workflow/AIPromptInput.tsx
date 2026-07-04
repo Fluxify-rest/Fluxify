@@ -11,6 +11,7 @@ interface AIPromptInputProps {
 	showSidebarToggle?: boolean;
 	onToggleSidebar?: () => void;
 	placeholderTexts?: string[];
+	staticPlaceholder?: string;
 	autoFocus?: boolean;
 	minRows?: number;
 	maxRows?: number;
@@ -32,11 +33,13 @@ export const AIPromptInput = ({
 	showSidebarToggle,
 	onToggleSidebar,
 	placeholderTexts = DEFAULT_PLACEHOLDERS,
+	staticPlaceholder,
 	autoFocus = true,
 	minRows = 1,
 	maxRows = 6,
 }: AIPromptInputProps) => {
-	const placeholder = useTypewriter(placeholderTexts, 40, 30, 2500);
+	const typeWriterPlaceholder = useTypewriter(placeholderTexts, 40, 30, 2500);
+	const placeholder = staticPlaceholder || typeWriterPlaceholder;
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	useEffect(() => {

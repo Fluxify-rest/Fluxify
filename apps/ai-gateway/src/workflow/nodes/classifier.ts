@@ -50,8 +50,6 @@ export class ClassifierNode extends BaseNode<
 	): Promise<ClassifierResult> {
 		const { query, messageHistory = [], model } = params;
 
-		logger.info("[ClassifierNode] Executing classifier", { query });
-
 		try {
 			const response = await this.callModel(
 				{
@@ -83,9 +81,6 @@ CRITICAL INSTRUCTIONS:
 			);
 
 			const { status, reasoning, data: route } = response.output;
-
-			logger.info(`[ClassifierNode] Classified route: ${route}`, { reasoning });
-
 			if (!status) {
 				logger.warn("[ClassifierNode] Query rejected by classifier", {
 					reasoning,
