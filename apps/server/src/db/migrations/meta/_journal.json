@@ -155,6 +155,13 @@
       "when": 1782909557391,
       "tag": "0021_tough_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1783122107413,
+      "tag": "0022_brief_daredevil",
+      "breakpoints": true
     }
   ]
 }

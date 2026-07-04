@@ -62,9 +62,12 @@ export const aiGatewayConversationsQuery = {
       return useMutation({
         mutationFn: ({ query, body }: { query: CreateConversationQueryParams; body: CreateConversationBodyParams }) =>
           aiGatewayConversationsService.create(query, body),
-        onSuccess: (_, variables) => {
+        onSuccess: (data, variables) => {
           if (variables.body.projectId) {
             aiGatewayConversationsQuery.list.invalidate(variables.body.projectId, queryClient);
+          }
+          if (variables.body.startWorkflow && data?.id) {
+            aiGatewayConversationsQuery.listMessages.invalidate(data.id, queryClient);
           }
         },
       });

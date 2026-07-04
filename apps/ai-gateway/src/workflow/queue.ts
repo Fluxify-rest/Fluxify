@@ -6,19 +6,17 @@ export const WORKER_QUEUE_NAME = "SCHEDULE_AI_WORKFLOW_QUEUE";
 export const START_WORKFLOW_JOB_NAME = "START_AI_WORKFLOW_JOB";
 
 export type AIWorkflowGatewayData = {
-	type: "start";
+	type: "start" | "continue";
 	data: {
+		conversationId: string;
 		userQuery: string;
-		location: string;
-		routeId: string;
-		projectId: string;
-		userId: string;
 	};
 };
 
 export interface ConversationWorkflowStatus {
 	status: "started" | "running" | "error" | "completed";
 	conversationId: string;
+	userQuery: string;
 	currentNodeId: string;
 	executionHistory: {
 		name: string;

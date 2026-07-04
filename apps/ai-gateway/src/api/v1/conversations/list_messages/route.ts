@@ -1,15 +1,15 @@
-import { zValidator } from "@hono/zod-validator";
 import { queryParamsSchema, routeParamsSchema } from "./dto";
 import handleRequest from "./service";
 import { zodErrorCallbackParser } from "@fluxify/server";
 import { Hono } from "hono";
 import { verifyConversationAccess } from "../middleware";
+import { validator } from "hono-openapi";
 
 export default function (app: Hono) {
 	app.get(
 		"/:conversationId/messages",
-		zValidator("param", routeParamsSchema, zodErrorCallbackParser),
-		zValidator("query", queryParamsSchema, zodErrorCallbackParser),
+		validator("param", routeParamsSchema, zodErrorCallbackParser),
+		validator("query", queryParamsSchema, zodErrorCallbackParser),
 		verifyConversationAccess,
 		async (c) => {
 			const query = c.req.valid("query");

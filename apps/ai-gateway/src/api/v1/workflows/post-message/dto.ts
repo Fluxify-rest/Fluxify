@@ -10,8 +10,6 @@ export const requestBodySchema = z.object({
 	userQuery: z.string(),
 });
 
-export const requestQuerySchema = z.object({
-	location: z.enum(["canvas", "project", "integrations", "appconfig"]),
-	routeId: z.uuid().optional(), // Only if canvas
-	projectId: z.uuid().optional(), // Only if project routes list page
+export const requestParamSchema = z.object({
+	conversationId: z.string(),
 });

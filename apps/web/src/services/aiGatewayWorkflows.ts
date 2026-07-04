@@ -1,21 +1,16 @@
 import { z } from "zod";
 import { httpClient } from "@/lib/http";
-import { postMessageDto } from "@fluxify/ai-gateway";
+import { postMessageDto, watchConversationDto } from "@fluxify/ai-gateway";
 
-const baseUrl = "ai/v1/workflows";
+const baseUrl = "/ai/v1/workflows";
 
 export const aiGatewayWorkflowsService = {
 	async postMessage(
-		query: z.infer<typeof postMessageDto.requestQuerySchema>,
+		param: z.infer<typeof postMessageDto.requestParamSchema>,
 		body: z.infer<typeof postMessageDto.requestBodySchema>,
 	): Promise<z.infer<typeof postMessageDto.responseSchema>> {
-		const queryParams = new URLSearchParams();
-		if (query.location) queryParams.set("location", query.location);
-		if (query.routeId) queryParams.set("routeId", query.routeId);
-		if (query.projectId) queryParams.set("projectId", query.projectId);
-
 		const result = await httpClient.post(
-			`${baseUrl}/post-message?${queryParams.toString()}`,
+			`${baseUrl}/${param.conversationId}`,
 			body,
 		);
 		return result.data;
@@ -23,7 +18,9 @@ export const aiGatewayWorkflowsService = {
 
 	watchConversation(
 		conversationId: string,
-		onUpdate: (status: any) => void,
+		onUpdate: (
+			status: z.infer<typeof watchConversationDto.watchResponseSchema>,
+		) => void,
 		onError?: (err: Event) => void,
 		onComplete?: () => void,
 	): () => void {
@@ -33,7 +30,9 @@ export const aiGatewayWorkflowsService = {
 
 		eventSource.onmessage = (event) => {
 			try {
-				const data = JSON.parse(event.data);
+				const data = JSON.parse(event.data) as z.infer<
+					typeof watchConversationDto.watchResponseSchema
+				>;
 				onUpdate(data);
 				if (data.status === "error" || data.status === "completed") {
 					eventSource.close();

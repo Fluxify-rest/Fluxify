@@ -1,4 +1,4 @@
-import { db, routesEntity } from "@fluxify/server";
+import { db, routesEntity, aiChatConversationsEntity } from "@fluxify/server";
 import { eq } from "drizzle-orm";
 
 export async function getProjectIdByRouteId(
@@ -11,4 +11,13 @@ export async function getProjectIdByRouteId(
 		.then((res: any) => res[0]);
 
 	return result?.projectId || null;
+}
+
+export async function getConversationById(id: string) {
+	const result = await db
+		.select()
+		.from(aiChatConversationsEntity)
+		.where(eq(aiChatConversationsEntity.id, id))
+		.then((res: any) => res[0]);
+	return result || null;
 }

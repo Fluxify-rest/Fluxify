@@ -15,7 +15,7 @@ export const getConversationsByProjectId = async (
 	if (location) {
 		condition = and(
 			condition,
-			sql`${aiChatConversationsEntity.metadata}->>'location' = ${location}`,
+			sql`${aiChatConversationsEntity.metadata} @> ${JSON.stringify({ location })}::jsonb`,
 		);
 	}
 

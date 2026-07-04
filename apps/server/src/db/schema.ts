@@ -161,6 +161,7 @@ export const aiChatHistoryEntity = pgTable("ai_chat_history", {
 		})
 		.notNull(),
 	status: aiChatConversationStatusEnum("status").default("running"),
+	userQuery: text("user_query").notNull(),
 	finalOutput: jsonb("final_output").$type<{
 		nodeId: string;
 		result: any;
