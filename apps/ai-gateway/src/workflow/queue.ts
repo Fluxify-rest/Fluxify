@@ -1,4 +1,4 @@
-import { Queue } from "bullmq";
+import { Queue, QueueEvents } from "bullmq";
 import { REDIS_HOST, REDIS_PASS, REDIS_PORT, REDIS_USER } from "../lib/env";
 import { EventEmitter } from "events";
 
@@ -6,19 +6,17 @@ export const WORKER_QUEUE_NAME = "SCHEDULE_AI_WORKFLOW_QUEUE";
 export const START_WORKFLOW_JOB_NAME = "START_AI_WORKFLOW_JOB";
 
 export type AIWorkflowGatewayData = {
-	type: "start";
+	type: "start" | "continue";
 	data: {
+		conversationId: string;
 		userQuery: string;
-		location: string;
-		routeId: string;
-		projectId: string;
-		userId: string;
 	};
 };
 
 export interface ConversationWorkflowStatus {
 	status: "started" | "running" | "error" | "completed";
 	conversationId: string;
+	userQuery: string;
 	currentNodeId: string;
 	executionHistory: {
 		name: string;
@@ -31,6 +29,7 @@ export interface ConversationWorkflowStatus {
 }
 
 export let workflowQueue: Queue<AIWorkflowGatewayData> = null!;
+export let workflowQueueEvents: QueueEvents = null!;
 export let conversationEventEmitter: EventEmitter = null!; // use this for SSE streams to get updated workflow status to send data to user
 let initialized = false;
 
@@ -46,9 +45,17 @@ export function initializeWorkflowQueue() {
 			username: REDIS_USER,
 		},
 	});
+	workflowQueueEvents = new QueueEvents(WORKER_QUEUE_NAME, {
+		connection: {
+			host: REDIS_HOST,
+			port: parseInt(REDIS_PORT),
+			password: REDIS_PASS,
+			username: REDIS_USER,
+		},
+	});
 	conversationEventEmitter = new EventEmitter();
-	workflowQueue.on("progress", (_, progress) => {
-		const updatedData = progress as ConversationWorkflowStatus;
+	workflowQueueEvents.on("progress", (args) => {
+		const updatedData = args.data as ConversationWorkflowStatus;
 		const eventId = `${updatedData.conversationId}`;
 		conversationEventEmitter.emit(eventId, updatedData);
 	});

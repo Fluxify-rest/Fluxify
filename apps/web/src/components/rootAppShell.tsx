@@ -28,7 +28,12 @@ const RootAppShell = ({
     };
   }, [path]);
 
-  if (path.startsWith("/editor") || path.startsWith("/login"))
+  if (
+    path.startsWith("/editor") ||
+    path.startsWith("/login") ||
+    path.startsWith("/new_homepage") ||
+    path.startsWith("/new_project")
+  )
     return <AuthProvider>{children}</AuthProvider>;
 
   return (
@@ -38,12 +43,14 @@ const RootAppShell = ({
         breakpoint: "xs",
       }}
     >
-      <AppShell.Navbar>
-        <RootSidebar />
-      </AppShell.Navbar>
-      <AppShell.Main>
-        <AuthProvider>{children}</AuthProvider>
-      </AppShell.Main>
+      <AuthProvider>
+        <AppShell.Navbar>
+          <RootSidebar />
+        </AppShell.Navbar>
+        <AppShell.Main>
+          {children}
+        </AppShell.Main>
+      </AuthProvider>
     </AppShell>
   );
 };

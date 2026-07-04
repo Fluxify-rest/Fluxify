@@ -9,6 +9,8 @@ export const queryParamsSchema = z.object({
 export const requestBodySchema = z.object({
 	title: z.string().optional(),
 	projectId: z.string().optional(),
+	startWorkflow: z.boolean().default(false),
+	initialUserQuery: z.string().optional(),
 });
 
 export const responseSchema = z.object({

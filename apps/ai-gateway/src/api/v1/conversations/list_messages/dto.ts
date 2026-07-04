@@ -16,8 +16,20 @@ export const messageSchema = z.object({
 	id: z.string(),
 	status: z.enum(["not_started", "running", "completed"]),
 	finalOutput: z.any().nullable().optional(),
-	workflowExecutionHistory: z.any().nullable().optional(),
-	updatedAt: z.union([z.string(), z.date()]),
+	workflowExecutionHistory: z
+		.array(
+			z.object({
+				name: z.string(),
+				status: z.enum(["success", "failure", "running"]),
+				type: z.enum(["tool", "node"]),
+				input: z.any().optional(),
+				output: z.any().optional(),
+			}),
+		)
+		.nullable()
+		.optional(),
+	createdAt: z.string(),
+	userQuery: z.string(),
 });
 
 export const responseSchema = z.object({

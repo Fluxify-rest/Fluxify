@@ -35,8 +35,6 @@ export class DiscussionNode extends BaseNode<
 	): Promise<DiscussionResult> {
 		const { query, messageHistory = [], metadata, model } = params;
 
-		logger.info("[DiscussionNode] Executing discussion", { query });
-
 		try {
 			const response = await this.callModel(
 				{
@@ -53,7 +51,8 @@ CRITICAL INSTRUCTIONS:
 - If the user's query requires knowledge you don't possess, you MUST use the \`search_docs\` tool. Do not hallucinate answers.
 - If the user's query lacks necessary context or details to provide a meaningful answer, fail early by explicitly asking the user to provide the missing information.
 - If the user asks for actions outside your capabilities (like actually building a route), politely inform them that you are the discussion agent and they should ask to build a route directly.
-- Keep your answers highly relevant, strictly based on provided documentation, and concisely structured. Decline requests that are not related to discussing the Fluxify platform.`,
+- Keep your answers highly relevant, strictly based on provided documentation, and concisely structured. Decline requests that are not related to discussing the Fluxify platform.
+- If the question is irrelavent to the user query, decline it politely.`,
 					tools: {
 						[WorkflowToolName.SEARCH_DOCS]:
 							context.tools[WorkflowToolName.SEARCH_DOCS],

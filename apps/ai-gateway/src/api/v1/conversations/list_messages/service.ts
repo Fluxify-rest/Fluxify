@@ -24,7 +24,7 @@ export default async function handleRequest(
 	]);
 
 	const totalPages = Math.ceil(totalCount / perPage);
-
+	messages.reverse();
 	const result = {
 		conversation: {
 			title: conversation.title,

@@ -35,28 +35,31 @@ const ConfirmDialog = (props: PropTypes) => {
       withCloseButton={false}
       onClose={props.onClose}
     >
-      <Text size="xl" fw={"500"}>
-        {props.title}
-      </Text>
-      <Divider mt={4} mb={"xs"} />
-      {typeof props.children === "function" ? (
-        props.children
-      ) : (
-        <Text>{props.children}</Text>
-      )}
-      <Group gap={4} my={"sm"} style={{ float: "right" }}>
-        <Button
-          onClick={onConfirm}
-          disabled={props.disableConfirm}
-          variant=""
-          color={props.confirmColor ?? "red"}
-        >
-          {props.confirmText ?? "Confirm"}
-        </Button>
-        <Button onClick={props.onClose} variant="subtle" color="dark">
-          {props.cancelText ?? "Cancel"}
-        </Button>
-      </Group>
+      <form onSubmit={(e) => { e.preventDefault(); if (!props.disableConfirm) onConfirm(); }}>
+        <Text size="xl" fw={"500"}>
+          {props.title}
+        </Text>
+        <Divider mt={4} mb={"xs"} />
+        {typeof props.children === "function" ? (
+          props.children
+        ) : (
+          <Text>{props.children}</Text>
+        )}
+        <Group gap={4} my={"sm"} style={{ float: "right" }}>
+          <Button
+            type="submit"
+            loading={loading}
+            disabled={props.disableConfirm}
+            variant=""
+            color={props.confirmColor ?? "red"}
+          >
+            {props.confirmText ?? "Confirm"}
+          </Button>
+          <Button type="button" onClick={props.onClose} variant="subtle" color="dark">
+            {props.cancelText ?? "Cancel"}
+          </Button>
+        </Group>
+      </form>
     </Modal>
   );
 };

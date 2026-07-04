@@ -18,7 +18,10 @@ import {
 	db,
 	deleteCacheKey,
 	setCache,
+	aiChatConversationsEntity,
+	deleteCacheKeysByPattern,
 } from "@fluxify/server";
+import { eq } from "drizzle-orm";
 
 // Define the NodeRegistry for type safety across the workflow
 export interface AIWorkflowRegistry {
@@ -46,19 +49,20 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	const { conversationId } = metadata;
 
 	if (activeWorkflows.has(conversationId)) {
-		logger.warn(
-			`Workflow for conversation ${conversationId} is already running.`,
-		);
 		return { conversationId, status: "already_running" };
 	}
 
-	logger.info(`Starting AI Workflow for conversation: ${conversationId}`);
+	await deleteCacheKeysByPattern(
+		`conversations:list_messages:${conversationId}:*`,
+	);
+	await deleteCacheKeysByPattern(`conversations:list:${metadata.projectId}:*`);
 
 	// Initialize the workflow
 	const workflow = new Workflow<AIWorkflowRegistry>(metadata);
 	const conversationStatus: ConversationWorkflowStatus = {
 		status: "started",
 		conversationId,
+		userQuery: initialQuery,
 		currentNodeId: "classifier",
 		executionHistory: [],
 	};
@@ -76,7 +80,6 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	// workflow.addNode(new BuilderNode(...));
 
 	workflow.onNodeEnter(async (nodeId, input) => {
-		logger.info(`[Workflow] Node ${nodeId} entered`, { input });
 		conversationStatus.status = "running";
 		conversationStatus.currentNodeId = nodeId;
 		conversationStatus.executionHistory.push({
@@ -89,7 +92,6 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	});
 
 	workflow.onNodeSuccess(async (nodeId, input, output) => {
-		logger.info(`[Workflow] Node ${nodeId} succeeded`, { output });
 		conversationStatus.currentNodeId = nodeId;
 		conversationStatus.executionHistory.push({
 			name: nodeId,
@@ -102,7 +104,6 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	});
 
 	workflow.onNodeFailure(async (nodeId, input, error) => {
-		logger.error(`[Workflow] Node ${nodeId} failed`, { error });
 		conversationStatus.executionHistory.push({
 			name: nodeId,
 			status: "failure",
@@ -114,7 +115,6 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	});
 
 	workflow.onToolExecution(async (toolName, input, output) => {
-		logger.info(`[Workflow] Tool ${toolName} executed`);
 		conversationStatus.executionHistory.push({
 			name: toolName,
 			status: "success",
@@ -150,9 +150,15 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	} finally {
 		// Clean up the active workflow map upon completion or failure
 		trackConversationStatus(conversationId, conversationStatus, job, true);
-		logger.info(`[Workflow] Removed from active map: ${conversationId}`);
 		await saveConversationStatus(conversationStatus);
 		activeWorkflows.delete(conversationId);
+
+		await deleteCacheKeysByPattern(
+			`conversations:list_messages:${conversationId}:*`,
+		);
+		await deleteCacheKeysByPattern(
+			`conversations:list:${metadata.projectId}:*`,
+		);
 	}
 
 	return { conversationId, status: "started" };
@@ -162,13 +168,22 @@ export function initializeAIWorkflow() {
 	const workflowWorker = new Worker<AIWorkflowGatewayData>(
 		WORKER_QUEUE_NAME,
 		async (job) => {
-			const { location, projectId, routeId, userId, userQuery } = job.data.data;
-			const conversationId = buildConversationId(
-				userId,
-				routeId,
-				projectId,
-				location,
-			);
+			const { conversationId, userQuery } = job.data.data;
+
+			const conversation = await db
+				.select()
+				.from(aiChatConversationsEntity)
+				.where(eq(aiChatConversationsEntity.id, conversationId))
+				.then((res: any) => res[0]);
+
+			if (!conversation) {
+				throw new Error(`Conversation ${conversationId} not found`);
+			}
+
+			const projectId = conversation.projectId;
+			const userId = conversation.userId;
+			const routeId = conversation.metadata.routeId || "none";
+			const location = conversation.metadata.location;
 
 			const modelInstance = await createAIModelInstanceFromProjectId(projectId);
 
@@ -181,7 +196,7 @@ export function initializeAIWorkflow() {
 					projectId,
 					routeId,
 					userId,
-					messageHistory: [],
+					messageHistory: [], // TODO: fetch history if continue
 				},
 				modelFactory: async (config) => {
 					return (runtimeConfig) => {
@@ -223,20 +238,12 @@ export function getConversationKey(conversationId: string): string {
 	return `workflow:${conversationId}`;
 }
 
-export function buildConversationId(
-	userId: string,
-	routeId: string,
-	projectId: string,
-	location: string,
-) {
-	return `${userId}-${routeId}-${projectId}-${location}`;
-}
-
 export async function saveConversationStatus(
 	status: ConversationWorkflowStatus,
 ) {
 	await db.insert(aiChatHistoryEntity).values({
 		conversationId: status.conversationId,
+		userQuery: status.userQuery,
 		status: "completed",
 		finalOutput: {
 			nodeId: status.currentNodeId,

@@ -21,10 +21,10 @@ export const aiGatewayConversationsService = {
 		if (query.location) queryParams.set("location", query.location);
 		if (query.routeId) queryParams.set("routeId", query.routeId);
 
-		const result = await httpClient.post(
-			`${baseUrl}/?${queryParams.toString()}`,
-			body,
-		);
+		const queryString = queryParams.toString();
+		const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+
+		const result = await httpClient.post(url, body);
 		return result.data;
 	},
 
