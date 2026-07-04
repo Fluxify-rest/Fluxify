@@ -19,6 +19,7 @@ import {
 	deleteCacheKey,
 	setCache,
 	aiChatConversationsEntity,
+	deleteCacheKeysByPattern,
 } from "@fluxify/server";
 import { eq } from "drizzle-orm";
 
@@ -55,6 +56,9 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 	}
 
 	logger.info(`Starting AI Workflow for conversation: ${conversationId}`);
+
+	await deleteCacheKeysByPattern(`conversations:list_messages:${conversationId}:*`);
+	await deleteCacheKeysByPattern(`conversations:list:${metadata.projectId}:*`);
 
 	// Initialize the workflow
 	const workflow = new Workflow<AIWorkflowRegistry>(metadata);
@@ -156,6 +160,9 @@ export async function runAIWorkflow(params: RunWorkflowParams) {
 		logger.info(`[Workflow] Removed from active map: ${conversationId}`);
 		await saveConversationStatus(conversationStatus);
 		activeWorkflows.delete(conversationId);
+
+		await deleteCacheKeysByPattern(`conversations:list_messages:${conversationId}:*`);
+		await deleteCacheKeysByPattern(`conversations:list:${metadata.projectId}:*`);
 	}
 
 	return { conversationId, status: "started" };

@@ -13,6 +13,8 @@ import { aiGatewayWorkflowsQuery } from "@/query/aiGatewayWorkflowsQuery";
 import { aiGatewayConversationsQuery } from "@/query/aiGatewayConversationsQuery";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { aiGatewayWorkflowsService } from "@/services/aiGatewayWorkflows";
+import { watchConversationDto } from "@fluxify/ai-gateway";
+import z from "zod";
 
 interface Props {
 	projectId: string;
@@ -25,7 +27,9 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 	const [message, setMessage] = useState("");
 	const [showArtifactPanel, setShowArtifactPanel] = useState(false);
 	const [isWatching, setIsWatching] = useState(false);
-	const [workflowStatus, setWorkflowStatus] = useState<any>(null);
+	const [workflowStatus, setWorkflowStatus] = useState<z.infer<
+		typeof watchConversationDto.watchResponseSchema
+	> | null>(null);
 
 	// Fetch messages if in an existing conversation
 	const {
@@ -55,39 +59,60 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 		}
 	}, [isError, error, router, projectId]);
 
+	const [watchTrigger, setWatchTrigger] = useState(0);
+
 	useEffect(() => {
 		if (!conversationId) return;
 
 		let cleanup: (() => void) | undefined;
-		setIsWatching(true);
+		let isMounted = true;
+		let timeoutId: NodeJS.Timeout;
+
 		setWorkflowStatus(null);
 
-		cleanup = aiGatewayWorkflowsService.watchConversation(
-			conversationId,
-			(status) => {
-				setWorkflowStatus(status);
-				// Invalidate the messages query to trigger a refetch for partial changes
-				queryClient.invalidateQueries({
-					queryKey: ["ai-conversations", "listMessages", conversationId],
-				});
-			},
-			(err) => {
-				console.error("Workflow watch error", err);
-				setIsWatching(false);
-			},
-			() => {
-				setIsWatching(false);
-				setWorkflowStatus(null);
-				queryClient.invalidateQueries({
-					queryKey: ["ai-conversations", "listMessages", conversationId],
-				});
-			},
-		);
+		const connect = (retriesLeft: number) => {
+			if (!isMounted) return;
+			setIsWatching(true);
+			if (cleanup) cleanup();
+
+			cleanup = aiGatewayWorkflowsService.watchConversation(
+				conversationId,
+				(status) => {
+					setWorkflowStatus(status);
+					// Invalidate the messages query to trigger a refetch for partial changes
+					queryClient.invalidateQueries({
+						queryKey: ["ai-conversations", "listMessages", conversationId],
+					});
+				},
+				(err) => {
+					if (retriesLeft > 0) {
+						console.log(
+							`Watch connection failed. Retrying... (${retriesLeft} left)`,
+						);
+						timeoutId = setTimeout(() => connect(retriesLeft - 1), 1000);
+					} else {
+						console.error("Workflow watch error after retries", err);
+						setIsWatching(false);
+					}
+				},
+				() => {
+					setIsWatching(false);
+					setWorkflowStatus(null);
+					queryClient.invalidateQueries({
+						queryKey: ["ai-conversations", "listMessages", conversationId],
+					});
+				},
+			);
+		};
+
+		connect(3); // Start connection with 3 retries
 
 		return () => {
+			isMounted = false;
+			clearTimeout(timeoutId);
 			if (cleanup) cleanup();
 		};
-	}, [conversationId, queryClient]);
+	}, [conversationId, queryClient, watchTrigger]);
 
 	const handleSelectConversation = (id: string) => {
 		router.push(APP_ROUTES.PROJECT_AI_CONVERSATION(projectId, id));
@@ -134,6 +159,9 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 					body: { userQuery },
 				},
 				{
+					onSuccess: () => {
+						setWatchTrigger((prev) => prev + 1);
+					},
 					onError: () => {
 						setMessage(userQuery); // Restore message on error
 						showErrorNotification(new Error("Failed to send message"));
@@ -154,7 +182,13 @@ const FluxifyAIPage = ({ projectId, conversationId }: Props) => {
 	return (
 		<Group h="100%" gap={0} wrap="nowrap" align="stretch">
 			{/* Main Chat Area */}
-			<Stack flex={1} h="100%" p="md" gap="md">
+			<Stack
+				flex={1}
+				h="100%"
+				p="md"
+				gap="md"
+				style={{ minWidth: 0, minHeight: 0 }}
+			>
 				<ConversationHeader
 					projectId={projectId}
 					activeConversationId={conversationId || null}

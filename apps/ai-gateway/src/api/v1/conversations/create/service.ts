@@ -1,5 +1,6 @@
 import { createConversation } from "./repository";
 import { START_WORKFLOW_JOB_NAME, workflowQueue } from "../../../../workflow/queue";
+import { deleteCacheKeysByPattern } from "@fluxify/server";
 
 export default async function handleRequest(
 	userId: string,
@@ -26,6 +27,8 @@ export default async function handleRequest(
 			},
 		});
 	}
+
+	await deleteCacheKeysByPattern(`conversations:list:${projectId}:*`);
 
 	return result;
 }

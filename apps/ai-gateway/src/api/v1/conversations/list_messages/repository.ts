@@ -23,8 +23,10 @@ export async function getMessages(
 		.select({
 			id: aiChatHistoryEntity.id,
 			status: aiChatHistoryEntity.status,
+			userQuery: aiChatHistoryEntity.userQuery,
 			finalOutput: aiChatHistoryEntity.finalOutput,
 			workflowExecutionHistory: aiChatHistoryEntity.workflowExecutionHistory,
+			createdAt: aiChatHistoryEntity.createdAt,
 		})
 		.from(aiChatHistoryEntity)
 		.where(eq(aiChatHistoryEntity.conversationId, conversationId))

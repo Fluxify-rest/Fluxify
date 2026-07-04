@@ -1,6 +1,6 @@
 import { watchConversationDto } from "@fluxify/ai-gateway";
 import { z } from "zod";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
 	Stack,
 	Group,
@@ -10,8 +10,11 @@ import {
 	Button,
 	Card,
 	Code,
+	Box,
 } from "@mantine/core";
 import { TbRefresh } from "react-icons/tb";
+import { NodeResultDisplay } from "./NodeResultDisplay";
+import { WorkflowExecutionHistory } from "./WorkflowExecutionHistory";
 
 export interface Message {
 	id: string;
@@ -21,13 +24,16 @@ export interface Message {
 		nodeId: string;
 		result: any;
 	};
-	workflowExecutionHistory?: {
-		type: "node" | "tool";
-		id: string;
-		input: any;
-		status: "running" | "success" | "failure";
-		output: any;
-	}[];
+	workflowExecutionHistory?:
+			| {
+					type: "node" | "tool";
+					id?: string;
+					name?: string;
+					input?: any;
+					status: "running" | "success" | "failure";
+					output?: any;
+			  }[]
+		| null;
 	createdAt?: string;
 }
 
@@ -50,13 +56,23 @@ export const ConversationHistory = ({
 	onRetry,
 	workflowStatus,
 }: ConversationHistoryProps) => {
-	// Sort by latest (descending order by createdAt if available, otherwise assume already sorted)
-	// We'll reverse the array to show latest at the bottom (or keep it if it's already sorted)
-	// Since standard chats show latest at the bottom, we'll keep the array order
-	// assuming it's returned sorted by createdAt ASC.
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+
+	const scrollToBottom = () => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	};
+
+	useEffect(() => {
+		scrollToBottom();
+	}, [messages, workflowStatus]);
 
 	return (
-		<Stack flex={1} justify="flex-end" style={{ overflowY: "auto" }} p="md">
+		<Stack
+			flex={1}
+			style={{ overflowY: "auto", overflowX: "hidden", minHeight: 0 }}
+			p="md"
+		>
+			<Box style={{ flexGrow: 1, minHeight: 0 }} />
 			{isLoading && (
 				<Stack w="100%" gap="md">
 					<Group justify="flex-end">
@@ -91,62 +107,92 @@ export const ConversationHistory = ({
 			{!isLoading &&
 				!isError &&
 				messages?.map((msg) => (
-					<Stack
-						key={msg.id}
-						gap="xs"
-						p="md"
-						bg="gray.0"
-						style={{ borderRadius: "8px", border: "1px solid #e9ecef" }}
-					>
-						<Text fw={600} size="sm" c="violet.7">
-							User Query
-						</Text>
-						<Code block bg="white">
-							{msg.userQuery || "No query provided"}
-						</Code>
+					<Stack key={msg.id} gap="md" w="100%">
+						{/* User Query - Right aligned */}
+						{msg.userQuery && (
+							<Group justify="flex-end" w="100%" align="flex-start">
+								<Stack
+									gap="xs"
+									p="md"
+									bg="violet.1"
+									align="flex-end"
+									style={{
+										borderRadius: "8px",
+										maxWidth: "80%",
+										minWidth: "15%",
+									}}
+								>
+									<Text fw={600} size="sm" c="violet.9">
+										You
+									</Text>
+									<Text size="sm">{msg.userQuery}</Text>
+								</Stack>
+							</Group>
+						)}
 
-						<Text fw={600} size="sm" c="grape.7" mt="sm">
-							Final Output (AI)
-						</Text>
-						<Code
-							block
-							bg="white"
-							style={{ maxHeight: "200px", overflowY: "auto" }}
-						>
-							{JSON.stringify(msg.finalOutput || null, null, 2)}
-						</Code>
-
-						<Text fw={600} size="sm" c="blue.7" mt="sm">
-							Execution History
-						</Text>
-						<Code
-							block
-							bg="white"
-							style={{ maxHeight: "300px", overflowY: "auto" }}
-						>
-							{JSON.stringify(msg.workflowExecutionHistory || [], null, 2)}
-						</Code>
+						{/* AI Output - Left aligned */}
+						{msg.finalOutput && msg.finalOutput.nodeId && (
+							<Group justify="flex-start" w="100%" align="flex-start">
+								<Box style={{ maxWidth: "80%", width: "100%" }}>
+									<NodeResultDisplay
+										nodeId={msg.finalOutput.nodeId}
+										result={msg.finalOutput.result}
+										executionHistory={msg.workflowExecutionHistory || []}
+									/>
+								</Box>
+							</Group>
+						)}
 					</Stack>
 				))}
 
+			{/* Active Workflow UI */}
 			{workflowStatus &&
 				workflowStatus.status !== "completed" &&
 				workflowStatus.status !== "error" && (
-					<Group justify="flex-start" w="100%">
-						<Card shadow="sm" padding="md" radius="md" withBorder w="100%">
-							<Text fw={500} size="sm" mb="xs" c="dimmed">
-								AI is processing...
-							</Text>
-							<Code
-								block
-								style={{ maxHeight: "300px", overflowY: "auto" }}
-								fz="xs"
+					<Stack gap="md" w="100%">
+						{/* Active User Query from Workflow */}
+						{workflowStatus.userQuery && (
+							<Group justify="flex-end" w="100%" align="flex-start">
+								<Stack
+									gap="xs"
+									p="md"
+									bg="violet.1"
+									align="flex-end"
+									style={{
+										borderRadius: "8px",
+										maxWidth: "80%",
+										minWidth: "15%",
+									}}
+								>
+									<Text fw={600} size="sm" c="violet.9">
+										You
+									</Text>
+									<Text size="sm">{workflowStatus.userQuery}</Text>
+								</Stack>
+							</Group>
+						)}
+
+						{/* Active AI Processing */}
+						<Group justify="flex-start" w="100%" align="flex-start">
+							<Card
+								shadow="sm"
+								padding="md"
+								radius="md"
+								withBorder
+								w="100%"
+								maw="80%"
 							>
-								{JSON.stringify(workflowStatus, null, 2)}
-							</Code>
-						</Card>
-					</Group>
+								<WorkflowExecutionHistory
+									history={workflowStatus.executionHistory}
+									isRunning={true}
+									defaultExpanded={true}
+								/>
+							</Card>
+						</Group>
+					</Stack>
 				)}
+
+			<div ref={messagesEndRef} />
 		</Stack>
 	);
 };
