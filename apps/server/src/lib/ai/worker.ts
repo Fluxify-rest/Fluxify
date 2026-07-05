@@ -14,7 +14,7 @@ import { AIMessage, HumanMessage } from "langchain";
 import { estimateTokenCount } from "tokenx";
 import { ProjectSettingsKeyType } from "../../api/v1/projects/settings/keys/keySchemaMap";
 import { AIAdapterFactory } from "./factory";
-import { appConfigCache } from "../../loaders/appconfigLoader";
+import { getAppConfig } from "../../loaders/appconfigLoader";
 import {
 	loadCanvasItems,
 	loadIntegrationsList,
@@ -77,6 +77,7 @@ async function processAiMessage(
 			)
 			.where(eq(routesEntity.id, routeId))
 			.limit(1);
+		const projectId = routeResult[0].projectId!;
 
 		if (routeResult.length === 0 || !routeResult[0].aiConnector) {
 			await tracker.update(
@@ -112,7 +113,7 @@ async function processAiMessage(
 		for (const key in rawConfig) {
 			const value = rawConfig[key];
 			if (typeof value === "string" && value.startsWith("cfg:")) {
-				aiConfig[key] = appConfigCache[value.slice(4)];
+				aiConfig[key] = getAppConfig(projectId!, value.slice(4));
 			} else {
 				aiConfig[key] = value;
 			}
@@ -160,8 +161,6 @@ async function processAiMessage(
 		}
 
 		const toolsCtx = new Set<string>();
-
-		const projectId = routeResult[0].projectId ?? "";
 
 		// Load canvas items, integrations and configs in parallel
 		const [canvasItems, integrationsList, configsList] = await Promise.all([

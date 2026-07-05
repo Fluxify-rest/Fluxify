@@ -9,11 +9,13 @@ import { integrationsQuery } from "@/query/integrationsQuery";
 import { useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { showErrorNotification } from "@/lib/errorNotifier";
+import { useParams } from "next/navigation";
 
 const AddIntegrationButton = () => {
+  const { projectId } = useParams<{ projectId: string }>();
   const [opened, { close, open }] = useDisclosure();
   const client = useQueryClient();
-  const { mutateAsync, isPending } = integrationsQuery.create.mutation(client);
+  const { mutateAsync, isPending } = integrationsQuery.create.mutation(projectId || "", client);
 
   async function onSubmit(values: any) {
     try {

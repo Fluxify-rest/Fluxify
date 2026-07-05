@@ -48,7 +48,7 @@ describe("getAllAppConfig service", () => {
       totalCount: 2,
     });
 
-    const result = await handleRequest({
+    const result = await handleRequest("test-project", {
       page: 1,
       perPage: 10,
     });
@@ -92,7 +92,7 @@ describe("getAllAppConfig service", () => {
       totalCount,
     });
 
-    const result = await handleRequest({
+    const result = await handleRequest("test-project", {
       page,
       perPage,
     });
@@ -110,7 +110,7 @@ describe("getAllAppConfig service", () => {
       totalCount: 0,
     });
 
-    const result = await handleRequest({
+    const result = await handleRequest("test-project", {
       page: 1,
       perPage: 10,
     });

@@ -1,8 +1,9 @@
 import { db, DbTransactionType } from "../../../../db";
 import { integrationsEntity } from "../../../../db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function updateIntegration(
+  projectId: string,
   id: string,
   data: { name: string; config: any; tags?: string[] },
   tx?: DbTransactionType,
@@ -14,26 +15,46 @@ export async function updateIntegration(
       config: data.config,
       tags: data.tags ? data.tags.join(",") : undefined,
     })
-    .where(eq(integrationsEntity.id, id))
+    .where(
+      and(
+        eq(integrationsEntity.id, id),
+        eq(integrationsEntity.projectId, projectId)
+      )
+    )
     .returning();
   return result;
 }
 
 export async function integrationExistByName(
+  projectId: string,
   name: string,
   tx?: DbTransactionType,
 ) {
   const result = await (tx ?? db)
     .select({ id: integrationsEntity.id })
     .from(integrationsEntity)
-    .where(eq(integrationsEntity.name, name));
+    .where(
+      and(
+        eq(integrationsEntity.name, name),
+        eq(integrationsEntity.projectId, projectId)
+      )
+    );
   return result[0];
 }
 
-export async function getIntegrationById(id: string, tx?: DbTransactionType) {
+export async function getIntegrationById(
+  projectId: string,
+  id: string,
+  tx?: DbTransactionType
+) {
   const result = await (tx ?? db)
     .select()
     .from(integrationsEntity)
-    .where(eq(integrationsEntity.id, id));
+    .where(
+      and(
+        eq(integrationsEntity.id, id),
+        eq(integrationsEntity.projectId, projectId)
+      )
+    );
   return result.length > 0 ? result[0] : null;
 }

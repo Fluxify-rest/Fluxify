@@ -11,7 +11,7 @@ import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackPars
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Delete app config by id",
@@ -49,11 +49,11 @@ export default function (app: HonoServer) {
   app.delete(
     "/:id",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("project_admin"),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
     validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (c) => {
-      const { id } = c.req.valid("param");
-      await handleRequest(id);
+      const { projectId, id } = c.req.valid("param");
+      await handleRequest(projectId, id);
       return c.body(null, 204);
     }
   );

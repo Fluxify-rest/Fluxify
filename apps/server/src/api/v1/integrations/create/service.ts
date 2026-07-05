@@ -17,10 +17,11 @@ import {
 import { getIntegrationTags } from "../schemas";
 
 export default async function handleRequest(
+	projectId: string,
 	data: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
 	const result = await db.transaction(async (tx) => {
-		const exist = await integrationExistByName(data.name, tx);
+		const exist = await integrationExistByName(projectId, data.name, tx);
 		if (exist) {
 			throw new ConflictError("Integration already exists");
 		}
@@ -28,7 +29,7 @@ export default async function handleRequest(
 		const appConfigKeysFromCfg = getAppConfigKeysFromData(data.config);
 		if (appConfigKeysFromCfg.length > 0) {
 			// tiny optimization
-			const appConfigKeysFromDB = new Set(await getAppConfigKeys(tx));
+			const appConfigKeysFromDB = new Set(await getAppConfigKeys(projectId, tx));
 			for (const key of appConfigKeysFromCfg) {
 				if (!appConfigKeysFromDB.has(key)) {
 					throw new NotFoundError(`App config '${key}' not found`);
@@ -42,6 +43,7 @@ export default async function handleRequest(
 				group: data.group,
 				variant: data.variant,
 				config: data.config,
+				projectId,
 				tags: getIntegrationTags(data.group, data.variant).join(","),
 			},
 			tx,

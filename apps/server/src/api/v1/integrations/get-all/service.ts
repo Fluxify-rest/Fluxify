@@ -3,6 +3,7 @@ import { responseSchema } from "./dto";
 import { getAllIntegrationsByGroup } from "./repository";
 
 export default async function handleRequest(
+	projectId: string,
 	group: string,
 	tags?: string,
 ): Promise<z.infer<typeof responseSchema>> {
@@ -12,7 +13,7 @@ export default async function handleRequest(
 				.map((t) => t.trim())
 				.filter(Boolean)
 		: undefined;
-	const result = await getAllIntegrationsByGroup(group, tagsArray);
+	const result = await getAllIntegrationsByGroup(projectId, group, tagsArray);
 	return result.map((item) => ({
 		id: item.id,
 		name: item.name!,

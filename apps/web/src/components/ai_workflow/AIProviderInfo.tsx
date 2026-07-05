@@ -23,7 +23,7 @@ const AIProviderInfo = ({ projectId }: AIProviderInfoProps) => {
 	const agentConnectionId = projectSettings?.["settings.ai.agentConnectionId"];
 
 	const { data: integration, isLoading: isIntegrationLoading } =
-		integrationsQuery.getById.query(agentConnectionId || "");
+		integrationsQuery.getById.query(projectId, agentConnectionId || "");
 
 	if (isProjectSettingsLoading || isIntegrationLoading) {
 		return <Loader size="sm" />;

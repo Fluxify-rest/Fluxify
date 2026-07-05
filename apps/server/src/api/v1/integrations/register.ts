@@ -11,7 +11,7 @@ import { HonoServer } from "../../../types";
 export default {
   name: "integrations",
   registerHandler(app: HonoServer) {
-    const router = app.basePath("/integrations");
+    const router = app.basePath("/:projectId/integrations");
     registerGetAllRoute(router);
     registerGetByIdRoute(router);
     registerCreateRoute(router);

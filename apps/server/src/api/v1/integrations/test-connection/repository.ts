@@ -1,8 +1,8 @@
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../../../../db";
 import { appConfigEntity } from "../../../../db/schema";
 
-export async function getAppConfigs(keys: string[]) {
+export async function getAppConfigs(keys: string[], projectId: string) {
   if (keys.length === 0) {
     return [];
   }
@@ -14,7 +14,12 @@ export async function getAppConfigs(keys: string[]) {
       encodingType: appConfigEntity.encodingType,
     })
     .from(appConfigEntity)
-    .where(inArray(appConfigEntity.keyName, keys));
+    .where(
+      and(
+        inArray(appConfigEntity.keyName, keys),
+        eq(appConfigEntity.projectId, projectId)
+      )
+    );
 
   return result;
 }

@@ -1,11 +1,20 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, DbTransactionType } from "../../../../db";
 import { integrationsEntity } from "../../../../db/schema";
 
-export async function getIntegrationById(id: string, tx?: DbTransactionType) {
+export async function getIntegrationById(
+  projectId: string,
+  id: string,
+  tx?: DbTransactionType
+) {
   const result = await (tx ?? db)
     .select()
     .from(integrationsEntity)
-    .where(eq(integrationsEntity.id, id));
+    .where(
+      and(
+        eq(integrationsEntity.id, id),
+        eq(integrationsEntity.projectId, projectId)
+      )
+    );
   return result[0];
 }

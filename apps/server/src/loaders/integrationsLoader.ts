@@ -5,7 +5,7 @@ import {
 	CHAN_ON_INTEGRATION_CHANGE,
 	subscribeToChannel,
 } from "../db/redis";
-import { appConfigCache } from "./appconfigLoader";
+import { getAppConfig, getProjectAppConfig } from "./appconfigLoader";
 import { parsePostgresUrl } from "../lib/parsers/postgres";
 import { parseMysqlUrl } from "../lib/parsers/mysql";
 import { parseMongoUrl } from "../lib/parsers/mongodb";
@@ -54,11 +54,20 @@ async function loadFromDB() {
 		let config: any = null!;
 		if (integration.group === integrationsGroupSchema.enum.database) {
 			if (integration.variant === databaseVariantSchema.enum.PostgreSQL) {
-				config = mapIntegrationToPgConnectionData(integration.config as any);
+				config = mapIntegrationToPgConnectionData(
+					integration.projectId!,
+					integration.config as any,
+				);
 			} else if (variant === databaseVariantSchema.enum.MySQL) {
-				config = mapIntegrationToMysqlConnectionData(integration.config as any);
+				config = mapIntegrationToMysqlConnectionData(
+					integration.projectId!,
+					integration.config as any,
+				);
 			} else if (variant === databaseVariantSchema.enum.MongoDB) {
-				config = mapIntegrationToMongoConnectionData(integration.config as any);
+				config = mapIntegrationToMongoConnectionData(
+					integration.projectId!,
+					integration.config as any,
+				);
 			}
 			dbIntegrationsCache[integration.id] = config;
 		} else if (
@@ -69,19 +78,21 @@ async function loadFromDB() {
 			) {
 				config = OpenObserve.extractConnectionInfo(
 					integration.config as any,
-					appConfigCache,
+					getProjectAppConfig(integration.projectId!),
 				);
 			} else if (
 				integration.variant === observabilityVariantSchema.enum["Loki"]
 			) {
 				config = LokiLogger.extractConnectionInfo(
 					integration.config as any,
-					appConfigCache,
+					getProjectAppConfig(integration.projectId!),
 				);
 			}
 			observabilityIntegrationsCache[integration.id] = config;
 		} else if (integration.group === integrationsGroupSchema.enum.ai) {
-			const appConfigMap = convertObjectToMap(appConfigCache);
+			const appConfigMap = convertObjectToMap(
+				getProjectAppConfig(integration.projectId!),
+			);
 			if (integration.variant === aiVariantSchema.enum.Anthropic) {
 				config = AnthropicIntegration.ExtractConnectionInfo(
 					integration.config as any,
@@ -127,11 +138,14 @@ function convertObjectToMap(config: Record<string, any>) {
 	return map;
 }
 
-function mapIntegrationToPgConnectionData(config: Record<string, string>) {
+function mapIntegrationToPgConnectionData(
+	projectId: string,
+	config: Record<string, string>,
+) {
 	let connectionDetails = {} as any;
 	if (config.source === "url") {
 		config.url = config.url.toString().startsWith("cfg:")
-			? appConfigCache[config.url.slice(4)].toString()
+			? (getAppConfig(projectId, config.url.slice(4)) as string)
 			: config.url;
 		const parsed = parsePostgresUrl(config.url);
 		if (parsed) {
@@ -143,18 +157,21 @@ function mapIntegrationToPgConnectionData(config: Record<string, string>) {
 		for (let key in config) {
 			const value = config[key];
 			connectionDetails[key] = value.toString().startsWith("cfg:")
-				? appConfigCache[value.slice(4)]
+				? getAppConfig(projectId, value.slice(4))
 				: value;
 		}
 	}
 	return connectionDetails;
 }
 
-function mapIntegrationToMysqlConnectionData(config: Record<string, string>) {
+function mapIntegrationToMysqlConnectionData(
+	projectId: string,
+	config: Record<string, string>,
+) {
 	let connectionDetails = {} as any;
 	if (config.source === "url") {
 		config.url = config.url.toString().startsWith("cfg:")
-			? appConfigCache[config.url.slice(4)].toString()
+			? (getAppConfig(projectId, config.url.slice(4)) as string)
 			: config.url;
 		const parsed = parseMysqlUrl(config.url);
 		if (parsed) {
@@ -166,18 +183,21 @@ function mapIntegrationToMysqlConnectionData(config: Record<string, string>) {
 		for (let key in config) {
 			const value = config[key];
 			connectionDetails[key] = value.toString().startsWith("cfg:")
-				? appConfigCache[value.slice(4)]
+				? getAppConfig(projectId, value.slice(4))
 				: value;
 		}
 	}
 	return connectionDetails;
 }
 
-function mapIntegrationToMongoConnectionData(config: Record<string, string>) {
+function mapIntegrationToMongoConnectionData(
+	projectId: string,
+	config: Record<string, string>,
+) {
 	let connectionDetails = {} as any;
 	if (config.source === "url") {
 		config.url = config.url.toString().startsWith("cfg:")
-			? appConfigCache[config.url.slice(4)].toString()
+			? (getAppConfig(projectId, config.url.slice(4)) as string)
 			: config.url;
 		const parsed = parseMongoUrl(config.url);
 		if (parsed) {
@@ -189,7 +209,7 @@ function mapIntegrationToMongoConnectionData(config: Record<string, string>) {
 		for (let key in config) {
 			const value = config[key];
 			connectionDetails[key] = value.toString().startsWith("cfg:")
-				? appConfigCache[value.slice(4)]
+				? getAppConfig(projectId, value.slice(4))
 				: value;
 		}
 	}

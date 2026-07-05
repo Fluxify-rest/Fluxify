@@ -10,13 +10,14 @@ import { AppConfigDataTypes } from "../../../../db/schema";
 import { BadRequestError } from "../../../../errors/badRequestError";
 
 export default async function handleRequest(
+  projectId: string,
   body: z.infer<typeof requestBodySchema>
 ): Promise<z.infer<typeof responseSchema>> {
   const name = body.keyName;
   const dataType = body.dataType;
   handleValidation(dataType, body.value);
   const result = await db.transaction(async (tx) => {
-    const exist = await keyExists(name, tx);
+    const exist = await keyExists(name, projectId, tx);
     if (exist) {
       throw new ConflictError("Key already exists");
     }
@@ -24,7 +25,7 @@ export default async function handleRequest(
       body.value = EncryptionService.encrypt(body.value);
     }
     body.value = EncryptionService.encodeData(body.value, body.encodingType);
-    const dbResult = await createAppConfig(body, tx);
+    const dbResult = await createAppConfig({ ...body, projectId }, tx);
     return dbResult;
   });
 

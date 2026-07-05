@@ -17,6 +17,7 @@ import QueryError from "../query/queryError";
 import { useQueryClient } from "@tanstack/react-query";
 import KeySelector from "./keySelector";
 import { useDisclosure } from "@mantine/hooks";
+import { useParams } from "next/navigation";
 
 type PropTypes = {
   value: string;
@@ -29,8 +30,9 @@ type PropTypes = {
 const AppConfigSelector = (props: PropTypes) => {
   const [value, setValue] = useState("");
   const [showModal, { open, close }] = useDisclosure(false);
+  const { projectId } = useParams<{ projectId: string }>();
   const { data, isLoading, isRefetching, isError } =
-    appConfigQuery.getKeysList.useQuery("");
+    appConfigQuery.getKeysList.useQuery(projectId as string, "");
   const client = useQueryClient();
 
   React.useEffect(() => {
@@ -38,7 +40,7 @@ const AppConfigSelector = (props: PropTypes) => {
   }, [props.value]);
 
   function refetch() {
-    appConfigQuery.getKeysList.invalidate("", client);
+    appConfigQuery.getKeysList.invalidate(projectId as string, "", client);
   }
 
   function onSelectChange(val: string) {

@@ -34,6 +34,7 @@ import { EncryptionService } from "../../../../lib/encryption";
 import { getSchema } from "../helpers";
 
 export async function testIntegrationConnection(
+	projectId: string,
 	group: z.infer<typeof integrationsGroupSchema>,
 	variant: string,
 	config: any,
@@ -55,7 +56,7 @@ export async function testIntegrationConnection(
 	}
 	const integrationData = result.data;
 	const keys = getAppConfigKeysFromData(integrationData);
-	const appConfigs = await decodeAppConfig(keys);
+	const appConfigs = await decodeAppConfig(keys, projectId);
 
 	switch (group) {
 		case "database":
@@ -81,10 +82,11 @@ export async function testIntegrationConnection(
 }
 
 export default async function handleRequest(
+	projectId: string,
 	body: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
 	const { group, variant, config: data } = body;
-	return testIntegrationConnection(group, variant, data);
+	return testIntegrationConnection(projectId, group, variant, data);
 }
 
 async function testDatabasesConnection(
@@ -253,8 +255,8 @@ export async function testAiConnection(
 	}
 }
 
-async function decodeAppConfig(keys: string[]) {
-	const appConfigs = await getAppConfigs(keys);
+async function decodeAppConfig(keys: string[], projectId: string) {
+	const appConfigs = await getAppConfigs(keys, projectId);
 	const configMap = new Map<string, string>();
 	appConfigs.forEach((config) => {
 		if (config.isEncrypted) {

@@ -1,4 +1,5 @@
 import { isAxiosError } from "axios";
+import { useParams } from "next/navigation";
 import { integrationsQuery } from "@/query/integrationsQuery";
 import { Button } from "@mantine/core";
 import { notifications, showNotification } from "@mantine/notifications";
@@ -15,8 +16,9 @@ type PropTypes = {
 };
 
 const TestIntegrationConnectionButton = (props: PropTypes) => {
+  const { projectId } = useParams<{ projectId: string }>();
   const { mutateAsync, isPending, reset } =
-    integrationsQuery.testConnection.mutation();
+    integrationsQuery.testConnection.mutation(projectId || "");
 
   async function onClick() {
     if (isPending && props.showStop) {

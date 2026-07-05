@@ -11,79 +11,87 @@ type UpdateIntegrationType = z.infer<
 
 export const integrationsQuery = {
 	getAll: {
-		query: (group: string, tags?: string[]) => {
+		query: (projectId: string, group: string, tags?: string[]) => {
 			return useQuery({
-				queryKey: ["integrations", group, tags],
-				queryFn: () => integrationService.getAll(group, tags),
+				queryKey: ["integrations", projectId, group, tags],
+				queryFn: () => integrationService.getAll(projectId, group, tags),
 				refetchOnWindowFocus: false,
+				enabled: !!projectId,
 			});
 		},
-		invalidate: (group: string, client: QueryClient, tags?: string[]) => {
+		invalidate: (
+			projectId: string,
+			group: string,
+			client: QueryClient,
+			tags?: string[],
+		) => {
 			return client.invalidateQueries({
-				queryKey: ["integrations", group, tags],
+				queryKey: ["integrations", projectId, group, tags],
 			});
 		},
 	},
 	getById: {
-		query: (id: string) => {
+		query: (projectId: string, id: string) => {
 			return useQuery({
-				queryKey: ["integrations", "getById", id],
+				queryKey: ["integrations", projectId, "getById", id],
 				queryFn: () => {
-					if (!id) return null;
-					return integrationService.getById(id);
+					if (!id || !projectId) return null;
+					return integrationService.getById(projectId, id);
 				},
 				refetchOnWindowFocus: false,
+				enabled: !!projectId && !!id,
 			});
 		},
-		invalidate: (id: string, client: QueryClient) => {
+		invalidate: (projectId: string, id: string, client: QueryClient) => {
 			return client.invalidateQueries({
-				queryKey: ["integrations", "getById", id],
+				queryKey: ["integrations", projectId, "getById", id],
 			});
 		},
 	},
 	create: {
-		mutation: (client: QueryClient) => {
+		mutation: (projectId: string, client: QueryClient) => {
 			return useMutation({
 				mutationFn: (data: CreateIntegrationType) =>
-					integrationService.create(data),
+					integrationService.create(projectId, data),
 				onSuccess: () => {
 					client.invalidateQueries({
-						queryKey: ["integrations"],
+						queryKey: ["integrations", projectId],
 					});
 				},
 			});
 		},
 	},
 	update: {
-		mutation: (client: QueryClient) => {
+		mutation: (projectId: string, client: QueryClient) => {
 			return useMutation({
 				mutationFn: (params: { id: string; data: UpdateIntegrationType }) =>
-					integrationService.update(params.id, params.data),
+					integrationService.update(projectId, params.id, params.data),
 				onSuccess: () => {
 					client.invalidateQueries({
-						queryKey: ["integrations"],
+						queryKey: ["integrations", projectId],
 					});
 				},
 			});
 		},
 	},
 	delete: {
-		mutation: (client: QueryClient) => {
+		mutation: (projectId: string, client: QueryClient) => {
 			return useMutation({
-				mutationFn: (id: string) => integrationService.delete(id),
+				mutationFn: (id: string) => integrationService.delete(projectId, id),
 				onSuccess: () => {
 					client.invalidateQueries({
-						queryKey: ["integrations"],
+						queryKey: ["integrations", projectId],
 					});
 				},
 			});
 		},
 	},
 	testConnection: {
-		mutation: () => {
+		mutation: (projectId: string) => {
 			return useMutation({
 				mutationFn: (params: { group: string; variant: string; config: any }) =>
 					integrationService.testConnection(
+						projectId,
 						params.group,
 						params.variant,
 						params.config,
@@ -92,11 +100,11 @@ export const integrationsQuery = {
 		},
 	},
 	testExistingConnection: {
-		mutation: () => {
+		mutation: (projectId: string) => {
 			return useMutation({
 				mutationFn: (id: string) => {
-					if (!id) return Promise.resolve(null);
-					return integrationService.testExistingConnection(id);
+					if (!id || !projectId) return Promise.resolve(null);
+					return integrationService.testExistingConnection(projectId, id);
 				},
 			});
 		},

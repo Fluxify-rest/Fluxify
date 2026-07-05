@@ -21,25 +21,28 @@ import { ConflictError } from "../../../../errors/conflictError";
 import { getIntegrationTags } from "../schemas";
 
 export default async function handleRequest(
+	projectId: string,
 	id: string,
 	body: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
 	const result = await db.transaction(async (tx) => {
-		const integration = await getIntegrationById(id, tx);
+		const integration = await getIntegrationById(projectId, id, tx);
 		if (!integration) {
 			throw new NotFoundError("Integration not found");
 		}
-		const integrationExist = await integrationExistByName(body.name, tx);
+		const integrationExist = await integrationExistByName(projectId, body.name, tx);
 		if (integrationExist && integrationExist.id !== id) {
 			throw new ConflictError("Integration name already exists");
 		}
 		await validateAppConfig(
+			projectId,
 			body.config,
 			integration.group!,
 			integration.variant!,
 			tx,
 		);
 		const updatedIntegration = await updateIntegration(
+			projectId,
 			id,
 			{
 				...body,
@@ -60,6 +63,7 @@ export default async function handleRequest(
 }
 
 async function validateAppConfig(
+	projectId: string,
 	appConfig: any,
 	group: string,
 	variant: string,
@@ -71,7 +75,7 @@ async function validateAppConfig(
 		throw new ValidationError(mapZodErrorToFieldErrors(parsedResult.error));
 	}
 	const appConfigKeys = getAppConfigKeysFromData(appConfig);
-	const keysFromDB = new Set(await getAppConfigKeys(tx));
+	const keysFromDB = new Set(await getAppConfigKeys(projectId, tx));
 	for (const key of appConfigKeys) {
 		if (!keysFromDB.has(key)) {
 			throw new NotFoundError(`App config '${key}' not found`);

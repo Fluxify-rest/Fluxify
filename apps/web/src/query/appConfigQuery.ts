@@ -14,99 +14,102 @@ type UpdateAppConfigBodyParams = z.infer<
 
 export const appConfigQuery = {
   getAll: {
-    useQuery(query: GetAllAppConfigQueryParams) {
+    useQuery(projectId: string, query: GetAllAppConfigQueryParams) {
       return useQuery({
-        queryKey: ["app-config", "list", query],
-        queryFn: () => appConfigService.getAll(query),
+        queryKey: ["app-config", projectId, "list", query],
+        queryFn: () => appConfigService.getAll(projectId, query),
         refetchOnWindowFocus: false,
+        enabled: !!projectId,
       });
     },
-    invalidate(query: GetAllAppConfigQueryParams, queryClient: QueryClient) {
+    invalidate(projectId: string, query: GetAllAppConfigQueryParams, queryClient: QueryClient) {
       queryClient.invalidateQueries({
-        queryKey: ["app-config", "list", query],
+        queryKey: ["app-config", projectId, "list", query],
       });
     },
   },
   getById: {
-    useQuery(id: string) {
+    useQuery(projectId: string, id: string) {
       return useQuery({
-        queryKey: ["app-config", "getById", id],
+        queryKey: ["app-config", projectId, "getById", id],
         queryFn: () => {
-          if (!id) {
+          if (!projectId || !id) {
             return null;
           }
-          return appConfigService.getById(id);
+          return appConfigService.getById(projectId, id);
         },
         refetchOnWindowFocus: false,
+        enabled: !!projectId && !!id,
       });
     },
-    invalidate(id: string, queryClient: QueryClient) {
+    invalidate(projectId: string, id: string, queryClient: QueryClient) {
       queryClient.invalidateQueries({
-        queryKey: ["app-config", "getById", id],
+        queryKey: ["app-config", projectId, "getById", id],
       });
     },
   },
   getKeysList: {
-    useQuery(search: string) {
+    useQuery(projectId: string, search: string) {
       return useQuery({
-        queryKey: ["app-config", "getKeysList", search],
-        queryFn: () => appConfigService.getKeysList(search),
+        queryKey: ["app-config", projectId, "getKeysList", search],
+        queryFn: () => appConfigService.getKeysList(projectId, search),
         refetchOnWindowFocus: false,
+        enabled: !!projectId,
       });
     },
-    invalidate(search: string, queryClient: QueryClient) {
+    invalidate(projectId: string, search: string, queryClient: QueryClient) {
       queryClient.invalidateQueries({
-        queryKey: ["app-config", "getKeysList", search],
+        queryKey: ["app-config", projectId, "getKeysList", search],
       });
     },
   },
   create: {
-    useMutation(queryClient: QueryClient) {
+    useMutation(projectId: string, queryClient: QueryClient) {
       return useMutation({
         mutationFn: (data: CreateAppConfigBodyParams) =>
-          appConfigService.create(data),
+          appConfigService.create(projectId, data),
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["app-config", "list"],
+            queryKey: ["app-config", projectId],
           });
         },
       });
     },
   },
   update: {
-    useMutation(id: string, queryClient: QueryClient) {
+    useMutation(projectId: string, id: string, queryClient: QueryClient) {
       return useMutation({
         mutationFn: (data: UpdateAppConfigBodyParams) =>
-          appConfigService.update(id, data),
+          appConfigService.update(projectId, id, data),
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["app-config", "list"],
+            queryKey: ["app-config", projectId],
           });
         },
       });
     },
   },
   delete: {
-    useMutation(queryClient: QueryClient) {
+    useMutation(projectId: string, queryClient: QueryClient) {
       return useMutation({
-        mutationFn: (id: string) => appConfigService.delete(id),
+        mutationFn: (id: string) => appConfigService.delete(projectId, id),
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["app-config", "list"],
+            queryKey: ["app-config", projectId],
           });
         },
       });
     },
   },
   deleteBulk: {
-    useMutation(queryClient: QueryClient) {
+    useMutation(projectId: string, queryClient: QueryClient) {
       return useMutation({
         mutationFn: (
           data: z.infer<typeof appConfigService.deleteBulkRequestBodySchema>
-        ) => appConfigService.deleteBulk(data),
+        ) => appConfigService.deleteBulk(projectId, data),
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: ["app-config", "list"],
+            queryKey: ["app-config", projectId],
           });
         },
       });

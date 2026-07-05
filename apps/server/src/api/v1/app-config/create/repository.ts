@@ -1,7 +1,7 @@
 import { createInsertSchema } from "drizzle-zod";
 import { db, DbTransactionType } from "../../../../db";
 import { appConfigEntity } from "../../../../db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import z from "zod";
 
 const createSchema = createInsertSchema(appConfigEntity);
@@ -21,11 +21,20 @@ export async function createAppConfig(
   return result.length > 0 ? result[0] : null;
 }
 
-export async function keyExists(keyName: string, tx?: DbTransactionType) {
+export async function keyExists(
+  keyName: string,
+  projectId: string,
+  tx?: DbTransactionType
+) {
   const result = await (tx ?? db)
     .select({ id: appConfigEntity.id })
     .from(appConfigEntity)
-    .where(eq(appConfigEntity.keyName, keyName))
+    .where(
+      and(
+        eq(appConfigEntity.keyName, keyName),
+        eq(appConfigEntity.projectId, projectId)
+      )
+    )
     .limit(1);
   return result.length > 0;
 }

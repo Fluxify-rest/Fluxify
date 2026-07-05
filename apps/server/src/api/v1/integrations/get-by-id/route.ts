@@ -10,7 +10,7 @@ import handleRequest from "./service";
 import { errorSchema } from "../../../../errors/customError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
 	description: "Get integration by id",
@@ -40,11 +40,11 @@ export default function (app: HonoServer) {
 	app.get(
 		"/:id",
 		describeRoute(openapiRouteOptions),
-		requireRoleAccess("creator"),
+		requireProjectAccess("creator", { key: "projectId", source: "param" }),
 		validator("param", requestRouteSchema, zodErrorCallbackParser),
 		async (c) => {
-			const id = c.req.param("id");
-			const result = await handleRequest(id!);
+			const { projectId, id } = c.req.valid("param");
+			const result = await handleRequest(projectId, id);
 			return c.json(result);
 		},
 	);

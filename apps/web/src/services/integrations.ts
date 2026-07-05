@@ -13,55 +13,68 @@ import { responseSchema as testConnectionResponseSchema } from "@fluxify/server/
 import { responseSchema as testExistingConnectionResponseSchema } from "@fluxify/server/src/api/v1/integrations/test-existing-connection/dto";
 import z from "zod";
 
-const baseUrl = "/v1/integrations";
+const getBaseUrl = (projectId: string) => `/v1/${projectId}/integrations`;
 
 export const integrationService = {
 	async getAll(
+		projectId: string,
 		group: string,
 		tags?: string[],
 	): Promise<z.infer<typeof getAllResponseSchema>> {
-		let url = `${baseUrl}/list/${group}`;
+		let url = `${getBaseUrl(projectId)}/list/${group}`;
 		if (tags && tags.length > 0) {
 			url += `?tags=${tags.join(",")}`;
 		}
 		const res = await httpClient.get(url);
 		return res.data;
 	},
-	async getById(id: string): Promise<z.infer<typeof getByIdResponseSchema>> {
-		const res = await httpClient.get(`${baseUrl}/${id}`);
+	async getById(
+		projectId: string,
+		id: string,
+	): Promise<z.infer<typeof getByIdResponseSchema>> {
+		const res = await httpClient.get(`${getBaseUrl(projectId)}/${id}`);
 		return res.data;
 	},
 	async create(
+		projectId: string,
 		data: z.infer<typeof createRequestSchema>,
 	): Promise<z.infer<typeof createResponseSchema>> {
-		const res = await httpClient.post(baseUrl, data);
+		const res = await httpClient.post(getBaseUrl(projectId), data);
 		return res.data;
 	},
 	async update(
+		projectId: string,
 		id: string,
 		data: z.infer<typeof updateRequestSchema>,
 	): Promise<z.infer<typeof updateResponseSchema>> {
-		const res = await httpClient.put(`${baseUrl}/${id}`, data);
+		const res = await httpClient.put(`${getBaseUrl(projectId)}/${id}`, data);
 		return res.data;
 	},
-	async delete(id: string): Promise<void> {
-		await httpClient.delete(`${baseUrl}/${id}`);
+	async delete(projectId: string, id: string): Promise<void> {
+		await httpClient.delete(`${getBaseUrl(projectId)}/${id}`);
 	},
 	async testExistingConnection(
+		projectId: string,
 		id: string,
 	): Promise<z.infer<typeof testExistingConnectionResponseSchema>> {
-		return await httpClient.get(`${baseUrl}/test-existing-connection/${id}`);
+		return await httpClient.get(
+			`${getBaseUrl(projectId)}/test-existing-connection/${id}`,
+		);
 	},
 	async testConnection(
+		projectId: string,
 		group: string,
 		variant: string,
 		config: any,
 	): Promise<z.infer<typeof testConnectionResponseSchema>> {
-		const res = await httpClient.post(`${baseUrl}/test-connection`, {
-			group,
-			variant,
-			config,
-		});
+		const res = await httpClient.post(
+			`${getBaseUrl(projectId)}/test-connection`,
+			{
+				group,
+				variant,
+				config,
+			},
+		);
 		return res.data;
 	},
 	createRequestSchema,

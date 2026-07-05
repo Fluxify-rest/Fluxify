@@ -20,7 +20,7 @@ import { Context } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { JsVM } from "@fluxify/lib";
 import { startBlocksExecution } from "../../loaders/blocksLoader";
-import { appConfigCache } from "../../loaders/appconfigLoader";
+import { getAppConfig } from "../../loaders/appconfigLoader";
 import { createObservabilityLogger, DbFactory } from "@fluxify/adapters";
 import {
 	dbIntegrationsCache,
@@ -195,7 +195,7 @@ function setupContextVars(
 			return getCookie(ctx, key) || "";
 		},
 		getConfig(key) {
-			return appConfigCache[key];
+			return getAppConfig(projectId, key);
 		},
 		setCookie(name, options) {
 			setCookie(ctx, name, options?.value.toString() || "", {

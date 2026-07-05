@@ -1,12 +1,21 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, DbTransactionType } from "../../../../db";
 import { appConfigEntity } from "../../../../db/schema";
 
-export async function getAppConfigById(id: number, tx?: DbTransactionType) {
+export async function getAppConfigById(
+  id: number,
+  projectId: string,
+  tx?: DbTransactionType
+) {
   const result = await (tx ?? db)
     .select()
     .from(appConfigEntity)
-    .where(eq(appConfigEntity.id, id))
+    .where(
+      and(
+        eq(appConfigEntity.id, id),
+        eq(appConfigEntity.projectId, projectId)
+      )
+    )
     .limit(1);
 
   if (!result[0]) {

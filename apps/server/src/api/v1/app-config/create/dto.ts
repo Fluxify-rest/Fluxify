@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { appConfigDataTypeEnum } from "../../../../db/schema";
 
+export const requestRouteSchema = z.object({
+  projectId: z.string(),
+});
+
 export const requestBodySchema = z.object({
   keyName: z
     .string()

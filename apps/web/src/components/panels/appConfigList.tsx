@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { TbTrash, TbPlus } from "react-icons/tb";
 import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import DebouncedTextInput from "@/components/editors/debouncedTextInput";
 import AppConfigTable from "@/components/tables/appConfigTable";
 import Pagination from "@/components/pagination/Pagination";
@@ -24,6 +25,7 @@ import RequireRoleInAnyProject from "../auth/requireRoleInAnyProject";
 
 const AppConfigList = () => {
   const queryClient = useQueryClient();
+  const { projectId } = useParams<{ projectId: string }>();
   const {
     page,
     setPage,
@@ -39,20 +41,23 @@ const AppConfigList = () => {
   } = useAppConfig();
 
   // Fetch app configs
-  const { data, isLoading, error } = appConfigQuery.getAll.useQuery({
-    page,
-    perPage,
-    search,
-    sortBy: sortBy as
-      | "id"
-      | "keyName"
-      | "createdAt"
-      | "updatedAt"
-      | "isEncrypted"
-      | "encodingType"
-      | undefined,
-    sort,
-  });
+  const { data, isLoading, error } = appConfigQuery.getAll.useQuery(
+    projectId as string,
+    {
+      page,
+      perPage,
+      search,
+      sortBy: sortBy as
+        | "id"
+        | "keyName"
+        | "createdAt"
+        | "updatedAt"
+        | "isEncrypted"
+        | "encodingType"
+        | undefined,
+      sort,
+    }
+  );
 
   // Update total pages when data changes
   useEffect(() => {
@@ -75,12 +80,12 @@ const AppConfigList = () => {
       // }
       // Invalidate queries after deletion
       queryClient.invalidateQueries({
-        queryKey: ["app-config", "list"],
+        queryKey: ["app-config", projectId, "list"],
       });
     } catch (error) {
       console.error("Error deleting items:", error);
     }
-  }, [selectedItems, queryClient]);
+  }, [selectedItems, queryClient, projectId]);
 
   if (error) {
     return (

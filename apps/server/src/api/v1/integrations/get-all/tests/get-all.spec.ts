@@ -41,13 +41,13 @@ describe("getAllIntegrations service", () => {
 			>
 		).mockResolvedValueOnce(mockIntegrations as any);
 
-		const result = await handleRequest("database");
+		const result = await handleRequest("test-project", "database");
 
 		expect(
 			getAllIntegrationsByGroup as unknown as Mock<
 				typeof getAllIntegrationsByGroup
 			>,
-		).toHaveBeenCalledWith("database", undefined);
+		).toHaveBeenCalledWith("test-project", "database", undefined);
 		expect(result).toHaveLength(2);
 		expect(result[0]).toEqual({
 			id: "1",
@@ -66,14 +66,14 @@ describe("getAllIntegrations service", () => {
 			>
 		).mockResolvedValueOnce([]);
 
-		const result = await handleRequest("kv");
+		const result = await handleRequest("test-project", "kv");
 
 		expect(result).toEqual([]);
 		expect(
 			getAllIntegrationsByGroup as unknown as Mock<
 				typeof getAllIntegrationsByGroup
 			>,
-		).toHaveBeenCalledWith("kv", undefined);
+		).toHaveBeenCalledWith("test-project", "kv", undefined);
 	});
 
 	it("should handle different groups", async () => {
@@ -85,12 +85,12 @@ describe("getAllIntegrations service", () => {
 					typeof getAllIntegrationsByGroup
 				>
 			).mockResolvedValueOnce([]);
-			await handleRequest(group);
+			await handleRequest("test-project", group);
 			expect(
 				getAllIntegrationsByGroup as unknown as Mock<
 					typeof getAllIntegrationsByGroup
 				>,
-			).toHaveBeenCalledWith(group, undefined);
+			).toHaveBeenCalledWith("test-project", group, undefined);
 		}
 	});
 
@@ -109,7 +109,7 @@ describe("getAllIntegrations service", () => {
 			>
 		).mockResolvedValueOnce([mockIntegration] as any);
 
-		const result = await handleRequest("database");
+		const result = await handleRequest("test-project", "database");
 
 		expect(result[0]).toHaveProperty("id");
 		expect(result[0]).toHaveProperty("name");

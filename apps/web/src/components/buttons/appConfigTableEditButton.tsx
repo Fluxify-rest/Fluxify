@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { appConfigQuery } from "@/query/appConfigQuery";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { showNotification } from "@mantine/notifications";
+import { useParams } from "next/navigation";
 
 interface AppConfigTableEditButtonProps {
   id: string;
@@ -20,7 +21,12 @@ const AppConfigTableEditButton: React.FC<AppConfigTableEditButtonProps> = ({
   const [opened, { open, close }] = useDisclosure(false);
   const [loading, setLoading] = React.useState(false);
   const queryClient = useQueryClient();
-  const updateMutation = appConfigQuery.update.useMutation(id, queryClient);
+  const { projectId } = useParams<{ projectId: string }>();
+  const updateMutation = appConfigQuery.update.useMutation(
+    projectId as string,
+    id,
+    queryClient
+  );
 
   async function onSubmit(data: any) {
     setLoading(true);

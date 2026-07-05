@@ -14,22 +14,23 @@ import QueryError from "../query/queryError";
 import { useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { showErrorNotification } from "@/lib/errorNotifier";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 const IntegrationsList = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { projectId } = useParams<{ projectId: string }>();
   const openedIntegration = searchParams.get("open");
   const group = searchParams.get("group");
   const { selectedMenu, filterVariant, searchQuery } = useIntegrationState();
   const { setFilterVariant, setSearchQuery } = useIntegrationActions();
   const { data, isLoading, isError, error } =
-    integrationsQuery.getAll.query(selectedMenu);
+    integrationsQuery.getAll.query(projectId || "", selectedMenu);
   const client = useQueryClient();
   const { mutateAsync: updateMutation, isPending } =
-    integrationsQuery.update.mutation(client);
+    integrationsQuery.update.mutation(projectId || "", client);
   const { mutateAsync: deleteMutation, isPending: isDeletePending } =
-    integrationsQuery.delete.mutation(client);
+    integrationsQuery.delete.mutation(projectId || "", client);
 
   const filteredData = useMemo(() => {
     if (!data) return [];
@@ -57,7 +58,7 @@ const IntegrationsList = () => {
       <QueryError
         error={error}
         refetcher={() => {
-          integrationsQuery.getAll.invalidate(selectedMenu, client);
+          integrationsQuery.getAll.invalidate(projectId || "", selectedMenu, client);
         }}
       />
     );

@@ -1,8 +1,9 @@
 import { db, DbTransactionType } from "../../../../db";
 import { appConfigEntity } from "../../../../db/schema";
-import { count, ilike, asc, desc } from "drizzle-orm";
+import { count, ilike, asc, desc, eq, and } from "drizzle-orm";
 
 export async function getAppConfigList(
+  projectId: string,
   skip: number,
   take: number,
   search?: string,
@@ -10,6 +11,11 @@ export async function getAppConfigList(
   sortBy: keyof typeof appConfigEntity = "updatedAt",
   tx?: DbTransactionType
 ) {
+  const conditions = [eq(appConfigEntity.projectId, projectId)];
+  if (search) {
+    conditions.push(ilike(appConfigEntity.keyName, `%${search}%`));
+  }
+
   const query = (tx ?? db)
     .select({
       id: appConfigEntity.id,
@@ -20,11 +26,8 @@ export async function getAppConfigList(
       createdAt: appConfigEntity.createdAt,
       updatedAt: appConfigEntity.updatedAt,
     })
-    .from(appConfigEntity);
-
-  if (search) {
-    query.where(ilike(appConfigEntity.keyName, `%${search}%`));
-  }
+    .from(appConfigEntity)
+    .where(and(...conditions));
 
   const result = await query
     .orderBy(
@@ -35,24 +38,27 @@ export async function getAppConfigList(
     .offset(skip)
     .limit(take);
 
-  const totalCount = await getAppConfigCount(search, tx);
+  const totalCount = await getAppConfigCount(projectId, search, tx);
 
   return { result, totalCount };
 }
 
 export async function getAppConfigCount(
+  projectId: string,
   search?: string,
   tx?: DbTransactionType
 ) {
+  const conditions = [eq(appConfigEntity.projectId, projectId)];
+  if (search) {
+    conditions.push(ilike(appConfigEntity.keyName, `%${search}%`));
+  }
+
   const query = (tx ?? db)
     .select({
       count: count(appConfigEntity.id),
     })
-    .from(appConfigEntity);
-
-  if (search) {
-    query.where(ilike(appConfigEntity.keyName, `%${search}%`));
-  }
+    .from(appConfigEntity)
+    .where(and(...conditions));
 
   const result = await query;
   return result[0].count;

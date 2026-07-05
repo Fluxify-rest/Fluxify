@@ -3,11 +3,15 @@ import { integrationsEntity } from "../../../../db/schema";
 import { eq, sql, and, or, SQL, desc, like } from "drizzle-orm";
 
 export async function getAllIntegrationsByGroup(
+	projectId: string,
 	group: string,
 	tags?: string[],
 	tx?: DbTransactionType,
 ) {
-	let condition: SQL = eq(integrationsEntity.group, group);
+	let condition: SQL = and(
+		eq(integrationsEntity.projectId, projectId),
+		eq(integrationsEntity.group, group),
+	)!;
 
 	if (tags && tags.length > 0) {
 		const tagConditions = tags.map((t) =>
