@@ -5,11 +5,11 @@ import {
   resolver,
   validator,
 } from "hono-openapi";
-import { requestQuerySchema, responseSchema } from "./dto";
+import { requestQuerySchema, requestRouteSchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Get list of app config keys",
@@ -31,11 +31,13 @@ export default function (app: HonoServer) {
   app.get(
     "/keys",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("creator"),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
+    validator("param", requestRouteSchema, zodErrorCallbackParser),
     validator("query", requestQuerySchema, zodErrorCallbackParser),
     async (c) => {
+      const { projectId } = c.req.valid("param");
       const { search } = c.req.valid("query");
-      const keys = await handleRequest(search);
+      const keys = await handleRequest(projectId, search);
       return c.json(keys);
     }
   );

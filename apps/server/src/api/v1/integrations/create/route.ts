@@ -5,14 +5,14 @@ import {
   resolver,
   validator,
 } from "hono-openapi";
-import { requestBodySchema, responseSchema } from "./dto";
+import { requestBodySchema, requestRouteSchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import { errorSchema } from "../../../../errors/customError";
 import { requestBodyValidator } from "./middleware";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Create integration",
@@ -58,14 +58,16 @@ export default function (app: HonoServer) {
   app.post(
     "/",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("creator"),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
+    validator("param", requestRouteSchema, zodErrorCallbackParser),
     validator("json", requestBodySchema, zodErrorCallbackParser),
     requestBodyValidator,
     async (c) => {
+      const { projectId } = c.req.valid("param");
       const data = c.req.valid("json");
       const config = c.get("config" as never) as any;
       data.config = config;
-      const result = await handleRequest(data);
+      const result = await handleRequest(projectId, data);
       return c.json(result, 201);
     }
   );

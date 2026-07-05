@@ -18,10 +18,11 @@ import {
   responseSchema as deleteBulkResponseSchema,
 } from "@fluxify/server/src/api/v1/app-config/delete-bulk/dto";
 
-const baseUrl = "/v1/app-config";
+const baseUrl = (projectId: string) => `/v1/${projectId}/app-config`;
 
 export const appConfigService = {
   async getAll(
+    projectId: string,
     query: z.infer<typeof getAllRequestQuerySchema>
   ): Promise<z.infer<typeof getAllResponseSchema>> {
     const { data, success } = getAllRequestQuerySchema.safeParse(query);
@@ -44,43 +45,49 @@ export const appConfigService = {
     if (query?.sort) {
       queryParams.set("sort", query.sort);
     }
-    const url = `${baseUrl}/list?${queryParams.toString()}`;
+    const url = `${baseUrl(projectId)}/list?${queryParams.toString()}`;
     const result = await httpClient.get(url);
     return result.data;
   },
   async create(
+    projectId: string,
     body: z.infer<typeof createRequestBodySchema>
   ): Promise<z.infer<typeof createResponseSchema>> {
-    const result = await httpClient.post(baseUrl, body);
+    const result = await httpClient.post(baseUrl(projectId), body);
     return result.data;
   },
   async update(
+    projectId: string,
     id: string,
     body: z.infer<typeof updateRequestBodySchema>
   ): Promise<z.infer<typeof updateResponseSchema>> {
-    const result = await httpClient.put(`${baseUrl}/${id}`, body);
+    const result = await httpClient.put(`${baseUrl(projectId)}/${id}`, body);
     return result.data;
   },
-  async delete(id: string): Promise<void> {
-    const result = await httpClient.delete(`${baseUrl}/${id}`);
+  async delete(projectId: string, id: string): Promise<void> {
+    const result = await httpClient.delete(`${baseUrl(projectId)}/${id}`);
     return result.data;
   },
-  async getById(id: string): Promise<z.infer<typeof getOneResponseSchema>> {
-    const result = await httpClient.get(`${baseUrl}/${id}`);
+  async getById(
+    projectId: string,
+    id: string
+  ): Promise<z.infer<typeof getOneResponseSchema>> {
+    const result = await httpClient.get(`${baseUrl(projectId)}/${id}`);
     return result.data;
   },
   async deleteBulk(
+    projectId: string,
     body: z.infer<typeof deleteBulkRequestBodySchema>
   ): Promise<z.infer<typeof deleteBulkResponseSchema>> {
-    const result = await httpClient.post(`${baseUrl}/delete-bulk`, body);
+    const result = await httpClient.post(`${baseUrl(projectId)}/delete-bulk`, body);
     return result.data;
   },
-  async getKeysList(search: string): Promise<string[]> {
+  async getKeysList(projectId: string, search: string): Promise<string[]> {
     const queryParams = new URLSearchParams();
     if (search) {
       queryParams.set("search", search);
     }
-    const url = `${baseUrl}/keys?${queryParams.toString()}`;
+    const url = `${baseUrl(projectId)}/keys?${queryParams.toString()}`;
     const result = await httpClient.get(url);
     return result.data;
   },

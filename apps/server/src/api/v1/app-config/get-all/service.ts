@@ -3,6 +3,7 @@ import { requestQuerySchema, responseSchema } from "./dto";
 import { getAppConfigList } from "./repository";
 
 export default async function handleRequest(
+  projectId: string,
   params: z.infer<typeof requestQuerySchema>
 ): Promise<z.infer<typeof responseSchema>> {
   const { page, perPage, search, sort, sortBy } = params;
@@ -10,6 +11,7 @@ export default async function handleRequest(
   const offset = perPage * (page - 1);
 
   const { result, totalCount } = await getAppConfigList(
+    projectId,
     offset,
     perPage,
     search,

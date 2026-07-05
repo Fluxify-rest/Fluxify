@@ -6,12 +6,13 @@ import { BadRequestError } from "../../../../errors/badRequestError";
 import { EncryptionService } from "../../../../lib/encryption";
 
 export default async function handleRequest(
+  projectId: string,
   id: number
 ): Promise<z.infer<typeof responseSchema>> {
   if (!id || isNaN(id)) {
     throw new BadRequestError("Invalid id");
   }
-  const result = await getAppConfigById(id);
+  const result = await getAppConfigById(id, projectId);
   if (!result) {
     throw new NotFoundError(`App config not found with id: ${id}`);
   }

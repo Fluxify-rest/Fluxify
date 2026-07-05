@@ -5,12 +5,12 @@ import {
   resolver,
   validator,
 } from "hono-openapi";
-import { requestQuerySchema, responseSchema } from "./dto";
+import { requestQuerySchema, requestRouteSchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Get all app configs",
@@ -40,11 +40,13 @@ export default function (app: HonoServer) {
   app.get(
     "/list",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("creator"),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
+    validator("param", requestRouteSchema, zodErrorCallbackParser),
     validator("query", requestQuerySchema, zodErrorCallbackParser),
     async (c) => {
+      const { projectId } = c.req.valid("param");
       const params = c.req.valid("query");
-      const response = await handleRequest(params);
+      const response = await handleRequest(projectId, params);
       return c.json(response);
     }
   );

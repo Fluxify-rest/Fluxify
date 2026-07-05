@@ -4,9 +4,10 @@ import { getIntegrationByID } from "./repository";
 import { NotFoundError } from "../../../../errors/notFoundError";
 
 export default async function handleRequest(
+  projectId: string,
   id: string
 ): Promise<z.infer<typeof responseSchema>> {
-  const integration = await getIntegrationByID(id);
+  const integration = await getIntegrationByID(projectId, id);
   if (!integration) {
     throw new NotFoundError("Integration not found");
   }

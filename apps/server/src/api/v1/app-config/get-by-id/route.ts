@@ -11,7 +11,7 @@ import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackPars
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { errorSchema } from "../../../../errors/customError";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Get app config by id",
@@ -49,11 +49,11 @@ export default function (app: HonoServer) {
   app.get(
     "/:id",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("creator"),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
     validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (c) => {
-      const id = c.req.param("id");
-      const result = await handleRequest(Number(id));
+      const { projectId, id } = c.req.valid("param");
+      const result = await handleRequest(projectId, Number(id));
       return c.json(result);
     }
   );

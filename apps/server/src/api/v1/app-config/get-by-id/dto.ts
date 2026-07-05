@@ -2,6 +2,7 @@ import { z } from "zod";
 import { appConfigDataTypeEnum } from "../../../../db/schema";
 
 export const requestRouteSchema = z.object({
+  projectId: z.string(),
   id: z.coerce.number().min(1).int(),
 });
 

@@ -8,12 +8,14 @@ import { appConfigService } from "@/services/appConfig";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { useQueryClient } from "@tanstack/react-query";
 import { appConfigQuery } from "@/query/appConfigQuery";
+import { useParams } from "next/navigation";
 
 const AppConfigTableAddButton = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const queryClient = useQueryClient();
+  const { projectId } = useParams<{ projectId: string }>();
   const { mutateAsync, isPending } =
-    appConfigQuery.create.useMutation(queryClient);
+    appConfigQuery.create.useMutation(projectId as string, queryClient);
 
   const handleAddNew = async (data: any) => {
     try {

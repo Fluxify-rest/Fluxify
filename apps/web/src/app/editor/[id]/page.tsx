@@ -8,22 +8,22 @@ import { redirect } from "next/navigation";
 import React from "react";
 
 const Page = async () => {
-  const headersList = await headers();
-  const session = await authClient.getSession({
-    fetchOptions: { headers: headersList },
-  });
-  if (!session.data?.user) {
-    return redirect("/login");
-  }
-  const hasAccess = canAccess((session.data as any).acl, "viewer");
-  if (!hasAccess) {
-    return redirect("/");
-  }
-  return (
-    <EditorAppShell>
-      <EditorWindow />;
-    </EditorAppShell>
-  );
+	const headersList = await headers();
+	const session = await authClient.getSession({
+		fetchOptions: { headers: headersList },
+	});
+	if (!session.data?.user) {
+		return redirect("/login");
+	}
+	const hasAccess = canAccess((session.data as any).acl, "viewer");
+	if (!hasAccess) {
+		return redirect("/routes");
+	}
+	return (
+		<EditorAppShell>
+			<EditorWindow />;
+		</EditorAppShell>
+	);
 };
 
 export default Page;

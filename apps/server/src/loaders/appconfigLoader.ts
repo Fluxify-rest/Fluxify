@@ -5,7 +5,10 @@ import { appConfigEntity } from "../db/schema";
 import { EncryptionService } from "../lib/encryption";
 import { logger } from "@fluxify/common";
 
-export let appConfigCache: Record<string, string | number | boolean> = {};
+let appConfigCache: Record<
+	string,
+	Record<string, string | number | boolean>
+> = {};
 
 export async function loadAppConfig() {
 	const configData = await loadConfigFromDB();
@@ -22,6 +25,7 @@ async function loadConfigFromDB() {
 			key: appConfigEntity.keyName,
 			value: appConfigEntity.value,
 			isEncrypted: appConfigEntity.isEncrypted,
+			projectId: appConfigEntity.projectId,
 			encodingType: appConfigEntity.encodingType,
 			dataType: appConfigEntity.dataType,
 		})
@@ -33,17 +37,30 @@ async function loadConfigFromDB() {
 		if (cfg.isEncrypted) {
 			value = EncryptionService.decrypt(value!);
 		}
+		const key = cfg.key!;
+		const projectId = cfg.projectId;
+		if (!config[projectId!]) {
+			config[projectId!] = {};
+		}
 		switch (cfg.dataType) {
 			case "string":
-				config[cfg.key!] = value;
+				config[projectId!][key] = value;
 				break;
 			case "boolean":
-				config[cfg.key!] = z.boolean().safeParse(value).data || value;
+				config[projectId!][key] = z.boolean().safeParse(value).data || value;
 				break;
 			case "number":
-				config[cfg.key!] = z.number().safeParse(value).data || value;
+				config[projectId!][key] = z.number().safeParse(value).data || value;
 				break;
 		}
 	}
 	return config;
+}
+
+export function getProjectAppConfig(projectId: string) {
+	return appConfigCache[projectId];
+}
+
+export function getAppConfig(projectId: string, key: string) {
+	return appConfigCache[projectId]?.[key];
 }

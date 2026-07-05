@@ -9,8 +9,9 @@ import { requestBodySchema, requestRouteSchema, responseSchema } from "./dto";
 import handleRequest from "./service";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import { errorSchema } from "../../../../errors/customError";
+import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Update an integration",
@@ -64,13 +65,13 @@ export default function (app: HonoServer) {
   app.put(
     "/:id",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("creator"),
-    validator("param", requestRouteSchema),
-    validator("json", requestBodySchema),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
+    validator("param", requestRouteSchema, zodErrorCallbackParser),
+    validator("json", requestBodySchema, zodErrorCallbackParser),
     async (c) => {
-      const { id } = c.req.valid("param");
+      const { projectId, id } = c.req.valid("param");
       const body = c.req.valid("json");
-      const result = await handleRequest(id, body);
+      const result = await handleRequest(projectId, id, body);
       return c.json(result);
     }
   );

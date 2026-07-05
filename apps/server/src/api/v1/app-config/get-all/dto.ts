@@ -5,6 +5,10 @@ import {
 } from "../../../../lib/pagination";
 import { appConfigDataTypeEnum } from "../../../../db/schema";
 
+export const requestRouteSchema = z.object({
+  projectId: z.string(),
+});
+
 export const requestQuerySchema = paginationRequestQuerySchema.extend({
   search: z.string().optional(),
   sort: z.enum(["asc", "desc"]).optional(),

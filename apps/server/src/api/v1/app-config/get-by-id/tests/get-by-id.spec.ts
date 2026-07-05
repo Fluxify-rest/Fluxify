@@ -44,7 +44,7 @@ describe("getAppConfigById service", () => {
       dataType: "string",
     });
 
-    const result = await handleRequest(1);
+    const result = await handleRequest("test-project", 1);
 
     // Verify the response matches the schema
     expect(() => responseSchema.parse(result)).not.toThrow();
@@ -58,7 +58,7 @@ describe("getAppConfigById service", () => {
       value: "sensitive-data-1234",
     });
 
-    const result = await handleRequest(1);
+    const result = await handleRequest("test-project", 1);
     // The encrypted value should be masked (mock implementation replaces with '*')
     expect(result.value.split("").every((x) => x === "*")).toBe(true);
     expect(result.isEncrypted).toBe(true);
@@ -66,16 +66,16 @@ describe("getAppConfigById service", () => {
 
   it("should throw BadRequestError for invalid ID", async () => {
     // Test with invalid ID (NaN)
-    await expect(handleRequest(NaN)).rejects.toThrow(BadRequestError);
+    await expect(handleRequest("test-project", NaN)).rejects.toThrow(BadRequestError);
 
     // Test with invalid ID (0)
-    await expect(handleRequest(0)).rejects.toThrow(BadRequestError);
+    await expect(handleRequest("test-project", 0)).rejects.toThrow(BadRequestError);
   });
 
   it("should throw NotFoundError when config is not found", async () => {
     // Mock the repository to return null (not found)
     getAppConfigByIdMock.mockResolvedValueOnce(null);
 
-    await expect(handleRequest(999)).rejects.toThrow(NotFoundError);
+    await expect(handleRequest("test-project", 999)).rejects.toThrow(NotFoundError);
   });
 });

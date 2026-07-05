@@ -5,12 +5,12 @@ import {
   resolver,
   validator,
 } from "hono-openapi";
-import { responseSchema } from "./dto";
+import { requestRouteSchema, responseSchema } from "./dto";
 import handleRequest from "./service";
-import { requestRouteSchema } from "../../routes/get-by-id/dto";
 import { errorSchema } from "../../../../errors/customError";
+import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
 import { HonoServer } from "../../../../types";
-import { requireRoleAccess } from "../../../auth/middleware";
+import { requireProjectAccess } from "../../../auth/middleware";
 
 const openapiRouteOptions: DescribeRouteOptions = {
   description: "Test the existing integration by its ID",
@@ -40,8 +40,8 @@ export default function (app: HonoServer) {
   app.get(
     "/test-existing-connection/:id",
     describeRoute(openapiRouteOptions),
-    requireRoleAccess("creator"),
-    validator("param", requestRouteSchema),
+    requireProjectAccess("creator", { key: "projectId", source: "param" }),
+    validator("param", requestRouteSchema, zodErrorCallbackParser),
     async (c) => {
       const params = c.req.valid("param");
       const result = await handleRequest(params);

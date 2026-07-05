@@ -14,6 +14,7 @@ import { appConfigQuery } from "@/query/appConfigQuery";
 import QueryLoader from "../query/queryLoader";
 import QueryError from "../query/queryError";
 import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 
 type PropTypes = {
   onSubmit?: (data: any) => void;
@@ -25,7 +26,9 @@ type PropTypes = {
 };
 
 const AppConfigForm = (props: PropTypes) => {
+  const { projectId } = useParams<{ projectId: string }>();
   const { data, error, isError, isLoading } = appConfigQuery.getById.useQuery(
+    projectId as string,
     props.id ?? ""
   );
   const form = useForm({
@@ -58,7 +61,11 @@ const AppConfigForm = (props: PropTypes) => {
         overrideMessage="Error loading configuration"
         error={error}
         refetcher={() =>
-          appConfigQuery.getById.invalidate(props.id ?? "", queryClient)
+          appConfigQuery.getById.invalidate(
+            projectId as string,
+            props.id ?? "",
+            queryClient
+          )
         }
       />
     );

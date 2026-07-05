@@ -5,39 +5,39 @@ import "@mantine/nprogress/styles.css";
 import "../index.css";
 
 import {
-  ColorSchemeScript,
-  MantineProvider,
-  mantineHtmlProps,
+	ColorSchemeScript,
+	MantineProvider,
+	mantineHtmlProps,
 } from "@mantine/core";
-import RootAppShell from "@/components/rootAppShell";
 import QueryProvider from "../query/queryProvider";
 import { Notifications } from "@mantine/notifications";
 import { NavigationProgress } from "@mantine/nprogress";
+import { AuthProvider } from "@/components/auth/authProvider";
 
 export const metadata: Metadata = {
-  title: "Fluxify",
-  description: "Fluxify Console",
+	title: "Fluxify",
+	description: "Fluxify Console",
 };
 
 export default async function RootLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <html lang="en" {...mantineHtmlProps}>
-      <head>
-        <ColorSchemeScript />
-      </head>
-      <body>
-        <MantineProvider>
-          <Notifications />
-          <QueryProvider>
-            <NavigationProgress color="violet" size={2} />
-            <RootAppShell>{children}</RootAppShell>
-          </QueryProvider>
-        </MantineProvider>
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en" {...mantineHtmlProps}>
+			<head>
+				<ColorSchemeScript />
+			</head>
+			<body>
+				<MantineProvider>
+					<Notifications />
+					<QueryProvider>
+						<NavigationProgress color="violet" size={2} />
+						<AuthProvider>{children}</AuthProvider>
+					</QueryProvider>
+				</MantineProvider>
+			</body>
+		</html>
+	);
 }

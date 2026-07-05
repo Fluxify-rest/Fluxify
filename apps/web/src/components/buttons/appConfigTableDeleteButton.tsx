@@ -6,15 +6,20 @@ import { TbTrash } from "react-icons/tb";
 import ConfirmDialog from "../dialog/confirmDialog";
 import { appConfigQuery } from "@/query/appConfigQuery";
 import { showNotification } from "@mantine/notifications";
+import { useParams } from "next/navigation";
 
 const AppConfigDeleteButton = () => {
   const queryClient = useQueryClient();
+  const { projectId } = useParams<{ projectId: string }>();
   const { selectedItems, clearSelection } = useAppConfig();
   const selectedIds = useMemo(
     () => Array.from(selectedItems).map((item) => Number(item)),
     [selectedItems]
   );
-  const deleteBulkMutation = appConfigQuery.deleteBulk.useMutation(queryClient);
+  const deleteBulkMutation = appConfigQuery.deleteBulk.useMutation(
+    projectId as string,
+    queryClient
+  );
 
   const [open, setOpen] = useState(false);
 

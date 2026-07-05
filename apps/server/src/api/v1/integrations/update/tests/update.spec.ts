@@ -116,10 +116,11 @@ describe("updateIntegration service", () => {
 		mockIntegrationExistByName.mockResolvedValue({ id: integrationId } as any); // Same ID, so allowed
 		mockUpdateIntegration.mockResolvedValue(updatedIntegration as any);
 
-		const result = await handleRequest(integrationId, updateData as any);
+		const result = await handleRequest("test-project", integrationId, updateData as any);
 
-		expect(mockGetIntegrationById).toHaveBeenCalledWith(integrationId, mockTx);
+		expect(mockGetIntegrationById).toHaveBeenCalledWith("test-project", integrationId, mockTx);
 		expect(mockUpdateIntegration).toHaveBeenCalledWith(
+			"test-project",
 			integrationId,
 			{ ...updateData, tags: ["sql"] },
 			mockTx,
@@ -132,7 +133,7 @@ describe("updateIntegration service", () => {
 		mockGetIntegrationById.mockResolvedValue(null as any);
 
 		await expect(
-			handleRequest(integrationId, updateData as any),
+			handleRequest("test-project", integrationId, updateData as any),
 		).rejects.toThrow(NotFoundError);
 		expect(mockUpdateIntegration).not.toHaveBeenCalled();
 	});
@@ -150,7 +151,7 @@ describe("updateIntegration service", () => {
 		mockIntegrationExistByName.mockResolvedValue({ id: "different-id" } as any); // Different ID
 
 		await expect(
-			handleRequest(integrationId, updateData as any),
+			handleRequest("test-project", integrationId, updateData as any),
 		).rejects.toThrow(ConflictError);
 		expect(mockUpdateIntegration).not.toHaveBeenCalled();
 	});
@@ -167,14 +168,10 @@ describe("updateIntegration service", () => {
 		mockGetIntegrationById.mockResolvedValue(existingIntegration as any);
 		mockIntegrationExistByName.mockResolvedValue(null as any); // Name not taken
 
-		// Simulate failure: updateIntegration returns null or transaction logic fails?
-		// Code says: if (!result) throw ServerError.
-		// Result comes from transaction. Callback returns await updateIntegration().
-		// So if updateIntegration returns null/undefined, then result is null/undefined.
 		mockUpdateIntegration.mockResolvedValue(null as any);
 
 		await expect(
-			handleRequest(integrationId, updateData as any),
+			handleRequest("test-project", integrationId, updateData as any),
 		).rejects.toThrow(ServerError);
 	});
 
@@ -202,6 +199,7 @@ describe("updateIntegration service", () => {
 		mockUpdateIntegration.mockResolvedValue(updatedIntegration as any);
 
 		const result = await handleRequest(
+			"test-project",
 			integrationId,
 			updateDataSameName as any,
 		);

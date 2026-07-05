@@ -1,11 +1,20 @@
 import { db, DbTransactionType } from "../../../../db";
 import { integrationsEntity } from "../../../../db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-export async function deleteIntegration(id: string, tx?: DbTransactionType) {
+export async function deleteIntegration(
+  projectId: string,
+  id: string,
+  tx?: DbTransactionType
+) {
   const result = await (tx ?? db)
     .delete(integrationsEntity)
-    .where(eq(integrationsEntity.id, id))
+    .where(
+      and(
+        eq(integrationsEntity.id, id),
+        eq(integrationsEntity.projectId, projectId)
+      )
+    )
     .returning();
   return result.length;
 }

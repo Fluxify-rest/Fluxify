@@ -14,6 +14,7 @@ import { BadRequestError } from "../../../../errors/badRequestError";
 import { CHAN_ON_APPCONFIG_CHANGE, publishMessage } from "../../../../db/redis";
 
 export default async function handleRequest(
+  projectId: string,
   id: number,
   body: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
@@ -21,14 +22,14 @@ export default async function handleRequest(
     throw new BadRequestError("Invalid id");
   }
   const result = await db.transaction(async (tx) => {
-    const config = await getConfigById(id, tx);
+    const config = await getConfigById(id, projectId, tx);
     if (!config) {
       throw new NotFoundError("App config not found");
     }
     if (config.isEncrypted && !body.isEncrypted) {
       throw new BadRequestError("Cannot decrypt value once it is encrypted");
     }
-    const keyNameExists = await getConfigByKeyName(body.keyName, tx);
+    const keyNameExists = await getConfigByKeyName(body.keyName, projectId, tx);
     if (keyNameExists?.id && keyNameExists.id !== id) {
       throw new ConflictError("Key name already exists");
     }
@@ -51,7 +52,7 @@ export default async function handleRequest(
       );
     }
     const cfg = { ...body, value: body.value?.toString() };
-    const updatedConfig = await updateAppConfig(id, cfg, tx);
+    const updatedConfig = await updateAppConfig(id, projectId, cfg, tx);
     return updatedConfig;
   });
   if (!result) {

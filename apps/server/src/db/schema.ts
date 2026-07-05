@@ -167,13 +167,15 @@ export const aiChatHistoryEntity = pgTable("ai_chat_history", {
 		result: any;
 	}>(),
 	workflowExecutionHistory: jsonb("workflow_execution_history")
-		.$type<{
-			type: "node" | "tool";
-			id: string;
-			input: any;
-			status: "running" | "success" | "failure";
-			output: any;
-		}[]>()
+		.$type<
+			{
+				type: "node" | "tool";
+				id: string;
+				input: any;
+				status: "running" | "success" | "failure";
+				output: any;
+			}[]
+		>()
 		.notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -283,6 +285,12 @@ export const appConfigEntity = pgTable(
 		keyName: varchar("key_name", { length: 100 }),
 		description: text(),
 		value: text(),
+		projectId: varchar("project_id", { length: 50 }).references(
+			() => projectsEntity.id,
+			{
+				onDelete: "cascade",
+			},
+		),
 		isEncrypted: boolean("is_encrypted").default(false),
 		encodingType: encodingTypeEnum("encoding_type"),
 		dataType: appConfigDataTypeEnum("data_type").default("string"),
@@ -293,6 +301,7 @@ export const appConfigEntity = pgTable(
 	},
 	(table) => [
 		index("idx_app_config_key_name").on(table.keyName),
+		index("idx_app_config_project_id").on(table.projectId),
 		index("idx_app_config_is_encrypted").on(table.isEncrypted),
 		index("idx_app_config_encoding_type").on(table.encodingType),
 	],
@@ -309,6 +318,12 @@ export const integrationsEntity = pgTable(
 		variant: varchar({ length: 255 }),
 		config: jsonb(),
 		tags: varchar({ length: 255 }).default(""),
+		projectId: varchar("project_id", { length: 50 }).references(
+			() => projectsEntity.id,
+			{
+				onDelete: "cascade",
+			},
+		),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at")
 			.defaultNow()
@@ -319,6 +334,7 @@ export const integrationsEntity = pgTable(
 		index("idx_integrations_group").on(table.group),
 		index("idx_integrations_variant").on(table.variant),
 		index("idx_integrations_tags").on(table.tags),
+		index("idx_integrations_project_id").on(table.projectId),
 	],
 );
 

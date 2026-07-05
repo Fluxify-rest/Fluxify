@@ -1,5 +1,6 @@
 "use client";
 
+import { useParams } from "next/navigation";
 import { integrationsQuery } from "@/query/integrationsQuery";
 import React, { useEffect, useRef } from "react";
 import QueryLoader from "../query/queryLoader";
@@ -49,6 +50,7 @@ type PropTypes = {
 };
 
 const IntegrationForm = (props: PropTypes) => {
+  const { projectId } = useParams<{ projectId: string }>();
   const useQuery = integrationsQuery.getById.query;
   const variantSelectorRef = useRef<HTMLInputElement>(null);
   const {
@@ -56,7 +58,7 @@ const IntegrationForm = (props: PropTypes) => {
     isLoading,
     isError,
     error,
-  } = useQuery(props.id || "");
+  } = useQuery(projectId || "", props.id || "");
   const data = props.data || loadedData;
   const [
     deleteModalOpened,
@@ -112,7 +114,7 @@ const IntegrationForm = (props: PropTypes) => {
       <QueryError
         error={error}
         refetcher={() => {
-          integrationsQuery.getById.invalidate(props.id || "", client);
+          integrationsQuery.getById.invalidate(projectId || "", props.id || "", client);
         }}
       />
     );
