@@ -23,12 +23,10 @@ import {
 import { APP_ROUTES } from "@/constants/routes";
 import { AuthProvider } from "@/components/auth/authProvider";
 import { projectsQuery } from "@/query/projectsQuery";
-import ProfileNav from "@/components/new_homepage/ProfileNav";
-import { canAccessProject } from "@fluxify/server/src/lib/acl";
+import ProfileNav from "@/components/homepage/ProfileNav";
 import { useAuthStore } from "@/store/auth";
 import { AccessControlRole } from "@fluxify/server";
 import RequireRole from "@/components/auth/requireRole";
-import { it } from "node:test";
 
 const NewProjectLayout = ({ children }: { children: React.ReactNode }) => {
 	const router = useRouter();

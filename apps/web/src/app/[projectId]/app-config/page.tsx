@@ -1,8 +1,9 @@
 "use server";
-import EditorAppShell from "@/components/editor/editorAppShell";
-import EditorWindow from "@/components/editor/editorWindow";
+import AppConfigList from "@/components/panels/appConfigList";
+import { AppConfigProvider } from "@/context/appConfigPage";
 import { authClient } from "@/lib/auth";
 import { canAccess } from "@fluxify/server/src/lib/acl";
+import { Stack, Text } from "@mantine/core";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -13,16 +14,20 @@ const Page = async () => {
 		fetchOptions: { headers: headersList },
 	});
 	if (!session.data?.user) {
-		return redirect("/login");
+		redirect("/login");
 	}
-	const hasAccess = canAccess((session.data as any).acl, "viewer");
+	const hasAccess = canAccess((session.data as any).acl, "creator");
 	if (!hasAccess) {
-		return redirect("/routes");
+		redirect("/");
 	}
 	return (
-		<EditorAppShell>
-			<EditorWindow />;
-		</EditorAppShell>
+		<AppConfigProvider>
+			<Stack pt={"md"} px={"xs"} h="100%">
+				<div style={{ flex: 1, overflowY: "auto" }}>
+					<AppConfigList />
+				</div>
+			</Stack>
+		</AppConfigProvider>
 	);
 };
 
