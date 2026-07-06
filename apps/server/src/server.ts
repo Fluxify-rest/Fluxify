@@ -14,7 +14,6 @@ import { auth, initializeAuth } from "./lib/auth";
 import authenticationRouter from "./api/auth/register";
 import { AccessControlRole } from "./db/schema";
 import { setSession } from "./middlewares/session";
-import { initDocsSearch } from "./lib/docs";
 import { startAiWorker } from "./lib/ai/worker";
 import {
 	OTLP_AUTH_HEADER_NAME,
@@ -70,7 +69,6 @@ async function main() {
 	startAiWorker();
 
 	if (adminRoutesEnabled) {
-		await initDocsSearch();
 		app.use("*", setSession);
 		initializeAuth(db);
 		authenticationRouter.registerHandler(app);

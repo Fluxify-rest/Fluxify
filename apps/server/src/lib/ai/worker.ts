@@ -3,14 +3,12 @@ import { db } from "../../db";
 import {
 	routesEntity,
 	projectSettingsEntity,
-	aiChatEntity,
 	integrationsEntity,
 } from "../../db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { AiChatTracker } from "./tracker";
 import { aiAgentGraph } from "../ai";
 import { ToolsContext } from "./schemas";
-import { AIMessage, HumanMessage } from "langchain";
 import { estimateTokenCount } from "tokenx";
 import { ProjectSettingsKeyType } from "../../api/v1/projects/settings/keys/keySchemaMap";
 import { AIAdapterFactory } from "./factory";
@@ -30,15 +28,9 @@ export async function startAiWorker() {
 			if (process.env.ENABLE_AI !== "true") return;
 
 			const data = JSON.parse(dataStr);
-			const { messageId, userMessageId, routeId, userId, content } = data;
+			const { messageId, routeId, userId, content } = data;
 
-			await processAiMessage(
-				messageId,
-				userMessageId,
-				routeId,
-				userId,
-				content,
-			);
+			await processAiMessage(messageId, routeId, userId, content);
 		} catch (error) {
 			console.error("[AI Worker] Error processing message:", error);
 		}
@@ -47,7 +39,6 @@ export async function startAiWorker() {
 
 async function processAiMessage(
 	messageId: string,
-	userMessageId: string,
 	routeId: string,
 	userId: string,
 	content: string,
@@ -124,41 +115,8 @@ async function processAiMessage(
 			aiConfig,
 		);
 
-		// Fetch historical messages: limited to max 2 recent pair ai-human messages
-		const pastMessages = await db
-			.select()
-			.from(aiChatEntity)
-			.where(
-				and(eq(aiChatEntity.routeId, routeId), eq(aiChatEntity.userId, userId)),
-			)
-			.orderBy(desc(aiChatEntity.createdAt))
-			.limit(5); // latest 5. we only send up to 2 context pairs
-
-		const langgraphMessages: any[] = [];
-		const pairsNeeded = 2; // max 2 ai-human pairs (4 messages total)
-		let pairsAdded = 0;
-
-		for (const msg of pastMessages) {
-			// skip the current two messages we just created (user prompt & pending ai prompt)
-			if (msg.id === messageId || msg.id === userMessageId) {
-				continue;
-			}
-			if (pairsAdded >= pairsNeeded * 2) break;
-
-			if (msg.role === "user" && msg.content) {
-				langgraphMessages.unshift(new HumanMessage(msg.content));
-				pairsAdded++;
-			} else if (msg.role === "ai" && msg.content) {
-				langgraphMessages.unshift(new AIMessage(msg.content));
-				pairsAdded++;
-			}
-		}
-
 		// Calculate Input Tokens
-		let inputTokens = estimateTokenCount(content) || 0;
-		for (const msg of langgraphMessages) {
-			inputTokens += estimateTokenCount(msg.content as string) || 0;
-		}
+		const inputTokens = estimateTokenCount(content) || 0;
 
 		const toolsCtx = new Set<string>();
 
@@ -176,7 +134,7 @@ async function processAiMessage(
 				buildMode: {},
 				clarificationQuestion: "",
 				classifierOutput: { intent: "DISCUSSION", reasoning: "" },
-				messages: langgraphMessages,
+				messages: [],
 				tracker,
 				metadata: {
 					integrationsList,
@@ -210,24 +168,7 @@ async function processAiMessage(
 
 		const outputTokens = estimateTokenCount(aiResponseContent) || 0;
 		const totalTokens = inputTokens + outputTokens;
-
-		// Final updates to DB
-		await db
-			.update(aiChatEntity)
-			.set({
-				content: aiResponseContent,
-				aiResponse: {
-					classifierOutput: result.classifierOutput,
-					discussionOutput: result.discussionMode,
-					plannerOutput: result.buildMode?.plannerOutput,
-					builderOutput: result.buildMode?.builderOutput,
-				},
-				messageStage: 4,
-				actionState: 0,
-				toolCalls: Array.from(toolsCtx),
-				tokenUsage: totalTokens,
-			})
-			.where(eq(aiChatEntity.id, messageId));
+		logger.info(`[AI Worker] Completed. Total tokens: ${totalTokens}`);
 
 		await tracker.update(4, "success", "Completed");
 	} catch (err: any) {

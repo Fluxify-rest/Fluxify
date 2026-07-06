@@ -1,5 +1,4 @@
 import {
-  useEditorAiWindowStore,
   useEditorSearchbarStore,
 } from "@/store/editor";
 import { ActionIcon, Box, Group, Kbd, Paper, Stack, Text } from "@mantine/core";
@@ -9,7 +8,6 @@ import BlockSearchList from "./blockSearchList";
 
 const BlockSearchDrawer = () => {
   const { opened, close, setSearchQuery } = useEditorSearchbarStore();
-  const aiWindowStore = useEditorAiWindowStore();
   const divRef = React.useRef<HTMLDivElement>(null);
   const ref = React.useRef<HTMLInputElement>(null);
   const addNewBtnRef = React.useRef<HTMLElement>(null);
@@ -20,7 +18,6 @@ const BlockSearchDrawer = () => {
 
   useEffect(() => {
     if (opened) {
-      if (aiWindowStore.opened) aiWindowStore.toggle();
       document.addEventListener("click", handleClickEvent);
       setTimeout(() => {
         ref.current?.focus();
