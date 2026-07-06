@@ -15,6 +15,7 @@ COPY packages/adapters/package.json packages/adapters/package.json
 COPY packages/blocks/package.json packages/blocks/package.json
 COPY packages/common/package.json packages/common/package.json
 COPY packages/lib/package.json packages/lib/package.json
+COPY scripts/setup-hooks.ts scripts/setup-hooks.ts
 
 RUN bun install --frozen-lockfile
 
