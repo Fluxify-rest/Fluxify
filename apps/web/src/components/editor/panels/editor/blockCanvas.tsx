@@ -27,6 +27,8 @@ import {
 	useBlockDataActionsStore,
 } from "@/store/blockDataStore";
 import { useEditorChangeTrackerStore } from "@/store/editor";
+import { canAccess } from "@fluxify/server/src/lib/acl";
+import { useAuthStore } from "@/store/auth";
 
 type Props = {
 	readonly?: boolean;
@@ -40,6 +42,8 @@ const BlockCanvas = ({ readonly, routeId }: Props) => {
 	} = useCanvasActionsStore();
 	const { data: routeData } = routesQueries.getById.useQuery(routeId ?? "");
 	const projectId = routeData?.projectId ?? "";
+	const acl = useAuthStore().acl;
+	const canvasEditable = !canAccess(acl[projectId], "creator");
 
 	const blocks = useCanvasBlocksStore();
 	const edges = useCanvasEdgesStore();
@@ -191,6 +195,7 @@ const BlockCanvas = ({ readonly, routeId }: Props) => {
 					nodesDraggable={!readonly}
 					nodesConnectable={!readonly}
 					fitView
+					draggable={canvasEditable}
 					zoomOnScroll={false}
 					panOnDrag={[0]}
 					edgeTypes={edgeTypes}

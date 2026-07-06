@@ -23,3 +23,4 @@ export * from "./src/errors/validationError";
 export * from "./src/errors/httpError";
 export { zodErrorCallbackParser };
 export * from "./src/lib/pagination";
+export * from "./src/lib/acl";

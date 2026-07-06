@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 
 const page = async () => {
-	return redirect("/routes");
+	return redirect("/");
 };
 
 export default page;

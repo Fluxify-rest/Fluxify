@@ -3,11 +3,11 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "concurrently 'bun run dev:server' 'bun run dev:web' 'bun run dev:ai'",
+		"dev": "concurrently 'bun run dev:server' 'bun run dev:web' 'bun run dev:ai' 'bun run dev:docs'",
 		"dev:server": "bun run --env-file=./apps/server/.env --watch ./apps/server/deployments/standalone.ts",
 		"dev:ai": "bun run --env-file=./apps/ai-gateway/.env --watch ./apps/ai-gateway/src/server.ts",
 		"dev:web": "turbo run dev --filter=@fluxify/web",
-		"dev:proxy": "bun run --watch ./scripts/proxy.js ./scripts/config.json",
+		"dev:docs": "vitepress dev docs",
 		"lint": "turbo run lint",
 		"build": "turbo run build",
 		"test:unit": "bun test --path-ignore-patterns \"**/*.test.ts\"",
@@ -17,12 +17,11 @@
 		"test:adapters": "bun run --cwd packages/adapters test",
 		"test:server:unit": "bun test --cwd apps/server --path-ignore-patterns \"**/*.test.ts\"",
 		"test:server:integration": "bun test --cwd apps/server --path-ignore-patterns \"**/*.spec.ts\"",
-		"build:proxy": "bun build scripts/proxy.js --outfile=dist/proxy.js --bundle --target bun --minify",
 		"build:ai": "turbo run build --filter=@fluxify/ai-gateway",
 		"analyze": "bun x fta-cli --score-cap 70 .",
-		"docs:dev": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
-		"docs:preview": "vitepress preview docs"
+		"docs:preview": "vitepress preview docs",
+		"prepare": "bun run scripts/setup-hooks.ts"
 	},
 	"keywords": [
 		"fluxify",
