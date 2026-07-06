@@ -44,8 +44,14 @@ describe("Integration Helpers", () => {
       expect(variants).toContain("Gemini");
     });
 
-    it("should return empty array for unknown groups", () => {
+    it("should return kv variants", () => {
       const variants = getIntegrationsVariants("kv");
+      expect(variants).toContain("Redis");
+      expect(variants).toContain("Memcached");
+    });
+
+    it("should return empty array for unknown groups", () => {
+      const variants = getIntegrationsVariants("unknown_group" as any);
       expect(variants).toEqual([]);
     });
   });
@@ -78,8 +84,14 @@ describe("Integration Helpers", () => {
       expect(config.baseUrl).toBe("");
     });
 
+    it("should return default Redis config", () => {
+      const config = getDefaultVariantValue("Redis") as any;
+      expect(config).not.toBeNull();
+      expect(config.source).toBe("credentials");
+    });
+
     it("should return null for unsupported variants", () => {
-      expect(getDefaultVariantValue("Redis" as any)).toBeNull();
+      expect(getDefaultVariantValue("FakeVariant" as any)).toBeNull();
     });
   });
 
@@ -104,9 +116,9 @@ describe("Integration Helpers", () => {
       expect(getSchema("observability", "Loki")).not.toBeNull();
     });
 
-    it("should return null for unsupported kv variant", () => {
+    it("should return schema for kv variants", () => {
       const schema = getSchema("kv", "Redis");
-      expect(schema).toBeNull();
+      expect(schema).not.toBeNull();
     });
   });
 });

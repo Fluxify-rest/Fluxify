@@ -14,6 +14,7 @@ import {
 	databaseVariantSchema,
 	observabilityVariantSchema,
 	aiVariantSchema,
+	kvVariantSchema,
 } from "../api/v1/integrations/schemas";
 import {
 	AnthropicIntegration,
@@ -24,6 +25,8 @@ import {
 	OpenAICompatibleIntegration,
 	OpenAIIntegration,
 	OpenObserve,
+	RedisIntegration,
+	MemcachedIntegration,
 } from "@fluxify/adapters";
 import { logger } from "@fluxify/common";
 
@@ -89,6 +92,22 @@ async function loadFromDB() {
 				);
 			}
 			observabilityIntegrationsCache[integration.id] = config;
+		} else if (integration.group === integrationsGroupSchema.enum.kv) {
+			const appConfigMap = convertObjectToMap(
+				getProjectAppConfig(integration.projectId!),
+			);
+			if (integration.variant === kvVariantSchema.enum.Redis) {
+				config = RedisIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			} else if (integration.variant === kvVariantSchema.enum.Memcached) {
+				config = MemcachedIntegration.ExtractConnectionInfo(
+					integration.config as any,
+					appConfigMap,
+				);
+			}
+			kvIntegrationsCache[integration.id] = config;
 		} else if (integration.group === integrationsGroupSchema.enum.ai) {
 			const appConfigMap = convertObjectToMap(
 				getProjectAppConfig(integration.projectId!),

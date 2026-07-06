@@ -111,6 +111,37 @@ export const mongoVariantConfigSchema = z
 		}),
 	);
 
+// KV
+export const redisVariantConfigSchema = z
+	.object({
+		host: z.string().min(1),
+		port: z.string().or(z.number()),
+		username: z.string().optional(),
+		password: z.string().optional(),
+		source: z.literal("credentials"),
+	})
+	.or(
+		z.object({
+			source: z.literal("url"),
+			url: z.string().min(4),
+		}),
+	);
+
+export const memcachedVariantConfigSchema = z
+	.object({
+		host: z.string().min(1),
+		port: z.string().or(z.number()),
+		username: z.string().optional(),
+		password: z.string().optional(),
+		source: z.literal("credentials"),
+	})
+	.or(
+		z.object({
+			source: z.literal("url"),
+			url: z.string().min(4),
+		}),
+	);
+
 // AI
 export const openAIVariantConfigSchema = z.object({
 	apiKey: z
@@ -187,6 +218,7 @@ export const lokiVariantConfigSchema = z.object({
 export const databaseTagsSchema = z.enum(["sql", "nosql"]);
 export const aiTagsSchema = z.enum(["llm", "embedding"]);
 export const observabilityTagsSchema = z.enum(["logs", "metrics", "traces"]);
+export const kvTagsSchema = z.enum(["redis", "kv", "redis-compatible"]);
 export function getIntegrationTags(
 	group: z.infer<typeof integrationsGroupSchema>,
 	variant: string,
@@ -232,6 +264,18 @@ export function getIntegrationTags(
 		}
 		if (variant === "OpenAI Compatible") {
 			return [...aiTagsSchema.options];
+		}
+	}
+	if (group === "kv") {
+		const result = kvVariantSchema.safeParse(variant);
+		if (!result.success) {
+			return [];
+		}
+		if (variant === "Redis") {
+			return [...kvTagsSchema.options];
+		}
+		if (variant === "Memcached") {
+			return [...kvTagsSchema.exclude(["redis", "redis-compatible"]).options];
 		}
 	}
 	return [];

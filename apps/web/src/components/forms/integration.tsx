@@ -34,6 +34,8 @@ import RequireRoleInAnyProject from "../auth/requireRoleInAnyProject";
 import OpenObserveIntegrationForm from "./observability/openObserve";
 import LokiIntegrationForm from "./observability/loki";
 import GenericAiIntegrationForm from "./genericAi";
+import RedisForm from "./kv/redis";
+import MemcachedForm from "./kv/memcached";
 
 type PropTypes = {
   onSubmit?: (data: any) => void;
@@ -149,6 +151,10 @@ const IntegrationForm = (props: PropTypes) => {
           form.values.variant === "MySQL" && <MysqlForm form={form} />}
         {form.values.group === "database" &&
           form.values.variant === "MongoDB" && <MongoForm form={form} />}
+        {form.values.group === "kv" &&
+          form.values.variant === "Redis" && <RedisForm form={form} />}
+        {form.values.group === "kv" &&
+          form.values.variant === "Memcached" && <MemcachedForm form={form} />}
         {form.values.group === "observability" &&
           form.values.variant === "Open Observe" && (
             <OpenObserveIntegrationForm form={form} />
