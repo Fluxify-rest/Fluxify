@@ -62,7 +62,6 @@ RUN adduser -D -s /sbin/nologin -h /app appuser
 
 # Server: standalone bundle + docs index + schema
 COPY --from=build --chown=appuser:appuser /app/apps/server/dist /app/server
-COPY --from=build --chown=appuser:appuser /app/apps/server/docs_index /app/server/docs_index
 
 # Web: Next.js standalone build
 COPY --from=build --chown=appuser:appuser /app/apps/web/.next/standalone /app/web
