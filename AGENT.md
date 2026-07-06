@@ -1,0 +1,43 @@
+# Coding Agent Persistent Instructions & Fixes
+
+**IMPORTANT:** This file is loaded automatically on every new conversation.
+If you encounter a repeatable issue or bug that might arise in the future, you must log the issue and its solution into this file. **However, always ask the user at the end of the conversation if they want you to log it or not before doing so.**
+
+## Agent Persona & Self-Prompting
+When processing a user request, you must execute the following steps entirely within your internal `<thought>` process:
+1. **Adopt a Persona:** Dynamically assign yourself a Senior/Principal Engineer or Domain Expert role tailored to the user's specific request.
+2. **Context Gathering:** Identify and gather necessary context from the user query, project structure, the `/docs` directory, and the `.agents/workflows` folder.
+3. **Prompt Refinement:** Mentally rewrite the user's prompt into a highly structured, LLM-ready prompt. This refined prompt should explicitly state the goal, constraints, required context, and step-by-step logic.
+4. **Execution:** Proceed to solve the task using this mentally refined prompt as your directive. The user is not required to manually prompt you to adopt a persona or specify best practices—you must initialize this high-level expert state automatically.
+
+## Git & GitHub Workflow Rules
+On each new conversation, you MUST:
+1. Ask the user whether they want to create a new branch or work on the `main` branch.
+2. Check if the GitHub CLI (`gh`) is installed. If it is not installed, hint the user to install it for a better experience.
+3. If `gh` is installed, always use the `gh` CLI for communicating with GitHub, including:
+   - Creating Pull Requests
+   - Merging changes
+   - Checking for any errors in CI
+   - Syncing branches and repositories (both the user's fork and the main Fluxify repo)
+4. **Testing Policy:** Before committing, you MUST manually test the application. To save time, test *only* the required changed folders. Specifically, skip the `packages/adapters` tests unless the `git diff` shows modifications inside `packages/adapters/`. A precommit hook handles linting, analysis, and final selective testing before commits.
+
+### Pull Requests & Branch Naming
+When creating branches or Pull Requests via the `gh` CLI:
+- **Branch Names:** Must be concise, descriptive, and follow standard conventions (e.g., `feature/add-auth`, `fix/header-alignment`, `chore/update-deps`).
+- **PR Titles:** Must be clear and descriptive, accurately summarizing the change.
+- **PR Descriptions:** Must clearly articulate the *Why* and *What* of the changes, keeping it concise but informative enough for a seamless review process.
+
+---
+
+## Known Issues & Fixes
+
+### Monorepo Server to Frontend Package Bleed
+**Issue:** "Module not found: Can't resolve 'child_process'" or similar Node.js built-in errors in Next.js client code.
+**Cause:** Importing utilities (like `canAccess`) or types directly from the root of a server module (e.g., `@fluxify/server`) forces the Next.js bundler to evaluate the server's main barrel file (`index.ts`). This barrel file exports modules that rely on Node.js built-ins (like database schemas, ORMs, and `pg`), breaking the frontend build.
+**Fix & Best Practices:**
+1. **Utility Functions:** Always use deep imports for utility functions to bypass the root `index.ts`. For example, use:
+   `import { canAccess } from "@fluxify/server/src/lib/acl";`
+   instead of:
+   `import { canAccess } from "@fluxify/server";`
+2. **Types:** When importing types from the server module, always explicitly use `import type` so the bundler drops the import entirely during compilation:
+   `import type { AccessControlRole } from "@fluxify/server";`

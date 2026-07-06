@@ -1,5 +1,4 @@
-import { User } from "better-auth";
-import { AccessControlRole, AuthACL } from "../db/schema";
+import type { AccessControlRole, AuthACL } from "../db/schema";
 
 export const roleHierarchy: Record<AccessControlRole, number> = {
 	system_admin: 3,
@@ -24,7 +23,7 @@ export function canAccessProject(
 	acl: AuthACL[],
 	projectId: string,
 	requiredRole: AccessControlRole,
-	userData?: User & {
+	userData?: {
 		isSystemAdmin: boolean;
 	},
 ) {

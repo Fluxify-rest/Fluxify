@@ -1,3 +1,6 @@
+---
+description: Overview of the Fluxify project architecture, tech stack, and development guidelines.
+---
 # Fluxify Project Instructions for Vibe Coding
 
 ## 1. Project Overview
@@ -12,7 +15,7 @@ Fluxify is a **low-code backend development platform** that empowers developers 
 
 ## Development Guidelines
 - **Code Style**: The platform uses a consistent code style that is easy to read and maintain.
-  - Follow [rules](rules.md) for writing code.
+  - Follow rules for writing code (see rules.md).
   - Uses bun as both runtime and package manager.
   - Uses tsgo for type safety and linting.
   - Uses `fta-cli` for checking code maintainability.
@@ -20,11 +23,12 @@ Fluxify is a **low-code backend development platform** that empowers developers 
 - **Testing**: The platform is well-tested with a comprehensive suite of unit tests. For every new feature, unit tests are a must. Use Bun's built-in test runner.
 
 ### Commands Available
-- `npm run dev`: Starts the development server of both web and server.
-- `npm run build`: Builds the production version of the app.
-- `npm run test`: Runs the test suite.
-- `npm run lint`: Lints the code.
-- `npm run analyze`: Analyzes the code for maintainability.
+- `bun run dev`: Starts all development servers (web, server, ai-gateway, docs).
+- `bun run build`: Builds the production version of the app using Turbo.
+- `bun run test:unit`: Runs the unit test suite.
+- `bun run test:integration`: Runs the integration test suite.
+- `bun run lint`: Lints the code using Turbo.
+- `bun run analyze`: Analyzes the code for maintainability using fta-cli.
 
 ## Tech Stack
 - **Frontend**: React, Mantine, Bun, Mantine Notifications
@@ -36,6 +40,6 @@ Fluxify is a **low-code backend development platform** that empowers developers 
 - **Testing**: Bun's built-in test runner (currently **.test.ts** files are used for unit tests, in future **.spec.ts** files will be used for integration tests)
 
 ## Feature Development
-- **Integration**: Refer [here](integration.md) for building integrations & its guidelines.
-- **Adding Admin API**: Refer [here](admin-api.md) for building admin APIs & its guidelines.
-- **Adding Blocks**: Refer [here](blocks.md) for building blocks & its guidelines.
+- **Integration**: Refer to integration.md for building integrations & its guidelines.
+- **Adding Admin API**: Refer to admin-api.md for building admin APIs & its guidelines.
+- **Adding Blocks**: Refer to blocks.md for building blocks & its guidelines.
