@@ -43,13 +43,13 @@ export default defineConfig({
 					{ text: "Execution Context", link: "/concepts/context" },
 					{ text: "Execution Engine", link: "/concepts/execution-engine" },
 					{ text: "Globals", link: "/concepts/globals" },
-					{ text: "Integrations", link: "/concepts/integrations" },
 					{ text: "Virtual Machine", link: "/concepts/vm" },
 					{ text: "HTTP Client", link: "/concepts/http-client" },
 					{ text: "Evaluators", link: "/concepts/evaluators" },
 					{ text: "Logging", link: "/concepts/logging" },
 				],
 			},
+			{ text: "Integrations", link: "/integrations/" },
 			{
 				text: "Blocks",
 				items: [
@@ -95,7 +95,6 @@ export default defineConfig({
 						{ text: "Execution Context", link: "/concepts/context" },
 						{ text: "Execution Engine", link: "/concepts/execution-engine" },
 						{ text: "Globals", link: "/concepts/globals" },
-						{ text: "Integrations", link: "/concepts/integrations" },
 						{ text: "Virtual Machine", link: "/concepts/vm" },
 						{ text: "HTTP Client", link: "/concepts/http-client" },
 						{ text: "Evaluators", link: "/concepts/evaluators" },
@@ -190,9 +189,7 @@ export default defineConfig({
 			"/deployments/": [
 				{
 					text: "Deployments",
-					items: [
-						{ text: "Self-Hosting", link: "/deployments/" },
-					],
+					items: [{ text: "Self-Hosting", link: "/deployments/" }],
 				},
 			],
 
@@ -202,6 +199,7 @@ export default defineConfig({
 					items: [
 						{ text: "Overview", link: "/integrations/" },
 						{ text: "Databases", link: "/integrations/databases" },
+						{ text: "KV Stores", link: "/integrations/kv-stores" },
 						{ text: "Observability", link: "/integrations/observability" },
 						{ text: "AI Models", link: "/integrations/ai-models" },
 					],

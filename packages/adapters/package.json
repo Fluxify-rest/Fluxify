@@ -22,8 +22,10 @@
 		"@langchain/google-genai": "^2.1.17",
 		"@langchain/mistralai": "^1.0.4",
 		"@langchain/openai": "^1.2.7",
+		"ioredis": "^5.11.1",
 		"kysely": "^0.28.11",
 		"langchain": "^1.2.23",
+		"memcached": "^2.2.2",
 		"mongodb": "7.2.0",
 		"mysql2": "^3.18.1",
 		"pino": "^10.3.0",
@@ -31,6 +33,7 @@
 	},
 	"devDependencies": {
 		"@types/dockerode": "^4.0.1",
+		"@types/memcached": "^2.2.10",
 		"@types/pg": "^8.16.0",
 		"@typescript/native-preview": "^7.0.0-dev.20260219.1",
 		"dockerode": "^4.0.9"

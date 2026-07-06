@@ -16,6 +16,8 @@ import {
 	openAiCompatibleVariantConfigSchema,
 	geminiVariantConfigSchema,
 	mistralVariantConfigSchema,
+	redisVariantConfigSchema,
+	memcachedVariantConfigSchema,
 } from "./schemas";
 
 type Variants =
@@ -48,6 +50,9 @@ export function getIntegrationsVariants(
 	}
 	if (group === "ai") {
 		return Object.values(aiVariantSchema.options);
+	}
+	if (group === "kv") {
+		return Object.values(kvVariantSchema.options);
 	}
 	return [];
 }
@@ -110,6 +115,17 @@ export function getDefaultVariantValue(variant: Variants) {
 			baseUrl: "",
 		} as z.infer<typeof openAiCompatibleVariantConfigSchema>;
 	}
+	if (variant === "Redis" || variant === "Memcached") {
+		return {
+			host: "",
+			port: 0,
+			username: "",
+			password: "",
+			source: "credentials",
+		} as
+			| z.infer<typeof redisVariantConfigSchema>
+			| z.infer<typeof memcachedVariantConfigSchema>;
+	}
 	return null;
 }
 
@@ -142,6 +158,12 @@ export function getSchema(
 			return null;
 		}
 		switch (variant as z.infer<typeof kvVariantSchema>) {
+			case "Redis":
+				schema = redisVariantConfigSchema;
+				break;
+			case "Memcached":
+				schema = memcachedVariantConfigSchema;
+				break;
 			default:
 				return null;
 		}

@@ -8,6 +8,7 @@ import {
 	observabilityVariantSchema,
 	openObserveVariantConfigSchema,
 	postgresVariantConfigSchema,
+	kvVariantSchema,
 } from "../schemas";
 import { getAppConfigKeysFromData } from "../create/service";
 import { getAppConfigs } from "./repository";
@@ -29,6 +30,8 @@ import {
 	extractMysqlConnectionInfo,
 	extractMongoConnectionInfo,
 	Connection,
+	RedisIntegration,
+	MemcachedIntegration,
 } from "@fluxify/adapters";
 import { EncryptionService } from "../../../../lib/encryption";
 import { getSchema } from "../helpers";
@@ -62,7 +65,7 @@ export async function testIntegrationConnection(
 		case "database":
 			return testDatabasesConnection(variant, config, appConfigs);
 		case "kv":
-			break;
+			return testKvConnection(variant, config, appConfigs);
 		case "ai":
 			return testAiConnection(variant, config, appConfigs);
 		case "baas":
@@ -86,7 +89,13 @@ export default async function handleRequest(
 	body: z.infer<typeof requestBodySchema>,
 ): Promise<z.infer<typeof responseSchema>> {
 	const { group, variant, config: data } = body;
-	return testIntegrationConnection(projectId, group, variant, data);
+	
+	const timeoutPromise = new Promise<z.infer<typeof responseSchema>>((resolve) =>
+		setTimeout(() => resolve({ success: false, error: "Connection timed out after 5 seconds" }), 5000)
+	);
+
+	const connectionPromise = testIntegrationConnection(projectId, group, variant, data);
+	return Promise.race([connectionPromise, timeoutPromise]);
 }
 
 async function testDatabasesConnection(
@@ -166,6 +175,29 @@ async function testDatabasesConnection(
 				success: false,
 				error: "Invalid variant",
 			};
+	}
+}
+
+async function testKvConnection(
+	variant: string,
+	config: any,
+	appConfigs: Map<string, string>,
+) {
+	switch (variant as z.infer<typeof kvVariantSchema>) {
+		case "Redis":
+			const redisResult = await RedisIntegration.TestConnection(config, appConfigs);
+			return {
+				success: redisResult.success,
+				error: redisResult.error || (redisResult.success ? "" : "Failed to connect to Redis"),
+			};
+		case "Memcached":
+			const memcachedResult = await MemcachedIntegration.TestConnection(config, appConfigs);
+			return {
+				success: memcachedResult.success,
+				error: memcachedResult.error || (memcachedResult.success ? "" : "Failed to connect to Memcached"),
+			};
+		default:
+			return { success: false, error: "Invalid variant" };
 	}
 }
 
