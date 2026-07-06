@@ -17,7 +17,7 @@ const Page = async () => {
 	}
 	const hasAccess = canAccess((session.data as any).acl, "viewer");
 	if (!hasAccess) {
-		return redirect("/routes");
+		return redirect("/");
 	}
 	return (
 		<EditorAppShell>

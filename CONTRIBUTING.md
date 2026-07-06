@@ -16,10 +16,12 @@ Open an issue tagged `enhancement`. If you'd like to work on it yourself, mentio
 
 ## Pull Requests
 
-1. Fork the repo and create a branch from `main`
-2. Follow the existing code style
-3. Add tests where applicable
-4. Open a PR against `main` with a clear description of what and why
+We highly recommend using the GitHub CLI (`gh`) for creating PRs and syncing branches for a better developer experience.
+
+1. Fork the repo and create a branch from `main`. **Branch names must be concise, descriptive, and follow standards** (e.g., `feature/add-auth`, `fix/header-alignment`).
+2. Follow the existing code style.
+3. Add tests where applicable.
+4. Open a PR against `main`. **Your PR title and description must clearly articulate the 'Why' and 'What' of the changes**, keeping it concise but informative enough for a seamless review process.
 
 ## Local Development
 See [self-hosting.md](docs/self-hosting.md) for local setup instructions.
@@ -29,6 +31,7 @@ Here's for devs:
 - Use redis for local cache and pub/sub
 - Please fill the .env file properly (see [env.example](env.example) and [self-hosting.md](docs/self-hosting.md) for reference) before running the application
 - Use bun for local development and as package manager
+- **Pre-commit Hooks:** When you run `bun install`, a Git pre-commit hook is automatically installed. This hook dynamically runs our linter, code analyzer (`fta-cli`), and test suites before every commit to ensure code quality.
 - Migrate the database schema using drizzle-kit
 - Run the development server using `bun run dev` at root folder which uses turbopack to run all the services
 - Access the application at `http://localhost:8080/_/admin/ui`
@@ -37,7 +40,7 @@ Here's for devs:
 
 ## Rules
 - Unit tests are mandatory for all new features and bug fixes
-- All code must be tested
+- All code must be tested. Our pre-commit hook automatically runs unit tests globally. To keep commits fast, adapter integration tests are skipped unless changes are detected in `packages/adapters/`.
 - Docs must be updated for all new features, enhancements or changes
 - PRs must be submitted against `main` branch until we have a stable release
 - Admin APIs must be documented with OpenAPI spec (see other admin APIs for reference)

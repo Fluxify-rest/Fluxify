@@ -25,7 +25,7 @@ import { AuthProvider } from "@/components/auth/authProvider";
 import { projectsQuery } from "@/query/projectsQuery";
 import ProfileNav from "@/components/homepage/ProfileNav";
 import { useAuthStore } from "@/store/auth";
-import { AccessControlRole } from "@fluxify/server";
+import type { AccessControlRole } from "@fluxify/server";
 import RequireRole from "@/components/auth/requireRole";
 
 const NewProjectLayout = ({ children }: { children: React.ReactNode }) => {
@@ -126,10 +126,10 @@ const NewProjectLayout = ({ children }: { children: React.ReactNode }) => {
 						{navItems.map((item) => (
 							<RequireRole
 								projectId={projectId as string}
+								key={item.label}
 								requiredRole={item.requiredRole}
 							>
 								<NavLink
-									key={item.label}
 									label={item.label}
 									leftSection={item.icon}
 									active={
