@@ -8,11 +8,11 @@ import {
 import React from "react";
 import { BiLogoPostgresql, BiLogoMongodb } from "react-icons/bi";
 import { DiRedis, DiMysql } from "react-icons/di";
-import { SiAnthropic, SiOpenai } from "react-icons/si";
+import { SiAnthropic } from "react-icons/si";
 import z from "zod";
 import MemcachedIcon from "./icons/memcached";
 import { TbBrandFirebase, TbBrandSupabase } from "react-icons/tb";
-import { RiGeminiFill, RiOpenaiLine, RiRobot2Fill } from "react-icons/ri";
+import { RiGeminiFill, RiOpenaiLine, RiRobot2Fill, RiOpenaiFill } from "react-icons/ri";
 import { IoTelescope } from "react-icons/io5";
 import { PiNotebookLight } from "react-icons/pi";
 
@@ -37,7 +37,7 @@ export const integrationIcons: IntegrationIcons = {
 	Firebase: <TbBrandFirebase size={iconSize} style={iconStyles} />,
 	"OpenAI Compatible": <RiOpenaiLine size={iconSize} style={iconStyles} />,
 	Anthropic: <SiAnthropic size={iconSize} style={iconStyles} />,
-	OpenAI: <SiOpenai size={iconSize} style={iconStyles} />,
+	OpenAI: <RiOpenaiFill size={iconSize} style={iconStyles} />,
 	Mistral: <RiRobot2Fill size={iconSize} style={iconStyles} />,
 	Gemini: <RiGeminiFill size={iconSize} style={iconStyles} />,
 	"Open Observe": <IoTelescope size={iconSize} style={iconStyles} />,

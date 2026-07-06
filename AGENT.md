@@ -23,6 +23,7 @@ On each new conversation, you MUST:
 
 ### Pull Requests & Branch Naming
 When creating branches or Pull Requests via the `gh` CLI:
+- **Upstream Repository:** ALWAYS create PRs against the main upstream repository (`Fluxify-rest/Fluxify`), rather than the user's fork (`<username>/Fluxify`).
 - **Branch Names:** Must be concise, descriptive, and follow standard conventions (e.g., `feature/add-auth`, `fix/header-alignment`, `chore/update-deps`).
 - **PR Titles:** Must be clear and descriptive, accurately summarizing the change.
 - **PR Descriptions:** Must clearly articulate the *Why* and *What* of the changes, keeping it concise but informative enough for a seamless review process.
