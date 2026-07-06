@@ -2,7 +2,6 @@ import { GraphNode } from "@langchain/langgraph";
 import { AgentStateSchema } from "../state";
 import { DiscussionOutputSchema } from "../schemas";
 import { withRetry } from "../../agentRetry";
-import { searchDocsTool, readDocsContentTool } from "../tools/docs";
 
 export const DISCUSSION_NODE_ID = "discussion";
 
@@ -28,10 +27,7 @@ export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
   state,
 ) => {
   const { userPrompt, messages, modelFactory } = state;
-  const agent = modelFactory.createAgent(systemPrompt, [
-    searchDocsTool,
-    readDocsContentTool,
-  ]);
+  const agent = modelFactory.createAgent(systemPrompt, []);
   await state.tracker?.update(2, "started", "Discussion");
   const result = await withRetry(
     async (history) => {

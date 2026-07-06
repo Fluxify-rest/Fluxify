@@ -169,6 +169,13 @@
       "when": 1783262886083,
       "tag": "0023_jazzy_martin_li",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1783300282745,
+      "tag": "0024_zippy_chameleon",
+      "breakpoints": true
     }
   ]
 }

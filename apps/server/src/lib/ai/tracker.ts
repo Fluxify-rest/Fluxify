@@ -1,6 +1,3 @@
-import { eq } from "drizzle-orm";
-import { db } from "../../db";
-import { aiChatEntity } from "../../db/schema";
 import { publishMessage, CHAN_AI_SSE_PREFIX } from "../../db/redis";
 import type z from "zod";
 import type {
@@ -31,23 +28,6 @@ export class AiChatTracker {
 		partialResponse?: Partial<AiChatResponseData>,
 		error?: string,
 	) {
-		const updateData: any = {
-			messageStage: stage,
-		};
-
-		if (partialResponse) {
-			updateData.aiResponse = partialResponse;
-		}
-
-		if (status === "error") {
-			updateData.messageStage = -1; // -1 for error
-		}
-
-		await db
-			.update(aiChatEntity)
-			.set(updateData)
-			.where(eq(aiChatEntity.id, this.messageId));
-
 		const channel = `${CHAN_AI_SSE_PREFIX}${this.userId}:${this.routeId}`;
 
 		await publishMessage(channel, {

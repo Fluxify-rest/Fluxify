@@ -3,7 +3,6 @@ import { sql, relations } from "drizzle-orm";
 import {
 	boolean,
 	index,
-	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -16,12 +15,6 @@ import {
 import z from "zod";
 import { user } from "./auth-schema";
 import { createSelectSchema } from "drizzle-zod";
-import {
-	BuilderOutputSchema,
-	ClassifierOutputSchema,
-	DiscussionOutputSchema,
-	PlannerOutputSchema,
-} from "../lib/ai/schemas";
 
 export enum HttpMethod {
 	GET = "GET",
@@ -74,45 +67,6 @@ export const projectSettingsEntity = pgTable(
 	(table) => [
 		index("idx_project_settings_project_id").on(table.projectId),
 		index("idx_project_settings_key").on(table.key),
-	],
-);
-
-export const aiChatEntity = pgTable(
-	"ai_chat",
-	{
-		id: varchar({ length: 50 })
-			.primaryKey()
-			.$defaultFn(() => generateID()),
-		role: varchar({ length: 50 }),
-		content: text(),
-		userId: varchar("user_id", { length: 50 }).references(() => user.id, {
-			onDelete: "cascade",
-		}),
-		routeId: varchar("route_id", { length: 50 }).references(
-			() => routesEntity.id,
-			{
-				onDelete: "cascade",
-			},
-		),
-		aiResponse: jsonb("ai_response").$type<{
-			classifierOutput: z.infer<typeof ClassifierOutputSchema>;
-			discussionOutput?: z.infer<typeof DiscussionOutputSchema>;
-			plannerOutput?: z.infer<typeof PlannerOutputSchema>;
-			builderOutput?: z.infer<typeof BuilderOutputSchema>;
-		}>(),
-		toolCalls: jsonb("tool_calls").$type<string[]>(),
-		// 0: pending, 1: discussion, 2: planner, 3: builder, 4: done, -1: error
-		messageStage: integer("message_stage").default(0),
-		// any action to perform in ui (to track for duplication and future use)
-		// available: pending(0), implemented(1)
-		actionState: integer("action_state").default(0),
-		tokenUsage: integer("token_usage").default(0),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-	},
-	(table) => [
-		index("idx_ai_chat_route_id").on(table.routeId),
-		index("idx_ai_chat_created_at").on(table.createdAt),
-		index("idx_ai_chat_user_id").on(table.userId),
 	],
 );
 

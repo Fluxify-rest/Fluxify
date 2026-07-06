@@ -4,7 +4,6 @@ import { AgentStateSchema } from "../state";
 import { BuilderOutputSchema } from "../schemas";
 import { blockAiDescriptions, contextVarsAiDescription } from "@fluxify/blocks";
 import { YAML } from "bun";
-import { searchDocsTool, readDocsContentTool } from "../tools/docs";
 
 export const BUILDER_NODE_ID = "builder";
 
@@ -21,7 +20,6 @@ export const BuilderNode: GraphNode<typeof AgentStateSchema> = async (
 		.map((c) => `- ${c.name} | ${c.description}`)
 		.join("\n");
 	const model = modelFactory.createModel();
-	model.bindTools([searchDocsTool, readDocsContentTool]);
 	const blockSchemasJson = YAML.stringify(
 		blockAiDescriptions.filter((desc) =>
 			state.buildMode?.plannerOutput?.plannedBlockNames?.includes(desc.name),
@@ -123,7 +121,7 @@ ${contextVarsAiDescription}
 
    > **Important**: Only use 'canvasChanges' for mutations to items already on the canvas. Brand-new blocks always go in the top-level 'blocks' array.
 
-7. **Tools**: If you are unsure how to configure a specific block's schema or need to know more about blocks, execution, about the api builder, or using javascript, use the '${searchDocsTool.name}' and '${readDocsContentTool.name}' tools to find documentation before outputting.
+7. **Tools**: If you are unsure how to configure a specific block's schema or need to know more about blocks, execution, about the api builder, or using javascript, consult the block schemas and documentation provided above.
 </construction_rules>
 
 <output_format>
