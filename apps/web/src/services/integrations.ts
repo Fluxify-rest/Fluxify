@@ -1,6 +1,7 @@
 import { httpClient } from "@/lib/http";
 import { responseSchema as getByIdResponseSchema } from "@fluxify/server/src/api/v1/integrations/get-by-id/dto";
 import { responseSchema as getAllResponseSchema } from "@fluxify/server/src/api/v1/integrations/get-all/dto";
+import { responseSchema as getBasicListResponseSchema } from "@fluxify/server/src/api/v1/integrations/get-basic-list/dto";
 import {
 	requestBodySchema as createRequestSchema,
 	responseSchema as createResponseSchema,
@@ -16,6 +17,12 @@ import z from "zod";
 const getBaseUrl = (projectId: string) => `/v1/${projectId}/integrations`;
 
 export const integrationService = {
+	async getBasicList(
+		projectId: string,
+	): Promise<z.infer<typeof getBasicListResponseSchema>> {
+		const res = await httpClient.get(`${getBaseUrl(projectId)}/list-basic`);
+		return res.data;
+	},
 	async getAll(
 		projectId: string,
 		group: string,

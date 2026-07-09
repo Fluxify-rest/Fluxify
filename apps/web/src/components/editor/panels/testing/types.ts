@@ -8,7 +8,7 @@ export interface TestSuite {
 
 export interface Assertion {
   id: string;
-  target: "status" | "body" | "time" | "header" | "custom_js";
+  target: "status" | "body" | "time" | "header" | "customJs";
   path?: string;
   operator:
     | "equals"

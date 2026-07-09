@@ -358,6 +358,14 @@ export const testSuitesEntity = pgTable("test_suites", {
 	// Assertions
 	assertions: jsonb("assertions").$type<any[]>().notNull().default([]),
 
+	// Overrides
+	integrationOverrides: jsonb("integration_overrides")
+		.$type<Array<{ existingId: string; newId: string }>>()
+		.default([]),
+	appConfigOverrides: jsonb("app_config_overrides")
+		.$type<Array<{ key: string; value: string }>>()
+		.default([]),
+
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at")
 		.defaultNow()

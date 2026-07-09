@@ -35,6 +35,11 @@ export type HandleRequestType = {
 	status: ContentfulStatusCode;
 };
 
+export type RequestOverrides = {
+	integrations?: Array<{ existingId: string; newId: string }>;
+	appConfigs?: Array<{ key: string; value: string }>;
+};
+
 export const RESPONSE_TIMEOUT = 4 * 1000;
 
 export async function handleRequest(
@@ -54,22 +59,72 @@ export async function handleRequest(
 		};
 	}
 
-	let requestBody = await getRequestBody(ctx);
+	const requestBody = await getRequestBody(ctx);
+	const headers = ctx.req.header();
+	const query = ctx.req.query();
+
+	return executeRouteInternal(
+		{
+			id: path.id,
+			projectId: path.projectId!,
+			projectName: path.projectName!,
+			routeParams: path.routeParams,
+			bodySchema: path.bodySchema,
+			querySchema: path.querySchema,
+			paramsSchema: path.paramsSchema,
+		},
+		{
+			method: ctx.req.method,
+			path: ctx.req.path,
+			headers,
+			query,
+			body: requestBody,
+			params: path.routeParams || {},
+		},
+		ctx,
+	);
+}
+
+export async function executeRouteInternal(
+	routeInfo: {
+		id: string;
+		projectId: string;
+		projectName: string;
+		routeParams?: Record<string, string>;
+		bodySchema?: any;
+		querySchema?: any;
+		paramsSchema?: any;
+	},
+	requestData: {
+		method: string;
+		path: string;
+		headers: Record<string, string>;
+		query: Record<string, string | string[]>;
+		body: any;
+		params: Record<string, string>;
+	},
+	ctx?: Context,
+	overrides?: RequestOverrides,
+): Promise<HandleRequestType> {
 	const httpClient = createHttpClient();
 	const vars = setupContextVars(
 		ctx,
-		requestBody,
-		path.id,
+		requestData,
+		routeInfo.id,
 		httpClient,
-		path.projectId,
-		path.routeParams,
+		routeInfo.projectId,
+		overrides,
 	);
 	const vm = createJsVM(vars);
 
-	if (path.bodySchema && Object.keys(path.bodySchema).length > 0) {
-		const result = await parseRequestSchema(path.bodySchema, requestBody, {
-			vm,
-		});
+	if (routeInfo.bodySchema && Object.keys(routeInfo.bodySchema).length > 0) {
+		const result = await parseRequestSchema(
+			routeInfo.bodySchema,
+			requestData.body,
+			{
+				vm,
+			},
+		);
 		if (!result.success) {
 			return {
 				status: 400,
@@ -78,11 +133,15 @@ export async function handleRequest(
 		}
 	}
 
-	if (path.querySchema && Object.keys(path.querySchema).length > 0) {
-		const result = await parseRequestSchema(path.querySchema, ctx.req.query(), {
-			vm,
-			coerce: true,
-		});
+	if (routeInfo.querySchema && Object.keys(routeInfo.querySchema).length > 0) {
+		const result = await parseRequestSchema(
+			routeInfo.querySchema,
+			requestData.query,
+			{
+				vm,
+				coerce: true,
+			},
+		);
 		if (!result.success) {
 			return {
 				status: 400,
@@ -91,10 +150,13 @@ export async function handleRequest(
 		}
 	}
 
-	if (path.paramsSchema && Object.keys(path.paramsSchema).length > 0) {
+	if (
+		routeInfo.paramsSchema &&
+		Object.keys(routeInfo.paramsSchema).length > 0
+	) {
 		const result = await parseRequestSchema(
-			path.paramsSchema,
-			path.routeParams || {},
+			routeInfo.paramsSchema,
+			requestData.params,
 			{ vm, coerce: true },
 		);
 		if (!result.success) {
@@ -108,11 +170,10 @@ export async function handleRequest(
 		}
 	}
 
-	const dbFactory = createDbFactory(vm);
+	const dbFactory = createDbFactory(vm, overrides?.integrations);
 	const context = createContext(
-		path,
-		ctx,
-		requestBody,
+		routeInfo,
+		requestData,
 		vm,
 		vars,
 		dbFactory,
@@ -121,12 +182,13 @@ export async function handleRequest(
 
 	const executionResult = await startBlocksExecution(
 		{
-			projectId: path.projectId!,
-			routeId: path.id,
-			projectName: path.projectName,
+			projectId: routeInfo.projectId,
+			routeId: routeInfo.id,
+			projectName: routeInfo.projectName,
 		},
 		context,
 	);
+
 	if (executionResult) {
 		return parseResult(executionResult);
 	}
@@ -152,19 +214,18 @@ function parseResult(executionResult: BlockOutput) {
 }
 
 function createContext(
-	path: { id: string; routeParams?: Record<string, string>; projectId: string },
-	ctx: Context<any, any, {}>,
-	requestBody: any,
+	routeInfo: { id: string; projectId: string },
+	requestData: { path: string; body: any },
 	vm: JsVM,
 	vars: ContextVarsType & Record<string, any>,
 	dbFactory: DbFactory,
 	httpClient: HttpClient,
 ): BlockContext {
 	return {
-		apiId: path.id,
-		route: ctx.req.path,
-		projectId: path.projectId,
-		requestBody,
+		apiId: routeInfo.id,
+		route: requestData.path,
+		projectId: routeInfo.projectId,
+		requestBody: requestData.body,
 		vm,
 		vars,
 		dbFactory,
@@ -180,26 +241,55 @@ function createHttpClient() {
 	return new HttpClient();
 }
 
-function createDbFactory(vm: JsVM) {
-	return new DbFactory(vm, dbIntegrationsCache);
+function createDbFactory(
+	vm: JsVM,
+	integrationOverrides?: Array<{ existingId: string; newId: string }>,
+) {
+	if (!integrationOverrides || integrationOverrides.length === 0) {
+		return new DbFactory(vm, dbIntegrationsCache);
+	}
+
+	const customDbCache = { ...dbIntegrationsCache };
+	for (const override of integrationOverrides) {
+		if (dbIntegrationsCache[override.newId]) {
+			customDbCache[override.existingId] = dbIntegrationsCache[override.newId];
+		}
+	}
+	return new DbFactory(vm, customDbCache);
 }
 
 function setupContextVars(
-	ctx: Context,
-	body: any,
+	ctx: Context | undefined,
+	requestData: {
+		method: string;
+		path: string;
+		headers: Record<string, string>;
+		query: Record<string, string | string[]>;
+		body: any;
+		params: Record<string, string>;
+	},
 	routeId: string,
 	httpClient: HttpClient,
 	projectId: string,
-	params?: Record<string, string>,
+	overrides?: RequestOverrides,
 ): BlockContext["vars"] {
 	let logger: AbstractLogger = null!;
 
 	const projectSettings = projectSettingsCache[projectId];
-	if ("settings.ai.loggerConnectionId" in projectSettings) {
-		const config =
-			observabilityIntegrationsCache[
-				projectSettings["settings.ai.loggerConnectionId"]
-			];
+	if (projectSettings && "settings.ai.loggerConnectionId" in projectSettings) {
+		let connectionId = projectSettings["settings.ai.loggerConnectionId"];
+
+		// Apply integration override for logger if present
+		if (overrides?.integrations) {
+			const override = overrides.integrations.find(
+				(o) => o.existingId === connectionId,
+			);
+			if (override) {
+				connectionId = override.newId;
+			}
+		}
+
+		const config = observabilityIntegrationsCache[connectionId];
 		if (!!config) {
 			config.projectId = projectId;
 			config.routeId = routeId;
@@ -207,6 +297,8 @@ function setupContextVars(
 		} else {
 			logger = new ConsoleLoggerProvider(routeId);
 		}
+	} else {
+		logger = new ConsoleLoggerProvider(routeId);
 	}
 
 	return {
@@ -237,37 +329,51 @@ function setupContextVars(
 		},
 		logger,
 		getCookie(key) {
-			return getCookie(ctx, key) || "";
+			return ctx ? getCookie(ctx, key) || "" : "";
 		},
 		getConfig(key) {
+			if (overrides?.appConfigs) {
+				const override = overrides.appConfigs.find((c) => c.key === key);
+				if (override) return override.value;
+			}
 			return getAppConfig(projectId, key);
 		},
 		setCookie(name, options) {
-			setCookie(ctx, name, options?.value.toString() || "", {
-				domain: options?.domain,
-				path: options?.path,
-				expires: new Date(options?.expiry),
-				httpOnly: options?.httpOnly,
-				secure: options?.secure,
-				sameSite: options?.samesite || "Strict",
-			});
+			if (ctx) {
+				setCookie(ctx, name, options?.value.toString() || "", {
+					domain: options?.domain,
+					path: options?.path,
+					expires: new Date(options?.expiry),
+					httpOnly: options?.httpOnly,
+					secure: options?.secure,
+					sameSite: options?.samesite || "Strict",
+				});
+			}
 		},
 		getHeader(key) {
-			return ctx.req.header(key) || "";
+			const lowerKey = key.toLowerCase();
+			for (const k in requestData.headers) {
+				if (k.toLowerCase() === lowerKey) {
+					return requestData.headers[k] || "";
+				}
+			}
+			return "";
 		},
 		getQueryParam(key) {
-			return ctx.req.query(key) || "";
+			return (requestData.query[key] as string) || "";
 		},
 		getRequestBody() {
-			return body;
+			return requestData.body;
 		},
 		getRouteParam(key) {
-			return params?.[key] || "";
+			return requestData.params[key] || "";
 		},
-		httpRequestMethod: ctx.req.method,
-		httpRequestRoute: ctx.req.path,
+		httpRequestMethod: requestData.method,
+		httpRequestRoute: requestData.path,
 		setHeader(key, value) {
-			ctx.header(key, value);
+			if (ctx) {
+				ctx.header(key, value);
+			}
 		},
 		httpClient,
 	};

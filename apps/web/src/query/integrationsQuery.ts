@@ -30,6 +30,21 @@ export const integrationsQuery = {
 			});
 		},
 	},
+	getBasicList: {
+		query: (projectId: string) => {
+			return useQuery({
+				queryKey: ["integrations", projectId, "basic-list"],
+				queryFn: () => integrationService.getBasicList(projectId),
+				refetchOnWindowFocus: false,
+				enabled: !!projectId,
+			});
+		},
+		invalidate: (projectId: string, client: QueryClient) => {
+			return client.invalidateQueries({
+				queryKey: ["integrations", projectId, "basic-list"],
+			});
+		},
+	},
 	getById: {
 		query: (projectId: string, id: string) => {
 			return useQuery({

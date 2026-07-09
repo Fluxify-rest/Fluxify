@@ -34,14 +34,15 @@ const RequestConfig = ({
   hideBodyTab,
 }: RequestConfigProps) => {
   const isBodyDisabled = ["GET", "DELETE"].includes(method.toUpperCase()) || hideBodyTab;
+  const defaultTab = !isBodyDisabled && ["POST", "PUT"].includes(method.toUpperCase()) ? "body" : "params";
 
   return (
     <Box bg="white" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Tabs defaultValue="params" color="violet">
+      <Tabs defaultValue={defaultTab} color="violet">
         <Tabs.List px="md" style={{ borderBottom: "1px solid #eee" }}>
+          {!isBodyDisabled && <Tabs.Tab value="body" py="sm">Body</Tabs.Tab>}
           <Tabs.Tab value="params" py="sm">Params</Tabs.Tab>
           <Tabs.Tab value="headers" py="sm">Headers</Tabs.Tab>
-          {!isBodyDisabled && <Tabs.Tab value="body" py="sm">Body</Tabs.Tab>}
         </Tabs.List>
 
         <Box p="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>

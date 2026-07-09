@@ -161,7 +161,7 @@ const AssertionsList = ({ assertions, onChange, ran }: AssertionsListProps) => {
                       { value: "body", label: "Response Body" },
                       { value: "time", label: "Response Time (ms)" },
                       { value: "header", label: "Response Header" },
-                      { value: "custom_js", label: "Custom Javascript" },
+                      { value: "customJs", label: "Custom Javascript" },
                     ]}
                     value={assertion.target}
                     onChange={(val) =>
@@ -198,7 +198,7 @@ const AssertionsList = ({ assertions, onChange, ran }: AssertionsListProps) => {
                 </Box>
 
                 <Box style={{ flex: 2 }}>
-                  {assertion.target !== "custom_js" ? (
+                  {assertion.target !== "customJs" ? (
                     <Select
                       size="xs"
                       variant="default"
@@ -217,7 +217,7 @@ const AssertionsList = ({ assertions, onChange, ran }: AssertionsListProps) => {
                 </Box>
 
                 <Box style={{ flex: 3 }}>
-                  {assertion.target !== "custom_js" ? (
+                  {assertion.target !== "customJs" ? (
                     assertion.operator !== "true" &&
                     assertion.operator !== "exists" ? (
                       <TextInput
@@ -269,7 +269,7 @@ const AssertionsList = ({ assertions, onChange, ran }: AssertionsListProps) => {
             Rules Preview:{" "}
             {assertions
               .map((a) => {
-                if (a.target === "custom_js") return "Custom JS Check";
+                if (a.target === "customJs") return "Custom JS Check";
                 const target =
                   a.target === "status"
                     ? "Status"

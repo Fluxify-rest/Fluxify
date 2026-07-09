@@ -8,12 +8,12 @@ export default async function handleRequest(
   data: z.infer<typeof requestBodySchema>,
 ) {
   try {
-    const { route_id, ...rest } = data;
+    const { routeId, ...rest } = data;
     return await createTestSuite({
       id: generateID(),
       name: rest.name,
       description: rest.description,
-      routeId: route_id,
+      routeId,
     });
   } catch (err: any) {
     throw new ServerError(err.message || "Failed to create test suite");

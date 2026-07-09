@@ -1,9 +1,9 @@
-import { app } from "../../../server";
 import { testSuitesEntity, routesEntity } from "../../../db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import { JsVM } from "@fluxify/lib";
 import { z } from "zod";
 import { assertionSchema } from "./schema";
+import { executeRouteInternal, RequestOverrides } from "../../../modules/requestRouter/service";
 
 export type AssertionType = z.infer<typeof assertionSchema>;
 
@@ -22,57 +22,63 @@ export async function runSuiteAssertions(
 	});
 
 	const queryParams = (suite.queryParams as Record<string, string>) || {};
-	const searchParams = new URLSearchParams();
-	Object.entries(queryParams).forEach(([key, value]) => {
-		if (key) searchParams.append(key, value);
-	});
-	const qs = searchParams.toString();
-	const urlPath = `${finalPath}${qs ? `?${qs}` : ""}`;
-
-	const headers = new Headers();
-	Object.entries((suite.headers as Record<string, string>) || {}).forEach(
-		([k, v]) => headers.set(k, v),
-	);
+	const headers = (suite.headers as Record<string, string>) || {};
 	const method = route.method || "GET";
 
 	// default json
+	const lowerHeaders = Object.keys(headers).reduce((acc, k) => {
+		acc[k.toLowerCase()] = headers[k];
+		return acc;
+	}, {} as Record<string, string>);
+
 	if (
-		!headers.has("Content-Type") &&
+		!lowerHeaders["content-type"] &&
 		["POST", "PUT"].includes(method.toUpperCase())
 	) {
-		headers.set("Content-Type", "application/json");
+		headers["Content-Type"] = "application/json";
 	}
 
-	const reqInit: RequestInit = {
-		method: method.toUpperCase(),
-		headers,
+	const overrides: RequestOverrides = {
+		integrations: Array.isArray(suite.integrationOverrides) ? suite.integrationOverrides : [],
+		appConfigs: Array.isArray(suite.appConfigOverrides) ? suite.appConfigOverrides : [],
 	};
 
-	if (!["GET", "DELETE"].includes(method.toUpperCase()) && suite.body) {
-		reqInit.body =
-			typeof suite.body === "string" ? suite.body : JSON.stringify(suite.body);
-	}
-
-	// Use app.request to bypass network
-	const startTime = Date.now();
-	let res: Response;
-	try {
-		res = await app.request("http://localhost" + urlPath, reqInit);
-	} catch (e: any) {
-		// Mock a 500 response
-		res = new Response(JSON.stringify({ error: e.message }), { status: 500 });
-	}
-	const time = Date.now() - startTime;
-
-	const resStatus = res.status;
-	const resHeaders = Object.fromEntries(res.headers.entries());
+	let resStatus: number = 500;
 	let resBody: unknown = null;
-	const text = await res.text();
+	const startTime = Date.now();
+
 	try {
-		resBody = JSON.parse(text);
-	} catch (_e) {
-		resBody = text;
+		const result = await executeRouteInternal(
+			{
+				id: route.id,
+				projectId: route.projectId!,
+				projectName: "", // We might not have this here, but it's okay for testing
+				routeParams: pathParams,
+				bodySchema: route.bodySchema,
+				querySchema: route.querySchema,
+				paramsSchema: route.paramsSchema,
+			},
+			{
+				method: method.toUpperCase(),
+				path: finalPath,
+				headers,
+				query: queryParams,
+				body: suite.body,
+				params: pathParams,
+			},
+			undefined,
+			overrides
+		);
+
+		resStatus = result.status;
+		resBody = result.data;
+	} catch (e: any) {
+		resStatus = 500;
+		resBody = { error: e.message };
 	}
+
+	const time = Date.now() - startTime;
+	const resHeaders: Record<string, string> = {}; // executeRouteInternal doesn't currently return headers
 
 	const assertions = (suite.assertions as AssertionType[]) || [];
 	const result = assertions.map((a: AssertionType) => {
@@ -87,12 +93,12 @@ export async function runSuiteAssertions(
 				actualValue = time;
 				targetDesc = "Time";
 			} else if (a.target === "header") {
-				actualValue = resHeaders[(a.property_path || "").toLowerCase()];
-				targetDesc = `Header(${a.property_path})`;
+				actualValue = resHeaders[(a.propertyPath || "").toLowerCase()];
+				targetDesc = `Header(${a.propertyPath})`;
 			} else if (a.target === "body") {
 				// Evaluate dot-notation path
-				if (a.property_path) {
-					const parts = a.property_path
+				if (a.propertyPath) {
+					const parts = a.propertyPath
 						.replace(/\[(\d+)\]/g, ".$1")
 						.split(".")
 						.filter(Boolean);
@@ -105,30 +111,35 @@ export async function runSuiteAssertions(
 				} else {
 					actualValue = resBody;
 				}
-				targetDesc = `Body(${a.property_path || ""})`;
-			} else if (a.target === "custom_js") {
+				targetDesc = `Body(${a.propertyPath || ""})`;
+			} else if (a.target === "customJs") {
 				const vm = new JsVM({
+					fluxify: {
+						request: {
+							path: finalPath,
+							query: queryParams,
+							body: suite.body,
+							headers,
+							params: pathParams,
+						}
+					},
 					body: resBody,
 					headers: resHeaders,
 					status: resStatus,
 				});
-				actualValue = vm.run(a.custom_js || "return true;");
+				actualValue = vm.run(a.customJs || "return true;");
 				targetDesc = "Custom JS";
 			}
 
 			let passed = false;
-			if (a.target === "custom_js") {
-				passed = new JsVM({
-					body: resBody,
-					headers: resHeaders,
-					status: resStatus,
-				}).truthy(actualValue);
+			if (a.target === "customJs") {
+				passed = new JsVM({}).truthy(actualValue);
 			}
 
-			const expected = a.expected_value == null ? "" : String(a.expected_value);
+			const expected = a.expectedValue == null ? "" : String(a.expectedValue);
 			const actualStr = actualValue == null ? "" : String(actualValue);
 
-			if (a.target !== "custom_js") {
+			if (a.target !== "customJs") {
 				switch (a.operator) {
 					case "eq":
 						passed = actualStr === expected || String(actualValue) === expected;
@@ -175,10 +186,10 @@ export async function runSuiteAssertions(
 			return {
 				success: passed,
 				message: passed
-					? `${targetDesc} ${a.target !== "custom_js" ? opStr + " " + (a.expected_value || "") : ""} ✓`
-					: a.target === "custom_js"
+					? `${targetDesc} ${a.target !== "customJs" ? opStr + " " + (a.expectedValue || "") : ""} ✓`
+					: a.target === "customJs"
 						? `Custom JS evaluated to falsy (${actualStr})`
-						: `Expected ${targetDesc} to ${opStr} ${a.expected_value || ""}, got: ${actualStr}`,
+						: `Expected ${targetDesc} to ${opStr} ${a.expectedValue || ""}, got: ${actualStr}`,
 			};
 		} catch (err: unknown) {
 			return {

@@ -3,8 +3,8 @@ import { z } from "zod";
 // --- Assertions Schema --- //
 export const assertionSchema = z
   .object({
-    target: z.enum(["status", "body", "time", "header", "custom_js"]),
-    property_path: z.string().optional().nullable(),
+    target: z.enum(["status", "body", "time", "header", "customJs"]),
+    propertyPath: z.string().optional().nullable(),
     operator: z
       .enum([
         "eq",
@@ -19,20 +19,20 @@ export const assertionSchema = z
       ])
       .optional()
       .nullable(),
-    expected_value: z.string().optional().nullable(),
-    custom_js: z.string().optional().nullable(),
+    expectedValue: z.string().optional().nullable(),
+    customJs: z.string().optional().nullable(),
   })
   .superRefine((val, ctx) => {
     // 1. Property path
     if (
       val.target !== "body" &&
-      val.property_path != null &&
-      val.property_path !== ""
+      val.propertyPath != null &&
+      val.propertyPath !== ""
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["property_path"],
-        message: "property_path must be absent or null unless target is 'body'",
+        path: ["propertyPath"],
+        message: "propertyPath must be absent or null unless target is 'body'",
       });
     }
 
@@ -52,7 +52,7 @@ export const assertionSchema = z
       ],
     };
 
-    if (val.target !== "custom_js") {
+    if (val.target !== "customJs") {
       if (!val.operator) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -68,7 +68,7 @@ export const assertionSchema = z
       }
 
       if (
-        val.expected_value == null &&
+        val.expectedValue == null &&
         val.operator !== "true" &&
         val.operator !== "false" &&
         val.operator !== "exists" &&
@@ -76,7 +76,7 @@ export const assertionSchema = z
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ["expected_value"],
+          path: ["expectedValue"],
           message: "Expected value is required",
         });
       }
@@ -86,11 +86,21 @@ export const assertionSchema = z
 export const testSuiteCoreSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),
-  route_id: z.string().uuid("Invalid route ID"),
+  routeId: z.string().uuid("Invalid route ID"),
   params: z.record(z.string(), z.string()).default({}),
   headers: z.record(z.string(), z.string()).default({}),
-  query_params: z.record(z.string(), z.string()).default({}),
-  route_params: z.record(z.string(), z.string()).default({}),
+  queryParams: z.record(z.string(), z.string()).default({}),
+  routeParams: z.record(z.string(), z.string()).default({}),
   body: z.record(z.string(), z.unknown()).optional().nullable(),
   assertions: z.array(assertionSchema).default([]),
+  appConfigOverrides: z
+    .array(z.object({ key: z.string(), value: z.string() }))
+    .default([])
+    .optional()
+    .nullable(),
+  integrationOverrides: z
+    .array(z.object({ existingId: z.string(), newId: z.string() }))
+    .default([])
+    .optional()
+    .nullable(),
 });
