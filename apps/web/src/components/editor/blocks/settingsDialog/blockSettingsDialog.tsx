@@ -7,8 +7,8 @@ import { TbChevronsLeft, TbChevronsRight } from "react-icons/tb";
 import {
   useBlockDataStore,
 } from "@/store/blockDataStore";
-import { useNodesData } from "@xyflow/react";
 import { BlockTypes } from "@/types/block";
+import { useCanvasBlocksStore } from "@/store/canvas";
 
 export type DataSettingsProps<T> = {
   blockId: string;
@@ -18,8 +18,9 @@ export type DataSettingsProps<T> = {
 const BlockSettingsDialog = () => {
   const blockSettings = useEditorBlockSettingsStore();
   const blockDataStore = useBlockDataStore();
-  const selectedBlockDetails = useNodesData(blockSettings.blockId);
-  const nodesData = blockDataStore[blockSettings.blockId];
+  const blocks = useCanvasBlocksStore();
+  const selectedBlockDetails = blocks.find((b) => b.id === blockSettings.blockId);
+  const nodesData = blockDataStore[blockSettings.blockId] || selectedBlockDetails?.data || {};
   const [collapsed, setCollapsed] = React.useState(false);
 
   function toggleCollapsed() {
@@ -34,7 +35,7 @@ const BlockSettingsDialog = () => {
       onClose={() => blockSettings.close()}
     >
       <Box h={"80vh"}>
-        {nodesData && selectedBlockDetails && (
+        {selectedBlockDetails && (
           <Grid h={"80vh"}>
             <Grid.Col
               h={"80vh"}
