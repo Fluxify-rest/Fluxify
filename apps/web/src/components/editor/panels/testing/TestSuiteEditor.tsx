@@ -8,23 +8,23 @@ import {
 	Badge,
 	Loader,
 	Paper,
-	ScrollArea,
-	Menu,
 	ActionIcon,
 	Divider,
 	TextInput,
 	Textarea,
 } from "@mantine/core";
-import { TbCheck, TbPlus, TbServer, TbTerminal2 } from "react-icons/tb";
+import { TbCheck, TbPlus, TbTerminal2, TbPlayerPlayFilled, TbDeviceFloppy } from "react-icons/tb";
 import Editor from "@monaco-editor/react";
 import UrlBar from "./components/UrlBar";
 import RequestConfig from "./components/RequestConfig";
 import AssertionsList from "./components/AssertionsList";
 import MockDataEditor from "./components/MockDataEditor";
 import TestSuiteHeader from "./components/TestSuiteHeader";
-import { TestSuite, Assertion } from "./types";
+import OverridesEditor from "./components/OverridesEditor";
 import { notifications } from "@mantine/notifications";
 import { testSuitesQueries } from "@/query/testSuitesQuery";
+import { appConfigQuery } from "@/query/appConfigQuery";
+import { integrationsQuery } from "@/query/integrationsQuery";
 import { useQueryClient } from "@tanstack/react-query";
 import FormDialog from "../../../dialog/formDialog";
 import ConfirmDialog from "../../../dialog/confirmDialog";
@@ -50,6 +50,9 @@ const TestSuiteEditor = ({
 	const deleteSuite = testSuitesQueries.delete.useMutation();
 	const runSuiteAction = testSuitesQueries.run.useMutation();
 
+	const { data: appConfigsData } = appConfigQuery.getKeysList.useQuery(route.projectId!, "");
+	const { data: integrationsData } = integrationsQuery.getBasicList.query(route.projectId!);
+
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [editingSuiteName, setEditingSuiteName] = useState("");
@@ -64,9 +67,12 @@ const TestSuiteEditor = ({
 	});
 	const [body, setBody] = useState<string>("{\n  \n}");
 	const [assertions, setAssertions] = useState<any[]>([]);
+	const [appConfigOverrides, setAppConfigOverrides] = useState<any[]>([]);
+	const [integrationOverrides, setIntegrationOverrides] = useState<any[]>([]);
 
 	const [actualResponseData, setActualResponseData] = useState<unknown>(null);
 	const responseDataRef = React.useRef<HTMLDivElement>(null);
+	const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
 	// Initialize with schema defaults
 	useEffect(() => {
@@ -108,14 +114,18 @@ const TestSuiteEditor = ({
 		const mappedAssertions = (suite.assertions || []).map((a: any) => ({
 			id: a.id || Math.random().toString(),
 			target: a.target,
-			path: a.property_path,
+			path: a.propertyPath,
 			operator: a.operator,
-			expected: a.expected_value,
-			customJs: a.custom_js,
+			expected: a.expectedValue,
+			customJs: a.customJs,
 			message: a.message,
 			success: a.success,
 		}));
 		setAssertions(mappedAssertions.length > 0 ? mappedAssertions : []);
+		
+		setAppConfigOverrides(Array.isArray((suite as any).appConfigOverrides) ? (suite as any).appConfigOverrides : []);
+		setIntegrationOverrides(Array.isArray((suite as any).integrationOverrides) ? (suite as any).integrationOverrides : []);
+
 		setRan(false);
 	}, [suite]);
 
@@ -150,13 +160,15 @@ const TestSuiteEditor = ({
 				body: parsedBody,
 				assertions: assertions.map((a) => ({
 					target: a.target,
-					property_path: a.path,
-					operator: a.target === "custom_js" ? undefined : a.operator,
-					expected_value:
-						a.target === "custom_js" ? undefined : String(a.expected),
-					custom_js: a.customJs,
+					propertyPath: a.path,
+					operator: a.target === "customJs" ? undefined : a.operator,
+					expectedValue:
+						a.target === "customJs" ? undefined : String(a.expected),
+					customJs: a.customJs,
 				})),
-			},
+				appConfigOverrides,
+				integrationOverrides,
+			} as any, // Bypass TS error if type is not updated everywhere yet
 		});
 		testSuitesQueries.getAll.invalidate(queryClient, route.id);
 
@@ -188,7 +200,10 @@ const TestSuiteEditor = ({
 
 			setRan(true);
 			setTimeout(() => {
-				responseDataRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+				if (scrollAreaRef.current && responseDataRef.current) {
+					const top = responseDataRef.current.offsetTop;
+					scrollAreaRef.current.scrollTo({ top: top - 20, behavior: "smooth" });
+				}
 			}, 100);
 			if (res.success) {
 				notifications.show({
@@ -263,8 +278,6 @@ const TestSuiteEditor = ({
 			)}
 
 			<TestSuiteHeader
-				suiteName={suite?.name || ""}
-				suiteDescription={suite?.description || ""}
 				status={
 					ran
 						? assertions.every((a) => a.success !== false)
@@ -272,16 +285,55 @@ const TestSuiteEditor = ({
 							: "failed"
 						: null
 				}
-				running={running}
-				isSaving={updateSuite.isPending}
-				onRun={handleRun}
-				onSave={handleSaveData}
 				onEdit={() => {
 					setEditingSuiteName(suite?.name || "");
 					setEditingSuiteDesc(suite?.description || "");
 					setIsEditDialogOpen(true);
 				}}
 				onDelete={() => setIsDeleteDialogOpen(true)}
+				actions={
+					<Group gap="xs">
+						<Button
+							color="green.8"
+							size="sm"
+							leftSection={<TbPlayerPlayFilled size={14} />}
+							onClick={handleRun}
+							loading={running}
+							style={{ fontWeight: 700 }}
+						>
+							Run Suite
+						</Button>
+						<Button
+							color="violet"
+							size="sm"
+							onClick={() => handleSaveData(true)}
+							loading={updateSuite.isPending}
+							variant="light"
+							leftSection={<TbDeviceFloppy size={16} />}
+						>
+							Save
+						</Button>
+					</Group>
+				}
+				urlBar={
+					<Box>
+						<UrlBar 
+							method={route.method} 
+							path={route.path}
+						/>
+						<Box mt="xs" px={4}>
+							<Text
+								size="11px"
+								c="dimmed"
+								fw={500}
+								style={{ fontFamily: "monospace", wordBreak: "break-all" }}
+							>
+								Preview:{" "}
+								<span style={{ color: "#7950F2" }}>{resolvedUrl}</span>
+							</Text>
+						</Box>
+					</Box>
+				}
 			/>
 
 			{/* Content - Scrollable area */}
@@ -294,6 +346,7 @@ const TestSuiteEditor = ({
 				}}
 			>
 				<Box
+					ref={scrollAreaRef}
 					style={{
 						position: "absolute",
 						top: 0,
@@ -307,21 +360,7 @@ const TestSuiteEditor = ({
 						<Stack gap={40} pb={80}>
 							{" "}
 							{/* Added significant bottom padding */}
-							{/* URL Section */}
-							<Box>
-								<UrlBar method={route.method} path={route.path} />
-								<Box mt="xs" px={4}>
-									<Text
-										size="11px"
-										c="dimmed"
-										fw={500}
-										style={{ fontFamily: "monospace", wordBreak: "break-all" }}
-									>
-										Preview:{" "}
-										<span style={{ color: "#7950F2" }}>{resolvedUrl}</span>
-									</Text>
-								</Box>
-							</Box>
+							{/* Added significant bottom padding */}
 							{/* Request Config Section */}
 							<Box>
 								<Text size="sm" fw={700} mb="lg" c="gray.8">
@@ -343,6 +382,21 @@ const TestSuiteEditor = ({
 								</Paper>
 							</Box>
 							<Divider color="gray.1" />
+
+							{/* Overrides Section */}
+							<Box>
+								<Paper withBorder radius="md" style={{ overflow: "hidden" }} p="md">
+									<OverridesEditor
+										appConfigOverrides={appConfigOverrides}
+										onAppConfigOverridesChange={setAppConfigOverrides}
+										integrationOverrides={integrationOverrides}
+										onIntegrationOverridesChange={setIntegrationOverrides}
+										availableAppConfigs={appConfigsData || []}
+										availableIntegrations={integrationsData || []}
+									/>
+								</Paper>
+							</Box>
+
 							{!isMockDataDisabled && (
 								<MockDataEditor mockData={body} onChange={setBody} />
 							)}

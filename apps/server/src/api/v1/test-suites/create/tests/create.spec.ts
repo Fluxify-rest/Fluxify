@@ -37,10 +37,9 @@ describe("Test Suites Endpoints - CREATE", () => {
 
   it("Happy path returns correct shape on CREATE", async () => {
     const payload = {
-      name: "User Login Specs",
-      route_id: crypto.randomUUID(),
-      body: { username: "abc" },
-      assertions: [{ target: "status", operator: "eq", expected_value: "200" }],
+      name: "New Suite",
+      routeId: crypto.randomUUID(),
+      assertions: [{ target: "status", operator: "eq", expectedValue: "200" }],
     };
     const req = new Request("http://localhost/test-suites", {
       method: "POST",
@@ -56,13 +55,13 @@ describe("Test Suites Endpoints - CREATE", () => {
   it("Validation rejects meaningful bad input case (CREATE property_path)", async () => {
     const payload = {
       name: "Invalid Suite",
-      route_id: crypto.randomUUID(),
+      routeId: crypto.randomUUID(),
       assertions: [
         {
           target: "status",
           operator: "eq",
-          expected_value: "200",
-          property_path: "invalid.path",
+          expectedValue: "200",
+          propertyPath: "invalid.path",
         },
       ],
     };

@@ -4,42 +4,31 @@ import {
   Group,
   Text,
   Badge,
-  Button,
   ActionIcon,
   Menu,
 } from "@mantine/core";
 import {
   TbCheck,
   TbX,
-  TbPlayerPlayFilled,
-  TbDeviceFloppy,
   TbDotsVertical,
   TbEdit,
   TbTrash,
 } from "react-icons/tb";
 
 interface TestSuiteHeaderProps {
-  suiteName?: string;
-  suiteDescription?: string;
   status: "passed" | "failed" | null;
-  running: boolean;
-  isSaving: boolean;
-  onRun: () => void;
-  onSave: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  urlBar?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
 export default function TestSuiteHeader({
-  suiteName,
-  suiteDescription,
   status,
-  running,
-  isSaving,
-  onRun,
-  onSave,
   onEdit,
   onDelete,
+  urlBar,
+  actions,
 }: TestSuiteHeaderProps) {
   return (
     <Box
@@ -52,59 +41,32 @@ export default function TestSuiteHeader({
         flexShrink: 0,
       }}
     >
-      <Group justify="space-between">
-        <Box>
-          <Group gap="sm">
-            <Text size="xl" fw={800} c="gray.8">
-              {suiteName || "Loading..."}
-            </Text>
-            {status === "passed" && (
-              <Badge
-                variant="light"
-                color="green"
-                radius="sm"
-                leftSection={<TbCheck size={12} />}
-              >
-                Passed
-              </Badge>
-            )}
-            {status === "failed" && (
-              <Badge
-                variant="light"
-                color="red"
-                radius="sm"
-                leftSection={<TbX size={12} />}
-              >
-                Failed
-              </Badge>
-            )}
-          </Group>
-          <Text size="sm" c="gray.5" mt={2}>
-            {suiteDescription}
-          </Text>
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <Box style={{ flexGrow: 1 }}>
+          {urlBar}
         </Box>
-        <Group gap="xs">
-          <Button
-            color="green.8"
-            size="md"
-            px="xl"
-            leftSection={<TbPlayerPlayFilled size={16} />}
-            onClick={onRun}
-            loading={running}
-            style={{ fontWeight: 700 }}
-          >
-            Run Suite
-          </Button>
-          <ActionIcon
-            color="violet"
-            size="md"
-            mr="sm"
-            onClick={onSave}
-            loading={isSaving}
-            variant="subtle"
-          >
-            <TbDeviceFloppy size={20} />
-          </ActionIcon>
+        <Group gap="xs" wrap="nowrap" align="center" mt={4}>
+          {status === "passed" && (
+            <Badge
+              variant="light"
+              color="green"
+              radius="sm"
+              leftSection={<TbCheck size={12} />}
+            >
+              Passed
+            </Badge>
+          )}
+          {status === "failed" && (
+            <Badge
+              variant="light"
+              color="red"
+              radius="sm"
+              leftSection={<TbX size={12} />}
+            >
+              Failed
+            </Badge>
+          )}
+          {actions}
           <Menu shadow="md" width={200} position="bottom-end">
             <Menu.Target>
               <ActionIcon variant="subtle" size="lg" color="dark">
