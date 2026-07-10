@@ -12,7 +12,8 @@ export type FlowEditorFeatures = {
 
 export type FlowEditorContextType = {
   readonly: boolean;
-  routeId?: string;
+  entityId?: string;
+  entityType?: "route" | "customBlock";
   projectId?: string;
   features: FlowEditorFeatures;
 };

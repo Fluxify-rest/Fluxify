@@ -12,6 +12,8 @@ import {
   responseSchema as updateResponseSchema,
 } from "@fluxify/server/src/api/v1/custom-blocks/update/dto";
 import { responseSchema as getByIdResponseSchema } from "@fluxify/server/src/api/v1/custom-blocks/get-by-id/dto";
+import { responseSchema as getCanvasItemsResponseSchema } from "@fluxify/server/src/api/v1/custom-blocks/get-canvas-items/dto";
+import { requestBodySchema as saveCanvasRequestSchema } from "@fluxify/server/src/api/v1/custom-blocks/save-canvas/dto";
 import { httpClient } from "@/lib/http";
 
 const baseUrl = `/v1/custom-blocks`;
@@ -48,6 +50,19 @@ export const customBlocksService = {
   },
   async delete(id: string) {
     await httpClient.delete(`${baseUrl}/${id}`);
+  },
+  async getCanvasItems(
+    id: string
+  ): Promise<z.infer<typeof getCanvasItemsResponseSchema>> {
+    const result = await httpClient.get(`${baseUrl}/${id}/canvas-items`);
+    return result.data;
+  },
+  async saveCanvasItems(
+    id: string,
+    data: z.infer<typeof saveCanvasRequestSchema>
+  ) {
+    const result = await httpClient.put(`${baseUrl}/${id}/save-canvas`, data);
+    return result.data;
   },
   // zod schemas
   createRequestSchema,

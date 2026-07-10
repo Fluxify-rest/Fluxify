@@ -46,4 +46,22 @@ export const customBlocksQueries = {
       exact: false,
     });
   },
+  getCanvasItems: {
+    useQuery(id: string) {
+      return useQuery({
+        queryKey: ["custom-blocks", "canvas", id],
+        queryFn: async () => {
+          return await customBlocksService.getCanvasItems(id);
+        },
+        refetchOnWindowFocus: false,
+        enabled: !!id,
+      });
+    },
+    invalidate(client: QueryClient, id: string) {
+      return client.invalidateQueries({
+        queryKey: ["custom-blocks", "canvas", id],
+        exact: false,
+      });
+    },
+  },
 };

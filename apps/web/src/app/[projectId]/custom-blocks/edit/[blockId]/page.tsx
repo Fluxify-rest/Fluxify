@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { APP_ROUTES } from "@/constants/routes";
 import { Button, Box } from "@mantine/core";
 import { TbArrowLeft } from "react-icons/tb";
+import CustomBlockCanvas from "./CustomBlockCanvas";
 
 export default function EditCustomBlockPage() {
   const { projectId, blockId } = useParams();
@@ -12,18 +13,9 @@ export default function EditCustomBlockPage() {
 
   return (
     <Box w="100vw" h="100vh" bg="gray.0" pos="relative">
-      <Button
-        variant="default"
-        pos="absolute"
-        top={16}
-        left={16}
-        leftSection={<TbArrowLeft size={16} />}
-        onClick={() => router.push(APP_ROUTES.PROJECT_CUSTOM_BLOCKS(projectId as string))}
-        style={{ zIndex: 100 }}
-      >
-        Back to Custom Blocks
-      </Button>
-      {/* Canvas or form goes here */}
+      <Box h="100%" w="100%">
+        <CustomBlockCanvas blockId={blockId as string} projectId={projectId as string} />
+      </Box>
     </Box>
   );
 }

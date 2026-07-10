@@ -34,7 +34,9 @@ export async function createDependencies(
     id: id1,
     customBlockId,
     type: BlockTypes.entrypoint,
-    data: {},
+    data: {
+      position: { x: 0, y: 0 }
+    },
   });
   
   await (tx ?? db)?.insert(customBlockGraphsEntity).values({
@@ -42,6 +44,7 @@ export async function createDependencies(
     customBlockId,
     type: BlockTypes.errorHandler,
     data: {
+      position: { x: 25, y: 0 },
       next: "",
       retryAfterFail: false,
       retryCount: 0,

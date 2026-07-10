@@ -60,9 +60,10 @@ const EditorProvidersWrapper = ({ children }: { children: React.ReactNode }) => 
 	return (
 		<FlowEditorProvider
 			value={{
-				readonly,
-				routeId: id,
-				projectId,
+				readonly: false,
+				entityId: id,
+				entityType: "route",
+				projectId: projectId as string,
 				features: defaultFeatures,
 			}}
 		>

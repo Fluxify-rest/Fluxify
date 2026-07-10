@@ -2,6 +2,7 @@ import { BlockCanvasContext } from "@/context/blockCanvas";
 import { useCanvasSave } from "@/hooks/useCanvasState";
 import { useBlockDataStore } from "@/store/blockDataStore";
 import { useCanvasActionsStore } from "@/store/canvas";
+import { useFlowEditorContext } from "./flowEditorContext";
 import {
 	useEditorBlockSettingsStore,
 	useEditorSearchbarStore,
@@ -31,8 +32,8 @@ const CanvasKeyboardAccessibility = () => {
 	useOnSelectionChange({
 		onChange,
 	});
-	const { id: routeId } = useParams<{ id: string }>();
-	const { onSave } = useCanvasSave(routeId);
+	const { readonly, entityId, entityType } = useFlowEditorContext();
+	const { onSave } = useCanvasSave(entityId ?? "", entityType ?? "route");
 
 	useHotkeys("enter", onEnterClicked, { preventDefault: true }, [
 		selectedBlocks,

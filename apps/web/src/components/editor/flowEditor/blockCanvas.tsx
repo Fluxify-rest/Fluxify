@@ -29,7 +29,7 @@ import { useEditorChangeTrackerStore } from "@/store/editor";
 import { useFlowEditorContext } from "./flowEditorContext";
 
 const BlockCanvas = () => {
-	const { readonly, routeId, features } = useFlowEditorContext();
+	const { readonly, entityId, entityType, features } = useFlowEditorContext();
 	
 	const {
 		blocks: { onBlockChange },
@@ -39,7 +39,7 @@ const BlockCanvas = () => {
 	const blocks = useCanvasBlocksStore();
 	const edges = useCanvasEdgesStore();
 
-	const { onSave } = useCanvasSave(routeId ?? "");
+	const { onSave } = useCanvasSave(entityId ?? "", entityType ?? "route");
 	const {
 		addBlockWithHistory,
 		deleteBlockWithHistory,

@@ -4,12 +4,14 @@ import { notifications } from "@mantine/notifications";
 import { useParams } from "next/navigation";
 import { TbDeviceFloppy } from "react-icons/tb";
 import { useCanvasSave } from "@/hooks/useCanvasState";
+import { useFlowEditorContext } from "@/components/editor/flowEditor/flowEditorContext";
 
 const SaveEditorButton = () => {
+	const { entityId, entityType, readonly } = useFlowEditorContext();
 	const changeTracker = useEditorChangeTrackerStore();
 	const disableButton = changeTracker.tracker.size === 0;
 	const { id: routeId } = useParams<{ id: string }>();
-	const { onSave } = useCanvasSave(routeId);
+	const { onSave } = useCanvasSave(entityId ?? "", entityType ?? "route");
 
 	async function onSaveClicked() {
 		await onSave();

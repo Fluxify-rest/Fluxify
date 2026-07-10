@@ -16,6 +16,7 @@ import { customBlocksService } from "@/services/customBlocks";
 import { customBlocksQueries } from "@/query/customBlocksQuery";
 import { useRouter } from "next/navigation";
 import { APP_ROUTES } from "@/constants/routes";
+import ConfirmDialog from "@/components/dialog/confirmDialog";
 import {
 	TbBrandPython,
 	TbBrandJavascript,
@@ -30,16 +31,16 @@ import {
 } from "react-icons/tb";
 
 const premadeIconMap: Record<string, React.ReactNode> = {
-	python: <TbBrandPython size={64} color="#6b7280" />,
-	javascript: <TbBrandJavascript size={64} color="#6b7280" />,
-	database: <TbDatabase size={64} color="#6b7280" />,
-	cloud: <TbCloud size={64} color="#6b7280" />,
-	mail: <TbMail size={64} color="#6b7280" />,
-	message: <TbMessage size={64} color="#6b7280" />,
-	api: <TbApi size={64} color="#6b7280" />,
-	webhook: <TbWebhook size={64} color="#6b7280" />,
-	lock: <TbLock size={64} color="#6b7280" />,
-	key: <TbKey size={64} color="#6b7280" />,
+	python: <TbBrandPython size={80} color="#6b7280" />,
+	javascript: <TbBrandJavascript size={80} color="#6b7280" />,
+	database: <TbDatabase size={80} color="#6b7280" />,
+	cloud: <TbCloud size={80} color="#6b7280" />,
+	mail: <TbMail size={80} color="#6b7280" />,
+	message: <TbMessage size={80} color="#6b7280" />,
+	api: <TbApi size={80} color="#6b7280" />,
+	webhook: <TbWebhook size={80} color="#6b7280" />,
+	lock: <TbLock size={80} color="#6b7280" />,
+	key: <TbKey size={80} color="#6b7280" />,
 };
 
 interface CustomBlockCardProps {
@@ -52,23 +53,19 @@ export default function CustomBlockCard({
 	projectId,
 }: CustomBlockCardProps) {
 	const [hovered, setHovered] = useState(false);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const router = useRouter();
 	const queryClient = useQueryClient();
+
+
 
 	const deleteMutation = useMutation({
 		mutationFn: (id: string) => customBlocksService.delete(id),
 		onSuccess: () => {
 			customBlocksQueries.getAll.invalidate(queryClient, projectId);
+			setDeleteDialogOpen(false);
 		},
 	});
-
-	const handleDelete = () => {
-		if (
-			confirm(`Are you sure you want to delete ${block.label || block.name}?`)
-		) {
-			deleteMutation.mutate(block.id);
-		}
-	};
 
 	const isCustomIcon = block.icon === "custom";
 
@@ -81,8 +78,8 @@ export default function CustomBlockCard({
 				withBorder
 				radius="md"
 				bg="white"
-				w={140}
-				h={140}
+				w={180}
+				h={180}
 				style={{
 					position: "relative",
 					display: "flex",
@@ -92,9 +89,15 @@ export default function CustomBlockCard({
 					borderColor: "#e5e7eb",
 					boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.05)" : "none",
 					transition: "box-shadow 0.2s ease",
+					cursor: "pointer",
 				}}
 				onMouseEnter={() => setHovered(true)}
 				onMouseLeave={() => setHovered(false)}
+				onClick={() =>
+					router.push(
+						APP_ROUTES.PROJECT_CUSTOM_BLOCKS(projectId) + `/edit/${block.id}`,
+					)
+				}
 			>
 				{/* Top Input Node (Rectangle) */}
 				<Box
@@ -133,29 +136,34 @@ export default function CustomBlockCard({
 						opacity: hovered ? 1 : 0,
 						transition: "opacity 0.2s",
 					}}
+					onClick={(e) => e.stopPropagation()}
 				>
 					<Menu position="bottom-end" withinPortal>
 						<Menu.Target>
-							<ActionIcon variant="light" color="violet" size="sm">
-								<TbDots size={16} />
+							<ActionIcon variant="light" color="violet" size="md">
+								<TbDots size={20} />
 							</ActionIcon>
 						</Menu.Target>
 						<Menu.Dropdown>
 							<Menu.Item
 								leftSection={<TbEdit size={14} />}
-								onClick={() =>
+								onClick={(e) => {
+									e.stopPropagation();
 									router.push(
 										APP_ROUTES.PROJECT_CUSTOM_BLOCKS(projectId) +
-											`/edit/${block.id}`,
-									)
-								}
+											`/edit/${block.id}/settings`,
+									);
+								}}
 							>
 								Edit
 							</Menu.Item>
 							<Menu.Item
 								leftSection={<TbTrash size={14} />}
 								color="red"
-								onClick={handleDelete}
+								onClick={(e) => {
+									e.stopPropagation();
+									setDeleteDialogOpen(true);
+								}}
 							>
 								Delete
 							</Menu.Item>
@@ -166,14 +174,24 @@ export default function CustomBlockCard({
 				{/* Center Icon */}
 				<Center>
 					{isCustomIcon ? (
-						<Image src={block.iconUrl} w={64} h={64} fit="contain" alt="icon" />
+						<Image src={block.iconUrl} w={80} h={80} fit="contain" alt="icon" />
 					) : (
 						premadeIconMap[block.iconUrl] || (
-							<TbBrandJavascript size={64} color="#6b7280" />
+							<TbBrandJavascript size={80} color="#6b7280" />
 						)
 					)}
 				</Center>
 			</Paper>
+			
+			<ConfirmDialog
+				open={deleteDialogOpen}
+				onClose={() => setDeleteDialogOpen(false)}
+				title="Delete Custom Block"
+				confirmText="Delete"
+				onConfirm={() => deleteMutation.mutate(block.id)}
+			>
+				Are you sure you want to delete {block.label || block.name}?
+			</ConfirmDialog>
 		</Box>
 	);
 }

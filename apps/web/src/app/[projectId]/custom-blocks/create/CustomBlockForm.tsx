@@ -21,6 +21,7 @@ import { customBlocksService } from "@/services/customBlocks";
 import { useRouter, useParams } from "next/navigation";
 import { APP_ROUTES } from "@/constants/routes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { notifications } from "@mantine/notifications";
 import InputParamsEditor from "./InputParamsEditor";
 import {
   TbBrandPython,
@@ -49,14 +50,22 @@ const premadeIcons = [
   { value: "key", icon: <TbKey size={24} /> },
 ];
 
-export default function CustomBlockForm() {
+export default function CustomBlockForm({
+  initialValues,
+  isEdit,
+  blockId,
+}: {
+  initialValues?: any;
+  isEdit?: boolean;
+  blockId?: string;
+}) {
   const { projectId } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [iconSearch, setIconSearch] = React.useState("");
 
   const form = useForm({
-    initialValues: {
+    initialValues: initialValues || {
       name: "",
       label: "",
       description: "",
@@ -78,11 +87,10 @@ export default function CustomBlockForm() {
   });
 
   const mutation = useMutation({
-    mutationFn: (values: typeof form.values) =>
-      customBlocksService.create({
+    mutationFn: (values: typeof form.values) => {
+      const payload = {
         ...values,
         projectId: projectId as string,
-        // The server expects specific fields for integration_selector and dropdown
         inputParams: values.inputParams.map((param: any) => {
           if (param.type === "integration_selector") {
             return { ...param, tags: param.tags || [] };
@@ -92,10 +100,28 @@ export default function CustomBlockForm() {
           }
           return param;
         }),
-      }),
+      };
+      
+      if (isEdit && blockId) {
+        return customBlocksService.update(blockId, payload);
+      }
+      return customBlocksService.create(payload);
+    },
     onSuccess: () => {
       customBlocksQueries.getAll.invalidate(queryClient, projectId as string);
-      router.push(APP_ROUTES.PROJECT_CUSTOM_BLOCKS(projectId as string));
+      if (blockId) {
+        customBlocksQueries.getById.invalidate(queryClient, blockId);
+      }
+      
+      notifications.show({
+        title: "Success",
+        message: isEdit ? "Custom block updated successfully" : "Custom block created successfully",
+        color: "green",
+      });
+
+      if (!isEdit) {
+        router.push(APP_ROUTES.PROJECT_CUSTOM_BLOCKS(projectId as string));
+      }
     },
   });
 
@@ -239,7 +265,7 @@ export default function CustomBlockForm() {
             color="violet"
             loading={mutation.isPending}
           >
-            Create Custom Block
+            {isEdit ? "Save Changes" : "Create Custom Block"}
           </Button>
         </Group>
       </Stack>
