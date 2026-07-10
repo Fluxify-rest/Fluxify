@@ -4,6 +4,7 @@ import projects from "./projects/register";
 import appConfig from "./app-config/register";
 import integrations from "./integrations/register";
 import testSuites from "./test-suites/register";
+import customBlocks from "./custom-blocks/register";
 import { HonoServer } from "../../types";
 
 export default {
@@ -28,5 +29,6 @@ export default {
 		appConfig.registerHandler(router);
 		integrations.registerHandler(router);
 		testSuites.registerHandler(router);
+		customBlocks.registerHandler(router);
 	},
 };
