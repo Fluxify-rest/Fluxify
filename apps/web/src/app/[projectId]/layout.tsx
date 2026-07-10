@@ -23,6 +23,7 @@ import {
 	TbSettings,
 	TbLayoutSidebarLeftCollapse,
 	TbLayoutSidebarLeftExpand,
+	TbBox,
 } from "react-icons/tb";
 import { APP_ROUTES } from "@/constants/routes";
 import { AuthProvider } from "@/components/auth/authProvider";
@@ -79,9 +80,15 @@ const NewProjectLayout = ({ children }: { children: React.ReactNode }) => {
 			href: APP_ROUTES.PROJECT_APP_CONFIG(id),
 			requiredRole: "creator" as AccessControlRole,
 		},
+		{
+			label: "Custom Blocks",
+			icon: <TbBox size={20} />,
+			href: APP_ROUTES.PROJECT_CUSTOM_BLOCKS(id),
+			requiredRole: "creator" as AccessControlRole,
+		},
 	];
 
-	if (path.endsWith("/openapi")) {
+	if (path.endsWith("/openapi") || path.includes("/custom-blocks/edit")) {
 		return <>{children}</>;
 	}
 

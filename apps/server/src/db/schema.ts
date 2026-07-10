@@ -383,3 +383,68 @@ export const testSuitesRelations = relations(testSuitesEntity, ({ one }) => ({
 export const routesRelations = relations(routesEntity, ({ many }) => ({
 	testSuites: many(testSuitesEntity),
 }));
+
+export const customBlockIconTypeEnum = pgEnum("custom_block_icon_type", [
+	"premade-list",
+	"custom",
+]);
+
+export const customBlockSourceTypeEnum = pgEnum("custom_block_source_type", [
+	"plugin",
+	"inhouse",
+	"user-defined",
+]);
+
+export const customBlocksListEntity = pgTable(
+	"custom_blocks_list",
+	{
+		id: varchar({ length: 50 })
+			.primaryKey()
+			.$defaultFn(() => generateID()),
+		name: varchar({ length: 50 }).notNull(),
+		label: varchar({ length: 50 }).notNull(),
+		description: text(),
+		icon: customBlockIconTypeEnum("icon"),
+		iconUrl: text("icon_url"),
+		projectId: varchar("project_id", { length: 50 }).references(
+			() => projectsEntity.id,
+			{
+				onDelete: "cascade",
+			},
+		),
+		inputParams: jsonb("input_params").$type<Record<string, any>[]>(),
+		sourceType:
+			customBlockSourceTypeEnum("source_type").default("user-defined"),
+		source: text(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.defaultNow()
+			.notNull()
+			.$onUpdate(() => new Date()),
+	},
+	(table) => [
+		index("idx_custom_blocks_list_project_id").on(table.projectId),
+		index("idx_custom_blocks_list_name").on(table.name),
+	],
+);
+
+export const customBlockGraphsEntity = pgTable(
+	"custom_block_graphs",
+	{
+		id: varchar({ length: 50 })
+			.primaryKey()
+			.$defaultFn(() => generateID()),
+		customBlockId: varchar("custom_block_id", { length: 50 }).references(
+			() => customBlocksListEntity.id,
+			{
+				onDelete: "cascade",
+			},
+		),
+		type: varchar({ length: 100 }),
+		data: jsonb("data").$type<any>(),
+		next: varchar("next_block_id", { length: 50 }),
+	},
+	(table) => [
+		index("idx_custom_block_graphs_custom_block_id").on(table.customBlockId),
+	],
+);

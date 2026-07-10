@@ -4,9 +4,11 @@ import { useEditorChangeTrackerStore } from "@/store/editor";
 import { useBlockDataStore } from "@/store/blockDataStore";
 import { routesService } from "@/services/routes";
 import { routesQueries } from "@/query/routerQuery";
+import { customBlocksService } from "@/services/customBlocks";
+import { customBlocksQueries } from "@/query/customBlocksQuery";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function useCanvasSave(routeId: string) {
+export function useCanvasSave(entityId: string, entityType: "route" | "customBlock") {
 	const blocks = useCanvasBlocksStore();
 	const edges = useCanvasEdgesStore();
 	const changeTracker = useEditorChangeTrackerStore();
@@ -63,7 +65,7 @@ export function useCanvasSave(routeId: string) {
 				withCloseButton: true,
 			});
 
-			await routesService.saveCanvasItems(routeId, {
+			const savePayload = {
 				actionsToPerform: {
 					blocks: blockActionsToPerform,
 					edges: edgeActionsToPerform,
@@ -78,7 +80,13 @@ export function useCanvasSave(routeId: string) {
 						to: edge.target,
 					})),
 				},
-			});
+			};
+
+			if (entityType === "route") {
+				await routesService.saveCanvasItems(entityId, savePayload);
+			} else {
+				await customBlocksService.saveCanvasItems(entityId, savePayload);
+			}
 
 			changeTracker.reset();
 			console.log("Successfully saved");
@@ -89,7 +97,11 @@ export function useCanvasSave(routeId: string) {
 				color: "green",
 				withCloseButton: true,
 			});
-			await routesQueries.getById.invalidate(queryClient, routeId);
+			if (entityType === "route") {
+				await routesQueries.getById.invalidate(queryClient, entityId);
+			} else {
+				await customBlocksQueries.getById.invalidate(queryClient, entityId);
+			}
 		} catch (error) {
 			console.error(error);
 			notifications.update({
