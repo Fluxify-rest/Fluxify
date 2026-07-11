@@ -160,6 +160,7 @@
         "memcached": "^2.2.2",
         "mongodb": "7.2.0",
         "mysql2": "^3.18.1",
+        "pino": "^10.3.1",
         "pino-loki": "^3.0.0",
         "zod": "^4.1.11",
       },
@@ -167,6 +168,7 @@
         "@types/dockerode": "^4.0.1",
         "@types/memcached": "^2.2.10",
         "@types/pg": "^8.16.0",
+        "@types/pino": "^7.0.5",
         "@typescript/native-preview": "^7.0.0-dev.20260219.1",
         "dockerode": "^4.0.9",
       },
@@ -922,6 +924,8 @@
     "@types/node": ["@types/node@24.13.2", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA=="],
 
     "@types/pg": ["@types/pg@8.20.0", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow=="],
+
+    "@types/pino": ["@types/pino@7.0.5", "", { "dependencies": { "pino": "*" } }, "sha512-wKoab31pknvILkxAF8ss+v9iNyhw5Iu/0jLtRkUD74cNfOOLJNnqfFKAv0r7wVaTQxRZtWrMpGfShwwBjOcgcg=="],
 
     "@types/react": ["@types/react@19.2.17", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw=="],
 
