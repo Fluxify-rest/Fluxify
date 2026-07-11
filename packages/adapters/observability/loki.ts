@@ -1,5 +1,5 @@
 import { AbstractLogger } from "@fluxify/lib";
-import pino from "pino";
+import { createLokiLogger } from "@fluxify/common";
 import z from "zod";
 
 export const lokiLoggerSettings = z.object({
@@ -19,7 +19,7 @@ type ConfigType = Map<string, string | number | boolean> | Record<string, any>;
 
 export class LokiLogger implements AbstractLogger {
 	public static variant = "Loki";
-	private logger: pino.Logger = null!;
+	private logger: ReturnType<typeof createLokiLogger> = null!;
 
 	constructor(private readonly settings: z.infer<typeof lokiLoggerSettings>) {}
 
@@ -62,47 +62,19 @@ export class LokiLogger implements AbstractLogger {
 		const baseUrl = new URL(this.settings.baseUrl);
 		const host = `${baseUrl.protocol}//${baseUrl.host}`;
 
-		let basicAuth = undefined;
-		if (
-			this.settings.credentials?.username &&
-			this.settings.credentials?.password
-		) {
-			basicAuth = {
-				username: this.settings.credentials.username,
-				password: this.settings.credentials.password,
-			};
-		}
+		const basicAuth = this.settings.credentials?.username && this.settings.credentials?.password 
+			? `${this.settings.credentials.username}:${this.settings.credentials.password}`
+			: undefined;
 
-		const transport = pino.transport({
-			target: "pino-loki",
-			options: {
-				host: host,
-				basicAuth: basicAuth,
-				labels: {
-					project_id: this.settings.projectId ?? "unknown",
-					route_id: this.settings.routeId ?? "unknown",
-					service_name: this.settings.routeId ?? "unknown",
-				},
-				batching: true,
-				interval: 500,
+		return (this.logger = createLokiLogger({
+			host: host,
+			basicAuth: basicAuth,
+			labels: {
+				project_id: this.settings.projectId ?? "unknown",
+				route_id: this.settings.routeId ?? "unknown",
+				service_name: this.settings.routeId ?? "unknown",
 			},
-		});
-
-		return (this.logger = pino(
-			{
-				timestamp: pino.stdTimeFunctions.isoTime,
-				base: {
-					project_id: this.settings.projectId,
-					route_id: this.settings.routeId,
-				},
-				formatters: {
-					level(label) {
-						return { level: label };
-					},
-				},
-			},
-			transport,
-		));
+		}));
 	}
 
 	public static async TestConnection(

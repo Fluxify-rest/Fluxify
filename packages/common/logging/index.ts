@@ -1,6 +1,7 @@
 import winston from "winston";
 import { OpenTelemetryTransportV3 } from "@opentelemetry/winston-transport";
 import { createOtlpLoggerProvider, initializeOtlpLogger } from "./otlp/logs";
+export { createLokiLogger } from "./loki";
 
 export interface LoggerConfig {
 	serviceName?: string;
