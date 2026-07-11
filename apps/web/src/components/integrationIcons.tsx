@@ -40,6 +40,19 @@ export const integrationIcons: IntegrationIcons = {
 	OpenAI: <RiOpenaiFill size={iconSize} style={iconStyles} />,
 	Mistral: <RiRobot2Fill size={iconSize} style={iconStyles} />,
 	Gemini: <RiGeminiFill size={iconSize} style={iconStyles} />,
-	"Open Observe": <IoTelescope size={iconSize} style={iconStyles} />,
+	"Open Telemetry Logs": (
+		<div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+			<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyles}>
+				{/* OTel Logo approximation (telescope/node graph) + logs */}
+				<path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4" />
+				<polyline points="14 2 14 8 20 8" />
+				<path d="M16 13H8" />
+				<path d="M16 17H8" />
+				<path d="M10 9H8" />
+				<circle cx="5" cy="14" r="2" />
+				<path d="M5 16v4" />
+			</svg>
+		</div>
+	),
 	Loki: <PiNotebookLight size={iconSize} style={iconStyles} />,
 };

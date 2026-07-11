@@ -31,7 +31,7 @@ import { TbTrash } from "react-icons/tb";
 import ConfirmDialog from "../dialog/confirmDialog";
 import { useDisclosure } from "@mantine/hooks";
 import RequireRoleInAnyProject from "../auth/requireRoleInAnyProject";
-import OpenObserveIntegrationForm from "./observability/openObserve";
+import OpenTelemetryLogsIntegrationForm from "./observability/openTelemetryLogs";
 import LokiIntegrationForm from "./observability/loki";
 import GenericAiIntegrationForm from "./genericAi";
 import RedisForm from "./kv/redis";
@@ -155,9 +155,10 @@ const IntegrationForm = (props: PropTypes) => {
           form.values.variant === "Redis" && <RedisForm form={form} />}
         {form.values.group === "kv" &&
           form.values.variant === "Memcached" && <MemcachedForm form={form} />}
+
         {form.values.group === "observability" &&
-          form.values.variant === "Open Observe" && (
-            <OpenObserveIntegrationForm form={form} />
+          form.values.variant === "Open Telemetry Logs" && (
+            <OpenTelemetryLogsIntegrationForm form={form} />
           )}
 
         {/* AI */}

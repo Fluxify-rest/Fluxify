@@ -1,13 +1,14 @@
+import { OpenTelemetryLogs } from "./openTelemetryLogs";
 import { LokiLogger } from "./loki";
-import { OpenObserve } from "./openObserve";
 
-export function createObservabilityLogger(variant: any, config: any) {
+export function createObservabilityLogger(variant: string, config: any) {
 	if (variant === LokiLogger.variant) {
 		return new LokiLogger(config);
-	} else if (variant === OpenObserve.variant) {
-		return new OpenObserve(config);
+	} else if (variant === OpenTelemetryLogs.variant) {
+		return new OpenTelemetryLogs(config);
 	}
+	throw new Error("Invalid generic provider variant: " + variant);
 }
 
+export * from "./openTelemetryLogs";
 export * from "./loki";
-export * from "./openObserve";

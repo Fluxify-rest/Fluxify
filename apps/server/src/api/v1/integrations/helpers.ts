@@ -7,7 +7,7 @@ import {
 	mongoVariantConfigSchema,
 	kvVariantSchema,
 	observabilityVariantSchema,
-	openObserveVariantConfigSchema,
+	openTelemetryLogsVariantConfigSchema,
 	baasVariantSchema,
 	aiVariantSchema,
 	lokiVariantConfigSchema,
@@ -88,14 +88,14 @@ export function getDefaultVariantValue(variant: Variants) {
 			source: "credentials",
 		} as z.infer<typeof mysqlVariantConfigSchema>;
 	}
-	if (variant === "Open Observe" || variant === "Loki") {
+	if (variant === "Open Telemetry Logs" || variant === "Loki") {
 		return {
 			baseUrl: "",
 			credentials: {
 				username: "",
 				password: "",
 			},
-		} as z.infer<typeof openObserveVariantConfigSchema>;
+		} as z.infer<typeof openTelemetryLogsVariantConfigSchema>;
 	}
 	if (
 		variant === "OpenAI" ||
@@ -173,8 +173,8 @@ export function getSchema(
 			return null;
 		}
 		switch (variant as z.infer<typeof observabilityVariantSchema>) {
-			case "Open Observe":
-				schema = openObserveVariantConfigSchema;
+			case "Open Telemetry Logs":
+				schema = openTelemetryLogsVariantConfigSchema;
 				break;
 			case "Loki":
 				schema = lokiVariantConfigSchema;

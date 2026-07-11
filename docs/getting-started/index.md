@@ -38,7 +38,7 @@ All of this is configured visually in the browser — no server framework knowle
 | 🤖 **AI / LLM Integration** | First-class blocks for calling OpenAI, Anthropic, and other AI providers directly from your workflows |
 | 📜 **Custom Scripting** | Write JavaScript in a secure sandboxed VM for advanced transformations, custom routing, or JWT handling |
 | 🔗 **HTTP Networking** | Call external APIs, inspect headers, manage cookies, and shape responses — all with dedicated HTTP blocks |
-| 📡 **Observability** | Structured logging with support for Loki and OpenObserve; built-in console logging for local development |
+| 📡 **Observability** | Structured logging with support for Loki and OpenTelemetry Logs; built-in console logging for local development |
 | 🔒 **Security** | Per-project App Config for secrets management, encrypted credentials, and sandbox isolation for scripts |
 | 🚀 **Flexible Deployment** | Ship as a standalone Docker container (via `fluxify-kit`), or scale with Kubernetes for high availability |
 

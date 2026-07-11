@@ -6,7 +6,7 @@ import {
 	integrationsGroupSchema,
 	lokiVariantConfigSchema,
 	observabilityVariantSchema,
-	openObserveVariantConfigSchema,
+	openTelemetryLogsVariantConfigSchema,
 	postgresVariantConfigSchema,
 	kvVariantSchema,
 } from "../schemas";
@@ -23,7 +23,7 @@ import {
 	MistralIntegration,
 	OpenAICompatibleIntegration,
 	OpenAIIntegration,
-	OpenObserve,
+	OpenTelemetryLogs,
 	PostgresAdapter,
 	MySqlAdapter,
 	MongoAdapter,
@@ -207,15 +207,19 @@ async function testObservibilityConnection(
 	appConfigs: Map<string, string>,
 ) {
 	switch (variant as z.infer<typeof observabilityVariantSchema>) {
-		case "Open Observe":
-			const openObserveResult = await OpenObserve.TestConnection(
-				config,
+
+		case "Open Telemetry Logs": {
+			const parsed = openTelemetryLogsVariantConfigSchema.safeParse(config);
+			if (!parsed.success) return { success: false, error: "Invalid Data" };
+			const openTelemetryLogsResult = await OpenTelemetryLogs.TestConnection(
+				parsed.data,
 				appConfigs,
 			);
 			return {
-				success: openObserveResult,
-				error: openObserveResult ? "" : "Failed to connect to Open Observe",
+				success: openTelemetryLogsResult,
+				error: openTelemetryLogsResult ? "" : "Failed to connect to OpenTelemetry Logs",
 			};
+		}
 		case "Loki":
 			if (!lokiVariantConfigSchema.safeParse(config).success) {
 				return { success: false, error: "Invalid configuration" };

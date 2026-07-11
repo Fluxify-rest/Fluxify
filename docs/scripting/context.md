@@ -125,7 +125,7 @@ setCookie("session_token", {
 
 ## Logger
 
-The `logger` object writes structured log entries to the configured output. The destination depends on project settings: **console** (default / local dev) or a **cloud observability provider** (Loki, OpenObserve, etc.). See [Logging](../concepts/logging.md).
+The `logger` object writes structured log entries to the configured output. The destination depends on project settings: **console** (default / local dev) or a **cloud observability provider** (Loki, OpenTelemetry Logs, etc.). See [Logging](../concepts/logging.md).
 
 | Method | Description |
 | :--- | :--- |

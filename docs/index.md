@@ -35,7 +35,7 @@ features:
 
   - icon: 📡
     title: Observability
-    details: Built-in structured logging with support for cloud providers like Loki and OpenObserve for production monitoring.
+    details: Built-in structured logging with support for cloud providers like Loki and OpenTelemetry Logs for production monitoring.
 
   - icon: 🚀
     title: Flexible Deployments
