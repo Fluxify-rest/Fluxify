@@ -5,7 +5,7 @@ description: Send logs to a cloud logging service.
 
 # Cloud Logs
 
-The **Cloud Logs** block sends log messages to your configured cloud logging provider (like Loki or OpenObserve).
+The **Cloud Logs** block sends log messages to your configured cloud logging provider (like Loki or OpenTelemetry Logs).
 
 ## Inputs
 

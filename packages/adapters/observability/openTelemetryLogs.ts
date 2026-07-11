@@ -6,7 +6,7 @@ import {
 	LoggerProvider,
 } from "@fluxify/common";
 
-export const openObserveSettings = z.object({
+export const openTelemetryLogsSettings = z.object({
 	baseUrl: z.url(), // e.g. http://localhost:5080/api/<ORG_ID>
 	credentials: z
 		.object({
@@ -21,9 +21,11 @@ export const openObserveSettings = z.object({
 
 type ConfigType = Map<string, string | number | boolean> | Record<string, any>;
 
-export class OpenObserve implements AbstractLogger {
-	public static variant = "Open Observe";
-	constructor(private readonly settings: z.infer<typeof openObserveSettings>) {}
+export class OpenTelemetryLogs implements AbstractLogger {
+	public static variant = "Open Telemetry Logs";
+	constructor(
+		private readonly settings: z.infer<typeof openTelemetryLogsSettings>,
+	) {}
 	private otelLogger: Logger = null!;
 	private loggerProvider: LoggerProvider = null!;
 
@@ -118,15 +120,18 @@ export class OpenObserve implements AbstractLogger {
 
 		// Call getLogger directly on our local provider to avoid global collisions!
 		this.otelLogger = this.loggerProvider.getLogger(
-			"fluxify-openobserve-logger",
+			"fluxify-opentelemetry-logger",
 		);
 		return this.otelLogger;
 	}
 
 	public static async TestConnection(settings: any, appConfig: ConfigType) {
-		const extracted = OpenObserve.extractConnectionInfo(settings, appConfig);
+		const extracted = OpenTelemetryLogs.ExtractConnectionInfo(
+			settings,
+			appConfig,
+		);
 		if (!extracted) return false;
-		const headers = OpenObserve.getHeaders(extracted);
+		const headers = OpenTelemetryLogs.getHeaders(extracted);
 		const settingsUrl = `${extracted.baseUrl}/settings`;
 		try {
 			const result = await fetch(settingsUrl, { headers, method: "GET" });
@@ -136,31 +141,37 @@ export class OpenObserve implements AbstractLogger {
 		}
 	}
 
-	public static extractConnectionInfo(
+	public static ExtractConnectionInfo(
 		config: {
 			baseUrl: string;
 			credentials: string | { username: string; password: string };
 		},
 		appConfig: ConfigType,
-	): z.infer<typeof openObserveSettings> | null {
+	): z.infer<typeof openTelemetryLogsSettings> | null {
 		const baseUrl = config?.baseUrl?.startsWith("cfg:")
-			? OpenObserve.getConfig(appConfig, config.baseUrl.substring(3))
+			? OpenTelemetryLogs.getConfig(appConfig, config.baseUrl.substring(3))
 			: config.baseUrl;
 		if (!baseUrl || !z.url().safeParse(baseUrl).success) return null;
 		let credentials = config.credentials;
 		if (typeof credentials === "object") {
 			const username = credentials.username.startsWith("cfg:")
-				? OpenObserve.getConfig(appConfig, credentials.username.substring(3))
+				? OpenTelemetryLogs.getConfig(
+						appConfig,
+						credentials.username.substring(3),
+					)
 				: credentials.username;
 			const password = credentials.password.startsWith("cfg:")
-				? OpenObserve.getConfig(appConfig, credentials.password.substring(3))
+				? OpenTelemetryLogs.getConfig(
+						appConfig,
+						credentials.password.substring(3),
+					)
 				: credentials.password;
 			if (!username || !password) return null;
 			credentials.password = password;
 			credentials.username = username;
 		} else {
 			const encodedBasicAuth = credentials.startsWith("cfg:")
-				? OpenObserve.getConfig(appConfig, credentials.substring(3))
+				? OpenTelemetryLogs.getConfig(appConfig, credentials.substring(3))
 				: credentials;
 			if (!encodedBasicAuth) return null;
 			credentials = encodedBasicAuth;
@@ -176,7 +187,7 @@ export class OpenObserve implements AbstractLogger {
 		};
 	}
 	private static getHeaders(
-		settings: z.infer<typeof openObserveSettings>,
+		settings: z.infer<typeof openTelemetryLogsSettings>,
 	): Record<string, string> {
 		if (settings.encodedBasicAuth) {
 			return {
@@ -188,7 +199,7 @@ export class OpenObserve implements AbstractLogger {
 			!settings.credentials.username ||
 			!settings.credentials.password
 		) {
-			console.error("[ERROR] [OPENOBSERVE] Credentials not found");
+			console.error("[ERROR] [OPENTELEMETRY_LOGS] Credentials not found");
 			return {};
 		}
 		const credentials = btoa(

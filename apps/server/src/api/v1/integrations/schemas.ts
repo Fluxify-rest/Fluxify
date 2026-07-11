@@ -22,7 +22,7 @@ export const aiVariantSchema = z.enum([
 	"OpenAI Compatible",
 ]);
 export const baasVariantSchema = z.enum(["Firebase", "Supabase"]);
-export const observabilityVariantSchema = z.enum(["Open Observe", "Loki"]);
+export const observabilityVariantSchema = z.enum(["Open Telemetry Logs", "Loki"]);
 
 // Database
 export const postgresVariantConfigSchema = z
@@ -184,7 +184,7 @@ export const openAiCompatibleVariantConfigSchema = z.object({
 });
 
 // Observability
-export const openObserveVariantConfigSchema = z.object({
+export const openTelemetryLogsVariantConfigSchema = z.object({
 	baseUrl: z
 		.string()
 		.refine((v) =>

@@ -4,7 +4,7 @@ import {
   observabilityVariantSchema,
 } from "../api/v1/integrations/schemas";
 import { observabilityIntegrationsCache } from "./integrationsLoader";
-import { LokiLogger, OpenObserve } from "@fluxify/adapters";
+import { LokiLogger, OpenTelemetryLogs } from "@fluxify/adapters";
 import { BadRequestError } from "../errors/badRequestError";
 
 export class IntegrationFactory {
@@ -49,8 +49,8 @@ export class IntegrationFactory {
   ) {
     const type = data.variant;
     switch (type as z.infer<typeof observabilityVariantSchema>) {
-      case "Open Observe":
-        return new OpenObserve({
+      case "Open Telemetry Logs":
+        return new OpenTelemetryLogs({
           ...data,
           projectId: path.projectName,
           routeId: path.routeId,

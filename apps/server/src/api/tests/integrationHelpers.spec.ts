@@ -8,7 +8,7 @@ import {
 import {
   integrationsGroupSchema,
   postgresVariantConfigSchema,
-  openObserveVariantConfigSchema,
+  openTelemetryLogsVariantConfigSchema,
   openAIVariantConfigSchema,
   openAiCompatibleVariantConfigSchema,
 } from "../v1/integrations/schemas";
@@ -33,7 +33,7 @@ describe("Integration Helpers", () => {
 
     it("should return observability variants", () => {
       const variants = getIntegrationsVariants("observability");
-      expect(variants).toContain("Open Observe");
+      expect(variants).toContain("Open Telemetry Logs");
       expect(variants).toContain("Loki");
     });
 
@@ -64,8 +64,8 @@ describe("Integration Helpers", () => {
       expect(config.host).toBe("");
     });
 
-    it("should return default Open Observe config", () => {
-      const config = getDefaultVariantValue("Open Observe") as any;
+    it("should return default Open Telemetry Logs config", () => {
+      const config = getDefaultVariantValue("Open Telemetry Logs") as any;
       expect(config).not.toBeNull();
       expect(config.baseUrl).toBe("");
       expect(config.credentials).toBeDefined();
@@ -112,7 +112,7 @@ describe("Integration Helpers", () => {
     });
 
     it("should return schema for observability variants", () => {
-      expect(getSchema("observability", "Open Observe")).not.toBeNull();
+      expect(getSchema("observability", "Open Telemetry Logs")).not.toBeNull();
       expect(getSchema("observability", "Loki")).not.toBeNull();
     });
 

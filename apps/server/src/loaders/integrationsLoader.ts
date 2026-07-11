@@ -24,7 +24,7 @@ import {
 	MistralIntegration,
 	OpenAICompatibleIntegration,
 	OpenAIIntegration,
-	OpenObserve,
+	OpenTelemetryLogs,
 	RedisIntegration,
 	MemcachedIntegration,
 } from "@fluxify/adapters";
@@ -77,9 +77,9 @@ async function loadFromDB() {
 			integration.group === integrationsGroupSchema.enum.observability
 		) {
 			if (
-				integration.variant === observabilityVariantSchema.enum["Open Observe"]
+				integration.variant === observabilityVariantSchema.enum["Open Telemetry Logs"]
 			) {
-				config = OpenObserve.extractConnectionInfo(
+				config = OpenTelemetryLogs.ExtractConnectionInfo(
 					integration.config as any,
 					getProjectAppConfig(integration.projectId!),
 				);

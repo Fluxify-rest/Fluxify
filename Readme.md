@@ -39,7 +39,7 @@ Full setup guide → [docs/self-hosting.md](docs/self-hosting.md)
 | ✅ | REST API generation |
 | ✅ | PostgreSQL, MySQL, MongoDB integration |
 | ✅ | Multi-user authentication & secrets management |
-| ✅ | Observability (OpenObserve, Loki) |
+| ✅ | Observability (OpenTelemetry Logs, Loki) |
 | ✅ | Testing System (Playground + Test Suites) |
 | 🚧 | AI-powered API generation |
 | 🚧 | JWT blocks, Cron scheduling, Audit logs |

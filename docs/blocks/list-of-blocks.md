@@ -52,7 +52,7 @@ Interact with your data.
 Monitor your application.
 
 - [**Console Log**](./console-log.md): Print to server logs.
-- [**Cloud Logs**](./cloud-logs.md): Send to external services (Loki/OpenObserve).
+- [**Cloud Logs**](./cloud-logs.md): Send to external services (Loki/OpenTelemetry Logs).
 
 ## Utility
 Helper blocks.

@@ -6,7 +6,7 @@ type PropTypes = {
   form: UseFormReturnType<any>;
 };
 
-const OpenObserveIntegrationForm = ({ form }: PropTypes) => {
+const OpenTelemetryLogsIntegrationForm = ({ form }: PropTypes) => {
   const isCredentialsSelected =
     typeof form.values.config.credentials === "object";
   function selectCredentials() {
@@ -22,15 +22,15 @@ const OpenObserveIntegrationForm = ({ form }: PropTypes) => {
         required
         value={form.values.name ?? ""}
         description="Unique Name for the integration"
-        placeholder="Open Observe | Production"
+        placeholder="OpenTelemetry Logs | Production"
         {...form.getInputProps("name")}
       />
       <AppConfigSelector
         value={form.values.config.baseUrl ?? ""}
         onChange={(value) => form.setFieldValue("config.baseUrl", value)}
         label="Base Url"
-        description="Base url of the open observe instance (should contain in the structure like below)"
-        placeholder="https://openobserve:5080/api/org_name"
+        description="Base url of the OpenTelemetry OTLP Logs endpoint (e.g., Datadog, OpenObserve, BetterStack)"
+        placeholder="https://http-intake.logs.datadoghq.com/api/v2/logs"
       />
       <ButtonGroup bd={"1px solid violet"} bdrs={"md"} w={"100%"}>
         <Button
@@ -72,8 +72,8 @@ const OpenObserveIntegrationForm = ({ form }: PropTypes) => {
                 form.setFieldValue("config.credentials.username", value)
               }
               label="Email"
-              description="Email address for the Open Observe"
-              placeholder="email@company.co"
+              description="Email or Username for Basic Auth"
+              placeholder="user@company.co"
             />
           </Grid.Col>
           <Grid.Col span={1}>
@@ -83,8 +83,8 @@ const OpenObserveIntegrationForm = ({ form }: PropTypes) => {
                 form.setFieldValue("config.credentials.password", value)
               }
               label="Password"
-              description="Password for the Open Observe"
-              placeholder="password"
+              description="Password or API Key for Basic Auth"
+              placeholder="password_or_api_key"
             />
           </Grid.Col>
         </Grid>
@@ -93,4 +93,4 @@ const OpenObserveIntegrationForm = ({ form }: PropTypes) => {
   );
 };
 
-export default OpenObserveIntegrationForm;
+export default OpenTelemetryLogsIntegrationForm;

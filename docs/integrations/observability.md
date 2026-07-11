@@ -15,11 +15,26 @@ Push logs to a Grafana Loki instance.
     - **Base URL**: The address of your Loki instance.
     - **Username/Password**: Authenticated access (optional).
 
-### OpenObserve
-Send logs to OpenObserve for storage and analysis.
+### OpenTelemetry Logs (OTLP)
+Send logs to any OpenTelemetry-compatible observability backend via the OTLP HTTP JSON standard.
+
 - **Configuration**:
-    - **Base URL**: The address of your OpenObserve instance.
-    - **Credentials**: Authentication details.
+    - **Base URL**: The OTLP Logs endpoint of your provider.
+    - **Credentials/Base64 Value**: Basic Auth credentials (or API Keys) for your provider.
+
+#### Examples
+
+**Datadog**
+- **Base URL**: `https://http-intake.logs.datadoghq.com/api/v2/logs`
+- **Credentials**: Select "Base64 Encoded" and provide your Datadog API Key.
+
+**OpenObserve**
+- **Base URL**: `https://<YOUR_OPENOBSERVE_HOST>/api/<ORG_ID>`
+- **Credentials**: Select "Credentials" and enter your OpenObserve Email and Password.
+
+**Better Stack**
+- **Base URL**: `https://in.logs.betterstack.com/v1/logs`
+- **Credentials**: Select "Base64 Encoded" and provide your Better Stack Source Token.
 
 ## functionality
 

@@ -108,7 +108,7 @@ Currently supported integrations:
 | :--- | :--- | :--- |
 | **Databases** | PostgreSQL | All `DB *` blocks |
 | **AI Models** | OpenAI, Anthropic | AI blocks (via AI Gateway) |
-| **Observability** | Loki, OpenObserve | Cloud Logs block |
+| **Observability** | Loki, OpenTelemetry Logs | Cloud Logs block |
 
 Fluxify uses an **Adapter Pattern** internally — blocks interact with a generic interface, so the underlying provider can be changed without modifying the workflow.
 
