@@ -72,9 +72,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbPlus size={14} />}
-            rightSection={<Kbd ml="md" size="xs">⇧ + A</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">⇧ + A</Kbd>}
             onClick={() => {
               onClose();
               setTimeout(() => openSearchbar(), 0);
@@ -85,9 +85,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
           
           <Menu.Divider />
           
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbArrowBackUp size={14} />}
-            rightSection={<Kbd ml="md" size="xs">Ctrl + Z</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">Ctrl + Z</Kbd>}
             onClick={() => {
               undo();
               onClose();
@@ -95,9 +95,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
           >
             Undo
           </Menu.Item>
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbArrowForwardUp size={14} />}
-            rightSection={<Kbd ml="md" size="xs">Ctrl + Y</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">Ctrl + Y</Kbd>}
             onClick={() => {
               redo();
               onClose();
@@ -107,9 +107,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
           </Menu.Item>
 
           <Menu.Divider />
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbCopy size={14} />}
-            rightSection={<Kbd ml="md" size="xs">Ctrl + C</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">Ctrl + C</Kbd>}
             disabled={!hasSelection}
             onClick={() => {
               copySelection();
@@ -118,9 +118,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
           >
             Copy
           </Menu.Item>
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbClipboardText size={14} />}
-            rightSection={<Kbd ml="md" size="xs">Ctrl + V</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">Ctrl + V</Kbd>}
             onClick={() => {
               pasteSelection();
               onClose();
@@ -128,9 +128,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
           >
             Paste
           </Menu.Item>
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbDuplicate size={14} />}
-            rightSection={<Kbd ml="md" size="xs">⇧ + D</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">⇧ + D</Kbd>}
             disabled={!hasSelection}
             onClick={() => {
               duplicateSelection(selectedBlocks);
@@ -142,7 +142,7 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
 
           <Menu.Divider />
 
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbTransform size={14} />}
             disabled={!canRefactor}
             onClick={() => setRefactorModalOpened(true)}
@@ -152,9 +152,9 @@ export default function CanvasContextMenu({ position, onClose }: Props) {
 
           <Menu.Divider />
 
-          <Menu.Item fz="sm"
+          <Menu.Item fz={13} style={{ minHeight: 28, padding: "4px 8px" }}
             leftSection={<TbDeviceFloppy size={14} />}
-            rightSection={<Kbd ml="md" size="xs">Ctrl + S</Kbd>}
+            rightSection={<Kbd ml="md" size="xs" p="2px 4px">Ctrl + S</Kbd>}
             onClick={() => {
               onSave();
               onClose();
