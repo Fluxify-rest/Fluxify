@@ -415,7 +415,7 @@ export const customBlocksListEntity = pgTable(
 		inputParams: jsonb("input_params").$type<Record<string, any>[]>(),
 		sourceType:
 			customBlockSourceTypeEnum("source_type").default("user-defined"),
-		source: text(),
+		source: text().default("user-defined"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 		updatedAt: timestamp("updated_at")
 			.defaultNow()
