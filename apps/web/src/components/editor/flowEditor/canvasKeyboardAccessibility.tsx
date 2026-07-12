@@ -19,7 +19,7 @@ const CanvasKeyboardAccessibility = () => {
 	const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
 	const { open: openSearchbar } = useEditorSearchbarStore();
 	const { open } = useEditorBlockSettingsStore();
-	const { deleteBulk, undo, redo, duplicateSelection, copySelection } =
+	const { deleteBulk, undo, redo, duplicateSelection, copySelection, pasteSelection } =
 		useContext(BlockCanvasContext);
 	const onChange = useCallback(
 		({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) => {
@@ -48,6 +48,7 @@ const CanvasKeyboardAccessibility = () => {
 	]); // duplicate selection
 	useHotkeys("ctrl+z", undo, { preventDefault: true }, [undo]); // undo
 	useHotkeys("ctrl+c", copySelection, { preventDefault: true }, [copySelection]); // copy selection
+	useHotkeys("ctrl+v", pasteSelection, { preventDefault: true }, [pasteSelection]); // paste selection
 	useHotkeys("ctrl+y, ctrl+shift+z", redo, { preventDefault: true }, [redo]); // redo
 	useHotkeys("delete, backspace", onDeleteClicked, { preventDefault: true }, [
 		selectedBlocks,
