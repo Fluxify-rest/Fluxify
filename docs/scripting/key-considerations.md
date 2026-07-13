@@ -8,9 +8,6 @@ description: Important limits, pitfalls, and behaviors that can cause 500 errors
 Because Fluxify runs your custom scripts on the server, writing improper code can cause workflow execution failures, return `500 Internal Server Error` statuses to clients, or degrade server-wide performance. 
 
 Pay close attention to the following constraints and pitfalls when scripting.
-
----
-
 ## 1. Global Variable Mutation (Context Corruption)
 
 Every block in a workflow execution shares the **same mutable context object**. Any global helper variables (like `setHeader`, `logger`, `jwt`, `libs`, `getConfig`, etc.) are injected as properties into this context.
@@ -31,9 +28,6 @@ Every block in a workflow execution shares the **same mutable context object**. 
   // ❌ BAD: Destroys the built-in logger reference for subsequent blocks
   logger = null; 
   ```
-
----
-
 ## 2. Missing `return` Statements
 
 All user scripts are implicitly wrapped in an Immediately Invoked Function Expression (IIFE).
@@ -49,9 +43,6 @@ All user scripts are implicitly wrapped in an Immediately Invoked Function Expre
   // Always return something
   return { success: true };
   ```
-
----
-
 ## 3. Unresolved Async Promises (Resource Leaks)
 
 Fluxify supports `async/await` and races asynchronous promises against a 4-second timeout.
@@ -64,9 +55,6 @@ Fluxify supports `async/await` and races asynchronous promises against a 4-secon
 ### Best Practice
 - Always specify timeouts on external fetches or operations (e.g., using Axios timeouts in `httpClient`).
 - Ensure all promises resolve or reject under all circumstances.
-
----
-
 ## 4. Unhandled Runtime Exceptions
 
 Executing operations on unverified inputs (like calling a method on `null` or `undefined`) throws runtime exceptions.
@@ -94,9 +82,6 @@ If an unhandled exception is thrown inside a script:
   return input.user.email;
   ```
 - Always configure an **Error Handler Block** in your workflow to catch script failures and return client-friendly JSON responses instead of 500 errors.
-
----
-
 ## 5. Memory Exhaustion
 
 Scripts run in-process on the server. If a script allocates massive structures (e.g. loading a 100MB database result, or infinite loops appending to a string), it can exhaust process memory. This will cause the garbage collector to consume 100% CPU or trigger an Out-Of-Memory (OOM) crash of the entire server instance, knocking out all API routes.

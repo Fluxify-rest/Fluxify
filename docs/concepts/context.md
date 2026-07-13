@@ -8,9 +8,6 @@ description: Understanding the shared environment that carries request data and 
 The **Execution Context** is a per-request object created when an HTTP request triggers a workflow. It is passed to every block that runs and holds all the data and tools needed to process that request — from the incoming URL and headers to the scripting VM, logger, and global variables.
 
 Think of it as the workflow's environment for a single request run.
-
----
-
 ## What the Context Contains
 
 Every block in a workflow has access to:
@@ -26,9 +23,6 @@ Every block in a workflow has access to:
 - **Timeout control** — the context enforces a maximum execution time for the entire workflow.
 
 For the complete scripting API (all available globals, functions, and examples), see the [Scripting Context](../scripting/context.md) reference.
-
----
-
 ## Global Variables
 
 A key feature of the context is its **global variable store**. Any variable set in one block is immediately readable by all subsequent blocks in the same workflow run.
@@ -37,9 +31,6 @@ A key feature of the context is its **global variable store**. Any variable set 
 - **Read** in any later block or `js:` expression: `myVariable`
 
 Variables live only for the duration of a single request. They are not shared between different users or different requests.
-
----
-
 ## The `input` Variable
 
 Every block receives the output of the **previous block** as `input`. This is separate from the global variable store — `input` only holds what the immediately preceding block returned.
@@ -48,9 +39,6 @@ Every block receives the output of the **previous block** as `input`. This is se
 // Previous block returned { "user": { "name": "Alice" } }
 return input.user.name; // → "Alice"
 ```
-
----
-
 ## Lifetime & Isolation
 
 | Property | Behavior |
@@ -59,9 +47,6 @@ return input.user.name; // → "Alice"
 | **Isolation** | Concurrent requests each get their own context with no shared state. |
 | **Timeout** | Workflows have a maximum execution time of **4 seconds**. Exceeding it returns a timeout error. |
 | **Cleanup** | The context is discarded after the response is sent. |
-
----
-
 ## Related Pages
 
 - [Scripting Context](../scripting/context.md) — Full API reference for all globals available in scripts.

@@ -10,9 +10,6 @@ Every time your JavaScript code runs — whether inside a **JS Runner** block, a
 This page is the complete reference for everything available in that environment.
 
 > **How it works**: When the execution engine prepares to run a script, it takes the `vars` object from the [Execution Context](../concepts/context.md), injects all its properties as top-level globals into the V8 sandbox, and runs your code. This means every function listed below is callable directly by name, with no prefix.
-
----
-
 ## The `input` Variable
 
 The single most important variable in any script:
@@ -29,9 +26,6 @@ return input.user.name; // → "Alice"
 ```
 
 > `input` is populated per-execution by the engine, not from `vars`. It is not persistent — each block receives only the output of its direct predecessor.
-
----
-
 ## Global Variables (Runtime State)
 
 Beyond built-in helpers, `vars` functions as a mutable key-value store for the duration of the workflow run. Any variable you assign in a script becomes a global accessible by all subsequent blocks.
@@ -52,9 +46,6 @@ return currentUser.name; // → "Alice"
 You can also use **Set Variable** blocks to write globals without writing code.
 
 > **Caution**: Variable names must not shadow built-in globals. Avoid names like `input`, `logger`, `jwt`, `libs`, `getHeader`, etc.
-
----
-
 ## HTTP Request Helpers
 
 Read data from the incoming HTTP request that triggered this workflow. All functions return `""` (empty string) if the requested value is not present.
@@ -80,9 +71,6 @@ const authHeader = getHeader("Authorization"); // "Bearer eyJ..."
 const body = getRequestBody();
 return body.amount * 1.1; // → 55
 ```
-
----
-
 ## HTTP Response Helpers
 
 Shape the response that will be sent back to the caller when the workflow completes.
@@ -120,9 +108,6 @@ setCookie("session_token", {
   samesite: "Strict"
 });
 ```
-
----
-
 ## Logger
 
 The `logger` object writes structured log entries to the configured output. The destination depends on project settings: **console** (default / local dev) or a **cloud observability provider** (Loki, OpenTelemetry Logs, etc.). See [Logging](../concepts/logging.md).
@@ -141,9 +126,6 @@ if (!result.success) {
   logger.logError("Order failed", result.error);
 }
 ```
-
----
-
 ## App Config
 
 `getConfig(key)` reads values from the project's **App Config** — a secure store for secrets, API keys, and environment-specific settings.
@@ -158,9 +140,6 @@ const maxRetries = getConfig("MAX_RETRY_COUNT"); // may return a number
 ```
 
 > Never hardcode secrets in scripts. Always use `getConfig()`.
-
----
-
 ## HTTP Client
 
 `httpClient` is an Axios-backed client for making **outgoing** HTTP requests from within a script. It is distinct from the workflow-level **HTTP Request** block and is available for direct use in JS Runner code.
@@ -182,9 +161,6 @@ const response = await httpClient.get("https://api.example.com/data", {
 });
 return response.data;
 ```
-
----
-
 ## JWT Utilities
 
 A built-in JWT helper is available globally as `jwt`:
@@ -209,9 +185,6 @@ if (!success) {
 }
 return payload.userId;
 ```
-
----
-
 ## Built-in Libraries (`libs`)
 
 Three third-party libraries are bundled and available as top-level globals inside scripts. No import statement is needed.
@@ -252,9 +225,6 @@ if (!result.success) {
 }
 return result.data;
 ```
-
----
-
 ## Database Helper (DB Native Block Only)
 
 `dbQuery` is **exclusively available** inside the **DB Native** block. It is injected into the VM context only when that specific block executes.
@@ -270,9 +240,6 @@ return users;
 ```
 
 Attempting to call `dbQuery` in a regular JS Runner block will result in a `ReferenceError`.
-
----
-
 ## Sandbox Constraints
 
 The scripting environment is a secure **V8 sandbox** (via Node.js `vm` module). The following constraints apply:
@@ -285,9 +252,6 @@ The scripting environment is a secure **V8 sandbox** (via Node.js `vm` module). 
 | **No cross-request state** | Variables exist only for the duration of a single workflow run. |
 | **Async supported** | `async/await` is fully supported. The VM waits for promise resolution. |
 | **ES6+ syntax** | Modern JavaScript (arrow functions, destructuring, spread, etc.) is supported. |
-
----
-
 ## Quick Reference
 
 ```typescript
@@ -328,9 +292,6 @@ zod                            // Zod schema validation
 // ─── DB Native block only ─────────────────────────────────────
 dbQuery("SELECT ...")
 ```
-
----
-
 ## Technical Notes for LLMs and Developers
 
 - **Injection mechanism**: All properties of the `ContextVarsType` object are spread as globals into the V8 `vm.createContext()` sandbox via `JsVM`. This is why helpers are available without a prefix.

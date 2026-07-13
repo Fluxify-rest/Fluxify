@@ -9,9 +9,6 @@ Thank you for your interest in contributing! Fluxify is an open-source project i
 
 > [!NOTE]
 > Because Fluxify is in alpha, the architecture and APIs may change. If you're planning a large contribution, we recommend opening an issue first to discuss the approach.
-
----
-
 ## Ways to Contribute
 
 You don't have to write code to contribute. Here are all the ways you can help:
@@ -25,9 +22,6 @@ You don't have to write code to contribute. Here are all the ways you can help:
 | 🔧 **Core Features** | Improve the execution engine, API, or frontend |
 | 🧪 **Tests** | Add or improve unit and integration tests |
 | 🎨 **UI/UX** | Improve the visual workflow builder or settings UI |
-
----
-
 ## Getting Started
 
 ### 1. Fork & Clone
@@ -56,9 +50,6 @@ cp env.example .env
 ```
 
 See [Local Testing](./local-testing.md) for a full setup guide including starting the required databases.
-
----
-
 ## Development Workflow
 
 ### Create a Branch
@@ -109,9 +100,6 @@ Ensure your code meets the project's quality standards:
 ```bash
 bun run lint
 ```
-
----
-
 ## Submitting a Pull Request
 
 1. **Push** your branch to your fork:
@@ -122,9 +110,6 @@ bun run lint
 3. Fill in the PR template — describe **what** changed and **why**.
 4. Link any related Issues in the PR description (e.g., `Closes #42`).
 5. Wait for a maintainer review. Be responsive to feedback — PRs with no activity may be closed after a period of time.
-
----
-
 ## Contribution Guidelines
 
 ### Code Style
@@ -149,9 +134,6 @@ Since Fluxify is in alpha:
 - Some APIs and internal interfaces may change between PRs.
 - Not all features are fully documented — improving docs is always a great first contribution.
 - Feature ideas and architectural feedback are especially valuable right now. Open a [Discussion](https://github.com/fluxify-rest/Fluxify/discussions) to share your thoughts.
-
----
-
 ## Reporting Bugs
 
 When opening a bug report, please include:
@@ -160,9 +142,6 @@ When opening a bug report, please include:
 2. **What actually happened** (error messages, screenshots if relevant).
 3. **Steps to reproduce** the issue.
 4. **Environment details**: OS, Docker version, Bun version, browser (if a UI issue).
-
----
-
 ## Feature Requests & Ideas
 
 Fluxify is in alpha and actively shaping its roadmap. If you have:
@@ -172,9 +151,6 @@ Fluxify is in alpha and actively shaping its roadmap. If you have:
 - Feedback on the developer experience
 
 ...please open a [GitHub Discussion](https://github.com/fluxify-rest/Fluxify/discussions) or an Issue tagged `enhancement`. Every idea helps the project improve.
-
----
-
 ## Community
 
 - 💬 [GitHub Discussions](https://github.com/fluxify-rest/Fluxify/discussions) — Q&A, ideas, and general chat

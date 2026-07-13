@@ -6,9 +6,6 @@ description: The fundamental concepts you need to understand to build with Fluxi
 # Basics & Core Concepts
 
 Fluxify is built around a small set of composable concepts. Understanding these will allow you to model any backend logic visually — from simple CRUD endpoints to AI-powered workflows with complex branching logic.
-
----
-
 ## 1. Workflows (API Endpoints)
 
 A **Workflow** is the fundamental unit of logic in Fluxify. Each workflow represents a single API endpoint — it has a defined HTTP method and path (e.g., `POST /users`), and defines exactly what happens when that endpoint is called.
@@ -19,9 +16,6 @@ Every workflow:
 - Ends when a **Response** block sends a reply, or when the execution engine reaches a block with no outgoing connection.
 
 Workflows are displayed visually as a directed graph (a canvas of blocks and connecting arrows) inside the Fluxify editor.
-
----
-
 ## 2. Blocks
 
 **Blocks** are the individual units of logic that make up a workflow. Each block performs a single, well-defined action. Blocks are the building "lego pieces" of Fluxify — you compose them to express arbitrarily complex backend behaviour.
@@ -45,9 +39,6 @@ Block inputs support **dynamic expressions**: prefix a value with `js:` to evalu
 | **Logging** | Console Log, Cloud Logs | Observability and debugging |
 
 Browse the full [Blocks Reference](../blocks/index.md) for detailed documentation on every block.
-
----
-
 ## 3. Edges (Connections)
 
 **Edges** are the arrows connecting blocks on the canvas. They define the **order of execution** — the directed path the engine follows through the workflow.
@@ -57,9 +48,6 @@ Key behaviours:
 - If Block A is connected to Block B, Block B runs immediately after Block A finishes successfully.
 - Some blocks produce **multiple output ports**. For example, the **If Condition** block has a `True` and a `False` output — the engine follows the matching branch based on the evaluated condition.
 - A block with no outgoing edge ends the workflow at that point.
-
----
-
 ## 4. Execution Context & Variables
 
 Every time a request hits a workflow, the engine creates a fresh **Execution Context** — an isolated per-request environment that holds everything the workflow needs:
@@ -95,9 +83,6 @@ return input.name; // → "Alice"
 ```
 
 For a complete reference, see the [Execution Context](../concepts/context.md) and [Scripting Context](../scripting/context.md) documentation.
-
----
-
 ## 5. Integrations
 
 **Integrations** are the connections between Fluxify and external systems. They are configured once in the project settings and then referenced by blocks using a connection ID.
@@ -115,9 +100,6 @@ Fluxify uses an **Adapter Pattern** internally — blocks interact with a generi
 Configure integrations in the **Integrations** section of the project dashboard, then reference them in your blocks by their connection ID.
 
 See the [Integrations Reference](../integrations/index.md) for setup guides.
-
----
-
 ## 6. App Config (Secrets)
 
 The **App Config** is a secure key-value store for project-level secrets and configuration values — things like API keys, database passwords, or external service URLs that you don't want to hardcode in your workflows.
@@ -129,9 +111,6 @@ cfg:OPENAI_API_KEY
 ```
 
 This keeps sensitive values out of your workflow definitions and centralises credential management.
-
----
-
 ## Next Steps
 
 Now that you understand the core concepts, you're ready to:
