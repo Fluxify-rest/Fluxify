@@ -6,9 +6,6 @@ description: How to run the full Fluxify stack locally for development and testi
 # Local Testing Guide
 
 This guide walks you through setting up a complete Fluxify development environment on your local machine. By the end, you will have the frontend, backend API, worker, and all supporting services running locally.
-
----
-
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -21,18 +18,12 @@ Before you begin, ensure you have the following installed:
 
 > [!TIP]
 > Fluxify uses **Bun** (not npm or yarn) as its runtime. Make sure `bun --version` works in your terminal before proceeding.
-
----
-
 ## Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/fluxify-rest/Fluxify.git
 cd Fluxify
 ```
-
----
-
 ## Step 2: Install Dependencies
 
 ```bash
@@ -40,9 +31,6 @@ bun install
 ```
 
 This installs all workspace dependencies across the monorepo (`apps/`, `packages/`).
-
----
-
 ## Step 3: Configure Your Environment
 
 Copy the example environment file:
@@ -81,9 +69,6 @@ HOSTNAME=localhost
 > The `SEED_USER_EMAIL` and `SEED_USER_PASSWORD` values define the initial admin account. You must set these before the first run — you will use them to log into the dashboard.
 
 See [Self-Hosting](./self-hosting.md) for the complete `.env` schema and description of every variable.
-
----
-
 ## Step 4: Start Databases with Docker
 
 The project includes a `docker-compose` configuration that starts PostgreSQL and Redis:
@@ -99,9 +84,6 @@ docker compose ps
 ```
 
 You should see both `postgres` and `redis` containers in a healthy state.
-
----
-
 ## Step 5: Start the Application
 
 Run all services (frontend, backend API, worker) in development mode with a single command:
@@ -120,9 +102,6 @@ This starts:
 
 > [!NOTE]
 > On first startup, the server will automatically run database migrations and seed the initial admin user defined in your `.env` file.
-
----
-
 ## Step 6: Access the Dashboard
 
 Open your browser and navigate to:
@@ -132,9 +111,6 @@ http://localhost:3000
 ```
 
 Log in with the `SEED_USER_EMAIL` and `SEED_USER_PASSWORD` you set in `.env`.
-
----
-
 ## Running the Docs Locally
 
 If you want to contribute to or preview the documentation:
@@ -144,9 +120,6 @@ bun run docs:dev
 ```
 
 The docs site will be available at `http://localhost:5173` (or the next available port).
-
----
-
 ## Useful Commands
 
 | Command | Description |
@@ -158,9 +131,6 @@ The docs site will be available at `http://localhost:5173` (or the next availabl
 | `bun run docs:dev` | Start the documentation site in dev mode |
 | `docker compose up -d` | Start PostgreSQL and Redis in the background |
 | `docker compose down` | Stop and remove the database containers |
-
----
-
 ## Troubleshooting
 
 **Cannot connect to PostgreSQL**

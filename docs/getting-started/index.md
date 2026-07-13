@@ -9,9 +9,6 @@ description: A complete introduction to Fluxify — what it is, how it works, an
 
 > [!NOTE]
 > Fluxify is currently in **alpha**. The platform is under active development and some features are still stabilizing. Feedback, bug reports, and contributions are very welcome.
-
----
-
 ## What is Fluxify?
 
 Fluxify is a visual backend platform. Instead of writing route handlers, middleware, and data-access layers manually, you build **workflows** — directed graphs of **Blocks** connected by **Edges** — that define exactly what happens when an HTTP request arrives.
@@ -26,9 +23,6 @@ A typical workflow might:
 6. Return a JSON response with a **Response** block
 
 All of this is configured visually in the browser — no server framework knowledge required.
-
----
-
 ## Core Capabilities
 
 | Capability | Description |
@@ -41,9 +35,6 @@ All of this is configured visually in the browser — no server framework knowle
 | 📡 **Observability** | Structured logging with support for Loki and OpenTelemetry Logs; built-in console logging for local development |
 | 🔒 **Security** | Per-project App Config for secrets management, encrypted credentials, and sandbox isolation for scripts |
 | 🚀 **Flexible Deployment** | Ship as a standalone Docker container (via `fluxify-kit`), or scale with Kubernetes for high availability |
-
----
-
 ## How It Works
 
 Every API endpoint in Fluxify is powered by a **workflow**. The platform runs a lightweight execution engine that:
@@ -56,9 +47,6 @@ Every API endpoint in Fluxify is powered by a **workflow**. The platform runs a 
 6. **Returns** the final block's output as the HTTP response.
 
 For a deep dive, see the [Execution Engine](../concepts/execution-engine.md) documentation.
-
----
-
 ## In This Section
 
 | Page | Description |
@@ -67,9 +55,6 @@ For a deep dive, see the [Execution Engine](../concepts/execution-engine.md) doc
 | [Local Testing](./local-testing.md) | Set up a full Fluxify stack locally for development and testing |
 | [Self-Hosting](../deployments/index.md) | Deploy Fluxify on your own infrastructure with Docker |
 | [Contributing](./contributing.md) | Learn how to contribute code, docs, or ideas to the project |
-
----
-
 ## Quick Links
 
 - 📖 [Blocks Reference](../blocks/index.md) — Browse all available blocks

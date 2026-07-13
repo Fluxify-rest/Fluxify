@@ -6,9 +6,6 @@ description: The execution model of Fluxify scripts.
 # How Scripting Works
 
 Fluxify executes your custom JavaScript code using an isolated, sandboxed Virtual Machine (VM) wrapper defined in `@fluxify/lib` (`JsVM`). This allows scripts to run server-side in a secure runtime sandbox that separates user execution from the host application process.
-
----
-
 ## The Execution Flow
 
 When a workflow runs a script (or evaluates a `js:` input), it follows these four steps:
@@ -17,9 +14,6 @@ When a workflow runs a script (or evaluates a `js:` input), it follows these fou
 2. **Context Injection**: The engine prepares the global environment by injecting helpers, third-party libraries, and the current workflow's variables (`vars`) as top-level globals in the sandboxed scope.
 3. **Sandboxed Evaluation**: The script is executed inside a fresh VM context. If the script is written in a block, it is wrapped in an immediately-invoked function expression (IIFE) to isolate variable declarations.
 4. **Result Resolution**: The output value is captured and returned. If the script returns a Promise (e.g., using `async`/`await` or calling async functions like `httpClient`), the VM suspends execution and waits for the Promise to resolve before passing the result to the next block.
-
----
-
 ## Synchronous vs. Asynchronous Execution
 
 Both synchronous logic and modern asynchronous JavaScript (`async/await`) are fully supported.
@@ -41,9 +35,6 @@ const userId = getQueryParam("userId");
 const response = await httpClient.get(`https://api.example.com/users/${userId}`);
 return response.data;
 ```
-
----
-
 ## Sandbox Limits and Timeouts
 
 To maintain platform stability and protect server resources, script execution is constrained by a strict **4-second (4000ms) execution limit**:

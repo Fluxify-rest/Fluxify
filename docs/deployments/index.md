@@ -9,9 +9,6 @@ Fluxify is designed to be self-hosted. This guide covers everything you need to 
 
 > [!NOTE]
 > This guide covers the **standalone Docker** deployment — the simplest way to self-host Fluxify. Production-grade topologies (Kubernetes, cloud-managed services) will be documented here as they mature.
-
----
-
 ## Architecture Overview
 
 The topology below reflects the standalone Docker deployment. External clients talk to port `8080` only — Caddy routes requests internally.
@@ -44,18 +41,12 @@ In addition to the container, the following **external services** are required a
 
 - **PostgreSQL** — primary datastore for workflows, users, and project configuration
 - **Redis** — used for caching, BullMQ job queues, and pub/sub
-
----
-
 ## Requirements
 
 - **Docker** (Docker Engine 20+ or Docker Desktop)
 - A **PostgreSQL** instance (version 14+ recommended)
 - A **Redis** instance (version 6+ recommended)
 - A domain name or IP address reachable from your users (for production)
-
----
-
 ## Setup Guide
 
 ### Step 1: Pull the Image
@@ -132,9 +123,6 @@ After the container starts, the server will:
 3. Start the Caddy proxy and all internal services.
 
 Access the dashboard at `http://your-host:8080` (or your configured domain). Log in with the `SEED_USER_EMAIL` and `SEED_USER_PASSWORD` from your `.env`.
-
----
-
 ## Upgrading
 
 To upgrade to the latest version of Fluxify:
@@ -158,9 +146,6 @@ docker run -d \
 
 > [!NOTE]
 > Database migrations are applied automatically on startup. Always read the release notes before upgrading to check for breaking changes.
-
----
-
 ## Troubleshooting
 
 **Container exits immediately**
@@ -185,9 +170,6 @@ docker run -d \
 
 > [!TIP]
 > Help us build out this section. If you encountered and solved an issue not listed here, please open a PR to add it to the docs!
-
----
-
 ## Environment Variables
 
 Copy `env.example` to `.env` and configure the variables below. All values are described with their purpose and defaults.

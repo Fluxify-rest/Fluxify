@@ -24,8 +24,8 @@ Trigger this workflow when a user requests to push their code, open a PR, merge 
    - Push to the user's origin fork: `git push -u origin <branch-name>`
 
 3. **Create the Pull Request**
-   - Create a PR against the upstream repository (e.g., `Fluxify-rest/Fluxify`).
-   - Run: `gh pr create --repo <upstream-repo> --head <username>:<branch-name> --title "<Title>" --body "<Body>"`
+   - Create a PR against the upstream repository `Fluxify-rest/Fluxify`
+   - Run: `gh pr create --repo Fluxify-rest/Fluxify --head <username>:<branch-name> --title "<Title>" --body "<Body>"`
 
 4. **Enable Auto-Merge / Wait for Checks**
    - Enable auto-merge so the PR merges immediately upon CI passing (if applicable):
@@ -40,7 +40,7 @@ Trigger this workflow when a user requests to push their code, open a PR, merge 
    - Switch back to main locally: `git checkout main`
    - Pull the updated changes from the remote fork: `git pull origin main`
 
-7. **Clean Up Local Environment**
+7. **Clean Up Local Environment but ask before deleting the branch**
    - Delete the temporary local feature branch: `git branch -D <branch-name>`
 
 You are now successfully synced with the upstream `main` branch, and the temporary feature branches have been securely disposed of!

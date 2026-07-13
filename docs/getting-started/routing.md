@@ -6,9 +6,6 @@ description: How Fluxify maps incoming requests to your API workflows, validates
 # Routing & Request Validation
 
 When someone calls your API, Fluxify automatically figures out which workflow to run, checks the request data against your defined rules, and only then starts executing your logic. This page explains how that works and what your callers can expect to receive.
-
----
-
 ## How Requests Are Matched
 
 Every route you create in Fluxify has an HTTP method (like `GET` or `POST`) and a URL path (like `/users/:id`). When a request comes in, Fluxify matches it to the right workflow instantly.
@@ -21,9 +18,6 @@ Path parameters like `:id` or `:slug` are captured automatically and made availa
 ::: tip Hot Reloading
 Routes update in real time. When you create or change a route in the dashboard, the change takes effect immediately — no server restart needed.
 :::
-
----
-
 ## What Happens Before Your Workflow Runs
 
 Before Fluxify executes a single block in your workflow, it runs through a quick validation pipeline:
@@ -36,9 +30,6 @@ Before Fluxify executes a single block in your workflow, it runs through a quick
 6. **Run your workflow** — only if everything above passed.
 
 If any validation step fails, the workflow never runs and the caller immediately gets a clear error response.
-
----
-
 ## Request Validation
 
 Each route optionally has three schemas you can configure in the Schema Editor:
@@ -84,9 +75,6 @@ return true;
 ```
 
 Whatever you pass to `ValidationError` is returned directly to the caller — giving you full control over your error messages.
-
----
-
 ## Validation Error Response
 
 When a request fails validation, the caller receives a `400 Bad Request` with a JSON body that clearly describes what went wrong.
@@ -117,9 +105,6 @@ When a request fails validation, the caller receives a `400 Bad Request` with a 
 | `errors[].errors` | One or more error messages for that field |
 
 When a custom JavaScript validator throws a `ValidationError`, its payload appears verbatim in `errors[].errors` — exactly as you wrote it.
-
----
-
 ## Error Responses at a Glance
 
 Here's every possible outcome and what the caller receives:
@@ -135,9 +120,6 @@ Here's every possible outcome and what the caller receives:
 ::: info Custom Status Codes
 Your workflow can return any HTTP status code you choose using the **Response** block — the defaults above only apply when no status is explicitly set.
 :::
-
----
-
 ## Next Steps
 
 - 🧩 [Explore the Blocks Reference](../blocks/index.md) — build the workflow logic that runs after validation

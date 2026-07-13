@@ -23,9 +23,6 @@ const schema = zod.object({ name: zod.string() });
 ```
 
 These libraries are injected via the `libs` property of the [Execution Context](../concepts/context.md) and exposed as globals by the VM.
-
----
-
 ## Arbitrary NPM Packages — Not Supported
 
 The scripting environment does **not** support importing arbitrary NPM packages using `require()` or ES module `import` syntax. This is intentional:
@@ -35,9 +32,6 @@ The scripting environment does **not** support importing arbitrary NPM packages 
 - **Predictability**: A curated set of globals ensures consistent behavior across deployments.
 
 Calling `require("lodash")` or `import ... from "..."` inside a script will result in a `ReferenceError`.
-
----
-
 ## Recommended Alternatives
 
 | Need | Recommended approach |
@@ -49,9 +43,6 @@ Calling `require("lodash")` or `import ... from "..."` inside a script will resu
 | Complex collection operations | Use the **Array Operations** block |
 | External API calls | Use `httpClient` global or the **HTTP Request** block |
 | Secrets / config | Use `getConfig("KEY")` global |
-
----
-
 ## For Platform Developers
 
 If you are contributing to the Fluxify codebase itself (not scripting workflows), the full set of internal npm dependencies is managed by the monorepo. See the [Contributing Guide](/getting-started/contributing) for information about workspace packages, the `@fluxify/lib` package, and how `JsVM` injects the `libs` object.

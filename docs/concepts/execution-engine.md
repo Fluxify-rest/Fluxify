@@ -6,9 +6,6 @@ description: The core system that runs your workflows block by block, manages th
 # Execution Engine
 
 The **Execution Engine** is the runtime core of Fluxify. Every time an HTTP request is matched to a workflow, the engine takes over — it walks the block graph, passes data between steps, manages failures, and enforces time limits.
-
----
-
 ## How the Engine Runs a Workflow
 
 When a request arrives, the server assembles an [Execution Context](./context.md) and then calls the engine's `start()` method with the ID of the first block to run (the **Entrypoint**).
@@ -39,9 +36,6 @@ Incoming Request
 4. **Error handling**: If a block fails and does not set `continueIfFail: true`, the engine routes to the configured **Error Handler** block. If the error handler has no continuation, execution stops.
 5. **Timeout enforcement**: Before each iteration, the engine checks if `performance.now()` has exceeded `stopper.timeoutEnd`. If so, execution stops and a timeout error is returned.
 6. **Final result**: The last `BlockOutput` is returned to the request router, which serializes it into an HTTP response.
-
----
-
 ## The Context & The Engine
 
 The `Engine` receives the [Execution Context](./context.md) in its `EngineOptions`. It does not read request data directly — all request awareness comes from the context:
@@ -55,9 +49,6 @@ export type EngineOptions = {
 ```
 
 The engine only directly uses `context.stopper` to track timeouts. Every block receives the full context via its constructor, giving it access to the VM, helpers, logger, DB, and HTTP client.
-
----
-
 ## Timeout System
 
 Workflows are subject to a **4-second execution timeout** by default (controlled by `RESPONSE_TIMEOUT = 4000` ms).
@@ -71,9 +62,6 @@ Workflows are subject to a **4-second execution timeout** by default (controlled
 | **`ExecutionTimeoutError`** | Blocks can also throw this error explicitly; the engine catches it and terminates cleanly. |
 
 > **Tip**: Long-running tasks (like DB queries or external HTTP calls) count toward the timeout. Design workflows to be efficient and avoid unnecessary sequential round-trips.
-
----
-
 ## Error Handling
 
 Every workflow must have an **Error Handler** block configured. The engine uses its ID (`errorHandlerId`) to route failures.
@@ -85,9 +73,6 @@ Every workflow must have an **Error Handler** block configured. The engine uses 
 4. If the error block has no `next`, the last failure result is returned.
 
 **`continueIfFail` flag**: A block can signal that even on failure the engine should proceed to `next`. This is used by blocks like **JS Runner** (which always sets `continueIfFail: true` on success).
-
----
-
 ## Block Output Contract
 
 Every block must return a `BlockOutput` object:
@@ -101,9 +86,6 @@ interface BlockOutput {
   continueIfFail: boolean; // If true, engine moves to `next` even on failure
 }
 ```
-
----
-
 ## Relationship to the Context
 
 The engine is intentionally thin — it knows nothing about HTTP, databases, or scripting. All of that lives in the **Context** that surrounds it:
@@ -119,9 +101,6 @@ The engine is intentionally thin — it knows nothing about HTTP, databases, or 
 | Timeout | `context.stopper` (read by Engine) |
 
 See [Execution Context](./context.md) for the full context reference.
-
----
-
 ## Performance
 
 The engine is designed to be lightweight:

@@ -7,16 +7,11 @@ description: Execute custom JavaScript code within a sandboxed V8 environment wi
 
 The **JS Runner** block lets you write arbitrary JavaScript code inside your workflow. It is the most flexible block available — use it for custom business logic, data transformation, conditional branching preparation, or anything that standard blocks don't cover.
 
----
-
 ## Inputs
 
 | Field | Description |
 | :--- | :--- |
 | **Value** | The JavaScript code to execute. Supports full ES6+ syntax and `async/await`. |
-
----
-
 ## How It Works
 
 1. The block receives the output of the previous block as its `params` argument.
@@ -27,9 +22,6 @@ The **JS Runner** block lets you write arbitrary JavaScript code inside your wor
 6. If an exception is thrown, the block returns `successful: false` and stops the chain (unless the next block is an Error Handler).
 
 > The JS Runner always sets `continueIfFail: true` on success, meaning the workflow will proceed even if `output` is `null` or `undefined`.
-
----
-
 ## Available Globals
 
 Inside your JS Runner code, all of the following are available without any import or prefix:
@@ -55,9 +47,6 @@ Inside your JS Runner code, all of the following are available without any impor
 | `zod` | Zod schema validation library. |
 
 For the complete API reference with type signatures and examples, see the [Scripting Context](../scripting/context.md) page.
-
----
-
 ## Examples
 
 ### Basic Transformation
@@ -142,9 +131,6 @@ requestingUser = getRouteParam("userId");
 return { status: "processing" };
 // Next blocks can read: processedAt, requestingUser
 ```
-
----
-
 ## Error Handling
 
 If your code throws an unhandled exception, the JS Runner returns:
@@ -169,9 +155,6 @@ try {
   return { error: "Service temporarily unavailable" };
 }
 ```
-
----
-
 ## Sandbox Constraints
 
 | Constraint | Detail |

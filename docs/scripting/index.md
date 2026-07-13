@@ -8,9 +8,6 @@ description: Extend Fluxify functionalities with custom JavaScript.
 While Fluxify provides a robust set of built-in blocks, there are times when your workflows require custom logic. Fluxify's scripting features allow you to write standard JavaScript code to manipulate data, execute complex calculations, handle advanced routing or request parsing, and implement custom condition flows.
 
 All user scripts are executed on the server in a secure, isolated sandbox environment (Virtual Machine). This ensures safety and stability while running high-performance computations.
-
----
-
 ## Where Scripting Can Be Used
 
 Scripting in Fluxify is divided into two main categories: **dedicated script blocks** and **dynamic inputs/conditions**.
@@ -22,9 +19,6 @@ Scripting in Fluxify is divided into two main categories: **dedicated script blo
 ### 2. Dynamic Input Fields & Expressions
 - **Dynamic Field Inputs (`js:`)**: Many fields inside block editors allow you to write inline JavaScript code by prefixing the value with `js:`. The execution engine evaluates this expression at runtime and uses the result as the block's input.
 - **Condition Chains**: Use Javascript expressions within conditional gates (like the **If** block or routing conditions) to evaluate complex truth/falsity assertions.
-
----
-
 ## Writing Scripts: The `return` Requirement
 
 Every script you write in Fluxify is implicitly wrapped and executed inside an **Immediately Invoked Function Expression (IIFE)**. 
@@ -49,9 +43,6 @@ const rawAmount = input.total;
 const taxRate = 0.08;
 const total = rawAmount * (1 + taxRate);
 ```
-
----
-
 ## Core Execution Concepts
 
 To write effective scripts, you should be familiar with the following three concepts:
