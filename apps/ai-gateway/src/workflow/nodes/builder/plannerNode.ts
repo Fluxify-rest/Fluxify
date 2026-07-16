@@ -120,6 +120,7 @@ export class PlannerNode extends BaseNode<PlannerParams, PlannerResult> {
 			const scratchPadText = builderState.scratchPad?.length
 				? `\n\n## Context / Scratch Pad\nHere is information gathered from previous steps:\n${builderState.scratchPad.map((s) => `- ${s}`).join("\n")}`
 				: "";
+			console.log(query, "TOOLS");
 
 			const response = await this.callModel(
 				{

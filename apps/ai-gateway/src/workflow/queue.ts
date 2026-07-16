@@ -13,6 +13,7 @@ export type AIWorkflowGatewayData = {
 		userQuery: string;
 		reviewAction?: "approve" | "reject" | "modify";
 		reviewComments?: string;
+		chatHistoryId?: string;
 	};
 };
 
@@ -21,7 +22,7 @@ export interface ConversationWorkflowStatus {
 		| "started"
 		| "running"
 		| "error"
-		| "completed"
+		| "success"
 		| "under_plan_review"
 		| "plan_rejected";
 	conversationId: string;
@@ -35,6 +36,7 @@ export interface ConversationWorkflowStatus {
 		output?: any;
 	}[];
 	finalResult?: any; // depends on last node's output
+	chatHistoryId?: string;
 }
 
 export let workflowQueue: Queue<AIWorkflowGatewayData> = null!;

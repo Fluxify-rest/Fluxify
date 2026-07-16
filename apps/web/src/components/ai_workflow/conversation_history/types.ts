@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export interface Message {
 	id: string;
-	status?: "not_started" | "running" | "completed" | "paused" | string;
+	status?: "not_started" | "running" | "success" | "error" | "paused" | "plan_rejected" | string;
 	userQuery?: string;
 	finalOutput?: {
 		nodeId: string;

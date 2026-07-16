@@ -8,7 +8,7 @@ import {
 	ThemeIcon,
 	Box,
 } from "@mantine/core";
-import { TbClipboardList, TbX } from "react-icons/tb";
+import { TbClipboardList, TbX, TbAlertTriangle } from "react-icons/tb";
 import { PlanReviewModal } from "./PlanReviewModal";
 import { WorkflowExecutionHistory } from "./WorkflowExecutionHistory";
 
@@ -17,6 +17,7 @@ interface PlannerNodeDisplayProps {
 		type: string;
 		markdownPlan: string;
 		success: boolean;
+		rejectReason?: string;
 		warnings?: string[];
 		builderStepData?: any;
 		rejected?: boolean;
@@ -40,6 +41,7 @@ export const PlannerNodeDisplay = ({
 	const isRejected = result.rejected || status === "plan_rejected";
 	const isApproved = result.approved;
 	const isReviewed = result.reviewed;
+	const isFailed = result.success === false;
 
 	return (
 		<Stack gap="xs" w="100%">
@@ -61,26 +63,28 @@ export const PlannerNodeDisplay = ({
 					withBorder
 					radius="md"
 					p="md"
-					bg="violet.0"
-					style={{ borderColor: "var(--mantine-color-violet-2)" }}
+					bg={isFailed ? "red.0" : "violet.0"}
+					style={{ borderColor: isFailed ? "var(--mantine-color-red-2)" : "var(--mantine-color-violet-2)" }}
 				>
 					<Stack gap="xs">
 						<Group gap="sm">
 							<ThemeIcon
 								size="md"
 								radius="xl"
-								color={isRejected ? "red" : "violet"}
+								color={isFailed || isRejected ? "red" : "violet"}
 								variant="light"
 							>
-								{isRejected ? <TbX size={16} /> : <TbClipboardList size={16} />}
+								{isFailed ? <TbAlertTriangle size={16} /> : isRejected ? <TbX size={16} /> : <TbClipboardList size={16} />}
 							</ThemeIcon>
-							<Text fw={600} size="sm" c={isRejected ? "red.7" : "violet.9"}>
-								{isRejected ? "Plan Rejected" : "Proposed Plan Ready"}
+							<Text fw={600} size="sm" c={isFailed || isRejected ? "red.7" : "violet.9"}>
+								{isFailed ? "Plan Generation Failed" : isRejected ? "Plan Rejected" : "Proposed Plan Ready"}
 							</Text>
 						</Group>
 
-						<Text size="sm" c="dimmed">
-							{isRejected
+						<Text size="sm" c={isFailed ? "red.6" : "dimmed"}>
+							{isFailed
+								? result.rejectReason || "The AI could not generate a plan for your request. Please modify your request and try again."
+								: isRejected
 								? "The AI's proposed plan was rejected. You can view the rejected plan for reference."
 								: "The AI has analyzed your request and created an implementation plan. Please review and approve the plan before we proceed with building the flow."}
 						</Text>
@@ -88,10 +92,11 @@ export const PlannerNodeDisplay = ({
 						<Group mt="sm">
 							<Button
 								variant="filled"
-								color={isRejected ? "red" : "violet"}
+								color={isFailed || isRejected ? "red" : "violet"}
 								onClick={() => setIsModalOpen(true)}
+								disabled={isFailed && !result.markdownPlan}
 							>
-								{isRejected ? "See rejected plan" : "View & Review Plan"}
+								{isFailed ? "View failure details" : isRejected ? "See rejected plan" : "View & Review Plan"}
 							</Button>
 						</Group>
 					</Stack>
@@ -101,10 +106,10 @@ export const PlannerNodeDisplay = ({
 			<PlanReviewModal
 				opened={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
-				plan={result.markdownPlan || "No plan generated."}
+				plan={result.markdownPlan || result.rejectReason || "No plan generated."}
 				chatId={chatId}
 				conversationId={conversationId}
-				isReadOnly={isRejected || isApproved || isReviewed}
+				isReadOnly={isFailed || isRejected || isApproved || isReviewed}
 			/>
 		</Stack>
 	);

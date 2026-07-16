@@ -150,7 +150,7 @@ function applyFinalResult(
 			builderStepData: finalResult,
 		};
 	} else {
-		conversationStatus.status = "completed";
+		conversationStatus.status = "success";
 		conversationStatus.finalResult = finalResult;
 	}
 }
@@ -247,8 +247,10 @@ export async function continueAIWorkflow(
 		userQuery: initialQuery,
 		currentNodeId: "planner",
 		executionHistory: [],
+		chatHistoryId: jobData.chatHistoryId,
 	};
 
+	await trackConversationStatus(conversationId, conversationStatus, job);
 	attachStatusTracking(workflow, conversationId, conversationStatus, job);
 	activeWorkflows.set(conversationId, workflow);
 
@@ -262,16 +264,30 @@ export async function continueAIWorkflow(
 		const builderState = step.inputData as any;
 
 		if (jobData.reviewAction === "modify" && jobData.reviewComments) {
-			const comments = JSON.parse(jobData.reviewComments);
-			builderState.scratchPad = [
-				...(builderState.scratchPad || []),
-				"USER REVIEW COMMENTS ON PREVIOUS PLAN:",
-				...comments,
-			];
+			const comments =
+				jobData.reviewComments && typeof jobData.reviewComments === "string"
+					? JSON.parse(jobData.reviewComments)
+					: [];
+			const previousPlan =
+				step.outputData?.markdownPlan ||
+				builderState.plannerOutput?.markdownPlan ||
+				"Previous plan";
+
+			const newMessageHistory: any[] = metadata.messageHistory || [];
+
+			const reviewQuery = `Original Request:
+${initialQuery}
+
+You previously proposed this plan:
+${previousPlan}
+
+I have reviewed your plan. Please make the following modifications and replan:
+${comments.map((c: string) => `- ${c}`).join("\n")}`;
+
 			// Re-run planner
 			const finalResult = (await workflow.continue("planner", {
-				query: initialQuery,
-				messageHistory: metadata.messageHistory,
+				query: reviewQuery,
+				messageHistory: newMessageHistory,
 				model: params.model,
 				builderState,
 				metadata: params.metadata,
@@ -280,7 +296,7 @@ export async function continueAIWorkflow(
 			applyFinalResult(conversationStatus, finalResult);
 		} else if (jobData.reviewAction === "approve") {
 			// User approved the plan. Since orchestrator isn't built yet, we complete the workflow.
-			conversationStatus.status = "completed";
+			conversationStatus.status = "success";
 			conversationStatus.finalResult = {
 				type: "plan_approved",
 				message:

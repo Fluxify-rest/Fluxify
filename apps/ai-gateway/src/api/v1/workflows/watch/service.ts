@@ -18,7 +18,7 @@ export default async function handleWatchRequest(
 	if (!cacheData) {
 		return streamSSE(c, async (stream) => {
 			await stream.writeSSE({
-				data: JSON.stringify({ status: "completed", conversationId, executionHistory: [] }),
+				data: JSON.stringify({ status: "success", conversationId, executionHistory: [] }),
 			});
 			await stream.close();
 		});
@@ -51,7 +51,7 @@ export default async function handleWatchRequest(
 						data: JSON.stringify(status),
 					});
 
-					if (status.status === "error" || status.status === "completed") {
+					if (status.status === "error" || status.status === "success") {
 						cleanup();
 						await stream.close();
 					}
@@ -68,7 +68,7 @@ export default async function handleWatchRequest(
 
 				if (
 					initialStatus.status === "error" ||
-					initialStatus.status === "completed"
+					initialStatus.status === "success"
 				) {
 					await stream.close();
 					resolve();

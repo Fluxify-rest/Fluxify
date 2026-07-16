@@ -66,42 +66,64 @@ export async function trackConversationStatus(
 export async function saveConversationStatus(
 	status: ConversationWorkflowStatus,
 ) {
-	const historyInsert = await db
-		.insert(aiChatHistoryEntity)
-		.values({
-			conversationId: status.conversationId,
-			userQuery: status.userQuery,
-			status: status.status === "under_plan_review" ? "paused" : "completed",
-			finalOutput: {
-				nodeId: status.currentNodeId,
-				result: status.finalResult,
-			},
-			workflowExecutionHistory: status.executionHistory.map((history) => ({
-				type: history.type,
-				id: history.name,
-				status: history.status,
-			})),
-		})
-		.returning({ id: aiChatHistoryEntity.id });
+	let chatHistoryId = status.chatHistoryId;
+	const historyData = {
+		conversationId: status.conversationId,
+		userQuery: status.userQuery,
+		status: status.status === "under_plan_review" ? "paused" : status.status === "error" ? "error" : "success",
+		finalOutput: {
+			nodeId: status.currentNodeId,
+			result: status.finalResult,
+		},
+		workflowExecutionHistory: status.executionHistory.map((history) => ({
+			type: history.type,
+			id: history.name,
+			status: history.status,
+		})),
+	};
 
-	const chatHistoryId = historyInsert[0]?.id;
+	if (chatHistoryId) {
+		await db
+			.update(aiChatHistoryEntity)
+			.set(historyData as any)
+			.where(eq(aiChatHistoryEntity.id, chatHistoryId));
+	} else {
+		const historyInsert = await db
+			.insert(aiChatHistoryEntity)
+			.values(historyData as any)
+			.returning({ id: aiChatHistoryEntity.id });
+
+		chatHistoryId = historyInsert[0]?.id;
+	}
 
 	if (status.status === "under_plan_review" && chatHistoryId) {
 		const stepData = status.finalResult?.builderStepData;
 		if (stepData) {
-			await db.insert(aiWorkflowBuilderStepsEntity).values({
-				chatHistoryId,
-				conversationId: status.conversationId,
-				stepType: "planner",
-				stepStatus: "awaiting_review",
-				inputData: stepData.builderState,
-				outputData: stepData.plannerOutput,
-				metadata: {
-					nodeId: "planner",
-					stepSource: "planner",
-					tokenUsage: stepData.tokenUsage,
-				},
-			});
+			if (status.chatHistoryId) {
+				await db
+					.update(aiWorkflowBuilderStepsEntity)
+					.set({
+						inputData: stepData.builderState,
+						outputData: stepData.plannerOutput,
+						stepStatus: "awaiting_review",
+						updatedAt: new Date(),
+					})
+					.where(eq(aiWorkflowBuilderStepsEntity.chatHistoryId, chatHistoryId));
+			} else {
+				await db.insert(aiWorkflowBuilderStepsEntity).values({
+					chatHistoryId,
+					conversationId: status.conversationId,
+					stepType: "planner",
+					stepStatus: "awaiting_review",
+					inputData: stepData.builderState,
+					outputData: stepData.plannerOutput,
+					metadata: {
+						nodeId: "planner",
+						stepSource: "planner",
+						tokenUsage: stepData.tokenUsage,
+					},
+				});
+			}
 		}
 	}
 }

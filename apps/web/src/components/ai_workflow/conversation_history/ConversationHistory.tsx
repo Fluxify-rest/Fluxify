@@ -38,7 +38,7 @@ export const ConversationHistory = ({
 		}
 		if (
 			workflowStatus &&
-			workflowStatus.status !== "completed" &&
+			workflowStatus.status !== "success" &&
 			workflowStatus.status !== "error"
 		) {
 			result.push({

@@ -13,7 +13,7 @@ export interface BuilderState {
 		| "planning"
 		| "under_plan_review"
 		| "executing"
-		| "completed"
+		| "success"
 		| "rejected";
 }
 

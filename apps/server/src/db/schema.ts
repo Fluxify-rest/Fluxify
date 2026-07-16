@@ -72,7 +72,7 @@ export const projectSettingsEntity = pgTable(
 
 export const aiChatConversationStatusEnum = pgEnum(
 	"ai_chat_conversation_status",
-	["not_started", "running", "completed", "paused", "plan_rejected"],
+	["not_started", "running", "success", "error", "paused", "plan_rejected"],
 );
 
 export const aiConversationLocationEnum = z.enum(["canvas", "ai_window"]);

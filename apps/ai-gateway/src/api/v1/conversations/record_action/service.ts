@@ -1,4 +1,8 @@
-import { BadRequestError, NotFoundError } from "@fluxify/server";
+import {
+	BadRequestError,
+	NotFoundError,
+	deleteCacheKey,
+} from "@fluxify/server";
 import {
 	workflowQueue,
 	CONTINUE_WORKFLOW_JOB_NAME,
@@ -52,10 +56,14 @@ export async function recordActionService(
 
 		await updateChatMessagePlanStatus(
 			chatId,
+			conversationId,
 			finalOutput,
 			newHistoryItem,
 			"plan_rejected",
 		);
+
+		await deleteCacheKey(`workflow:${conversationId}`);
+
 		return { success: true };
 	}
 
@@ -71,15 +79,17 @@ export async function recordActionService(
 
 	await updateChatMessagePlanStatus(
 		chatId,
+		conversationId,
 		finalOutput,
 		newHistoryItem,
-		"completed",
+		"running",
 	);
 
 	await enqueueWorkflowAction(
 		conversationId,
 		chatMessage.userQuery,
 		action,
+		chatId,
 		reviews,
 	);
 
@@ -90,6 +100,7 @@ async function enqueueWorkflowAction(
 	conversationId: string,
 	userQuery: string,
 	action: "approve" | "review",
+	chatHistoryId: string,
 	reviews?: string[],
 ) {
 	await workflowQueue.add(
@@ -100,7 +111,8 @@ async function enqueueWorkflowAction(
 				conversationId,
 				userQuery,
 				reviewAction: action === "review" ? "modify" : action,
-				reviewComments: reviews ? JSON.stringify(reviews) : undefined,
+				reviewComments: reviews ? JSON.stringify(reviews) : "",
+				chatHistoryId,
 			},
 		},
 		{

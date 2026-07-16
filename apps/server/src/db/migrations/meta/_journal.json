@@ -239,6 +239,13 @@
       "when": 1784233197349,
       "tag": "0033_gigantic_lockheed",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1784240013444,
+      "tag": "0034_typical_nomad",
+      "breakpoints": true
     }
   ]
 }
