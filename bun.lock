@@ -25,6 +25,7 @@
     "apps/ai-gateway": {
       "name": "@fluxify/ai-gateway",
       "dependencies": {
+        "@fluxify/blocks": "../../packages/blocks/",
         "@ai-sdk/anthropic": "^4.0.0",
         "@ai-sdk/google": "^4.0.0",
         "@ai-sdk/mistral": "^4.0.0",

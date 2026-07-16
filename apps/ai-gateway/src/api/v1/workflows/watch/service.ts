@@ -16,9 +16,12 @@ export default async function handleWatchRequest(
 	const cacheData = await getCache(redisKey);
 
 	if (!cacheData) {
-		throw new NotFoundError(
-			"There are no active workflows running for this conversation",
-		);
+		return streamSSE(c, async (stream) => {
+			await stream.writeSSE({
+				data: JSON.stringify({ status: "completed", conversationId, executionHistory: [] }),
+			});
+			await stream.close();
+		});
 	}
 
 	let initialStatus: ConversationWorkflowStatus;

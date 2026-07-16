@@ -18,6 +18,7 @@ import { MessageItemRow } from "./MessageItemRow";
 import { WorkflowStatusRow } from "./WorkflowStatusRow";
 
 export const ConversationHistory = ({
+	conversationId,
 	messages,
 	isLoading,
 	isError,
@@ -140,7 +141,7 @@ export const ConversationHistory = ({
 										}}
 									>
 										{item.type === "message" ? (
-											<MessageItemRow message={item.message} />
+											<MessageItemRow message={item.message} conversationId={conversationId} />
 										) : (
 											<WorkflowStatusRow status={item.status} messages={messages} />
 										)}

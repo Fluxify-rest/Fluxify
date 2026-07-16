@@ -72,7 +72,7 @@ export const projectSettingsEntity = pgTable(
 
 export const aiChatConversationStatusEnum = pgEnum(
 	"ai_chat_conversation_status",
-	["not_started", "running", "completed"],
+	["not_started", "running", "completed", "paused", "plan_rejected"],
 );
 
 export const aiConversationLocationEnum = z.enum(["canvas", "ai_window"]);
@@ -125,14 +125,60 @@ export const aiChatHistoryEntity = pgTable("ai_chat_history", {
 			{
 				type: "node" | "tool";
 				id: string;
-				input: any;
 				status: "running" | "success" | "failure";
-				output: any;
 			}[]
 		>()
 		.notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const aiWorkflowBuilderStepTypeEnum = pgEnum(
+	"ai_workflow_builder_step_type",
+	["verify", "planner", "orchestrator", "sub_agent", "evaluator"],
+);
+
+export const aiWorkflowBuilderStepStatusEnum = pgEnum(
+	"ai_workflow_builder_step_status",
+	["running", "completed", "failed", "paused", "awaiting_review"],
+);
+
+export const aiWorkflowBuilderStepsEntity = pgTable(
+	"ai_workflow_builder_steps",
+	{
+		id: varchar({ length: 50 })
+			.primaryKey()
+			.$defaultFn(() => generateID()),
+		chatHistoryId: varchar("chat_history_id", { length: 50 })
+			.references(() => aiChatHistoryEntity.id, { onDelete: "cascade" })
+			.notNull(),
+		conversationId: varchar("conversation_id", { length: 50 })
+			.references(() => aiChatConversationsEntity.id, { onDelete: "cascade" })
+			.notNull(),
+		stepType: aiWorkflowBuilderStepTypeEnum("step_type").notNull(),
+		stepStatus: aiWorkflowBuilderStepStatusEnum("step_status")
+			.default("running")
+			.notNull(),
+		stepOrder: serial("step_order"),
+		inputData: jsonb("input_data").$type<any>(),
+		outputData: jsonb("output_data").$type<any>(),
+		metadata: jsonb("metadata").$type<{
+			nodeId: string;
+			stepSource: string;
+			tokenUsage?: { input: number; output: number };
+		}>(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.defaultNow()
+			.notNull()
+			.$onUpdate(() => new Date()),
+	},
+	(table) => [
+		index("idx_ai_wf_steps_chat_history_id").on(table.chatHistoryId),
+		index("idx_ai_wf_steps_conversation_id").on(table.conversationId),
+		index("idx_ai_wf_steps_step_type").on(table.stepType),
+		index("idx_ai_wf_steps_step_status").on(table.stepStatus),
+	],
+);
 
 export const routesEntity = pgTable(
 	"routes",

@@ -21,6 +21,7 @@
 		"@ai-sdk/mistral": "^4.0.0",
 		"@ai-sdk/openai": "^4.0.0",
 		"@ai-sdk/openai-compatible": "^3.0.0",
+		"@fluxify/blocks": "workspace:*",
 		"@fluxify/common": "workspace:*",
 		"@fluxify/server": "workspace:*",
 		"@hono/mcp": "^0.3.0",

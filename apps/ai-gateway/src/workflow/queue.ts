@@ -4,17 +4,26 @@ import { EventEmitter } from "events";
 
 export const WORKER_QUEUE_NAME = "SCHEDULE_AI_WORKFLOW_QUEUE";
 export const START_WORKFLOW_JOB_NAME = "START_AI_WORKFLOW_JOB";
+export const CONTINUE_WORKFLOW_JOB_NAME = "CONTINUE_AI_WORKFLOW_JOB";
 
 export type AIWorkflowGatewayData = {
-	type: "start" | "continue";
+	type: "start" | "continue" | "plan_review";
 	data: {
 		conversationId: string;
 		userQuery: string;
+		reviewAction?: "approve" | "reject" | "modify";
+		reviewComments?: string;
 	};
 };
 
 export interface ConversationWorkflowStatus {
-	status: "started" | "running" | "error" | "completed";
+	status:
+		| "started"
+		| "running"
+		| "error"
+		| "completed"
+		| "under_plan_review"
+		| "plan_rejected";
 	conversationId: string;
 	userQuery: string;
 	currentNodeId: string;

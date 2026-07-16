@@ -7,7 +7,7 @@ export const requestRouteSchema = z.object({
 });
 
 export const watchResponseSchema = z.object({
-	status: z.enum(["started", "running", "error", "completed"]),
+	status: z.enum(["started", "running", "error", "completed", "under_plan_review"]),
 	conversationId: z.string(),
 	userQuery: z.string(),
 	currentNodeId: z.string(),
