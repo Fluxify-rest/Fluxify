@@ -57,7 +57,7 @@ export abstract class BaseAgentWrapper {
 
 		let finalMessages: BaseMessage[] = [...messages];
 
-		if (systemPrompt && !finalMessages.some((m) => m._getType() === "system")) {
+		if (systemPrompt && !finalMessages.some((m) => m.type === "system")) {
 			finalMessages.unshift(new SystemMessage(systemPrompt));
 		}
 
