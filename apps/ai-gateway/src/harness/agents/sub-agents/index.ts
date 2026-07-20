@@ -8,6 +8,6 @@ export const subAgents: SubAgentMetadata[] = [
 		nodeName: AgentNode.ROUTE_CONFIG_AGENT,
 		ability: "Create, modify, or delete route configurations and schemas",
 		description:
-			"Responsible for configuring routes, including their method, path, and request validation schemas (body, query, params) based on custom schema definitions.",
+			"Responsible for configuring routes, including their method, path, and request validation schemas (body, query, params) based on custom schema definitions. Note: Tasks assigned to this agent MUST include the 'routeId' in the task description if the intent is to update or delete an existing route, so it can search for the route.",
 	},
 ];
