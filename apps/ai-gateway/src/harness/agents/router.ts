@@ -1,6 +1,6 @@
 import { BaseAgent } from "./base";
 import { type GlobalGraphState, AgentNode } from "../types";
-import { dispatchCustomEvent } from "@langchain/core/callbacks/dispatch";
+import { dispatchAgentEvent } from "../callbacks";
 import { z } from "zod";
 
 const routerSchema = z.object({
@@ -18,9 +18,12 @@ export class RouterAgent extends BaseAgent {
 	}
 
 	async execute(): Promise<Partial<GlobalGraphState>> {
-		await dispatchCustomEvent("agent_status", {
-			status: "thinking",
-			agent: "router",
+		await dispatchAgentEvent({
+			name: "agent_status",
+			data: {
+				status: "routing query",
+				agent: AgentNode.ROUTER,
+			},
 		});
 
 		const systemPrompt = `You are the primary Router and Classifier Agent for Fluxify, an Agentic Low Code Backend Development Platform.
@@ -55,16 +58,22 @@ CRITICAL INSTRUCTIONS:
 			userQuery: this.state.userQuery,
 		})) as z.infer<typeof routerSchema>;
 
-		await dispatchCustomEvent("agent_status", {
-			status: `Routed to ${response.intent}`,
-			agent: "router",
-			data: { reason: response.reason },
+		await dispatchAgentEvent({
+			name: "agent_status",
+			data: {
+				status: `Routed to ${response.intent}`,
+				agent: AgentNode.ROUTER,
+				data: { reason: response.reason },
+			},
 		});
 
 		return {
 			currentAgent: AgentNode.ROUTER,
-			nextRoute: response.intent === "builder" ? AgentNode.VERIFY_USER_QUERY : AgentNode.DISCUSSION,
-			router: {
+			nextRoute:
+				response.intent === "builder"
+					? AgentNode.VERIFY_USER_QUERY
+					: AgentNode.DISCUSSION,
+			routerState: {
 				intent: response.intent,
 				reason: response.reason,
 			},

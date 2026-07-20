@@ -1,4 +1,9 @@
-import type { GlobalGraphState, AgentNodeName, CustomEventName } from "./types";
+import type { GlobalGraphState, AgentNodeName, CustomEventName, AgentCustomEvent } from "./types";
+import { dispatchCustomEvent } from "@langchain/core/callbacks/dispatch";
+
+export async function dispatchAgentEvent(event: AgentCustomEvent): Promise<void> {
+  await dispatchCustomEvent(event.name, event.data);
+}
 
 export class HarnessCallbacks {
   protected state: Partial<GlobalGraphState>;

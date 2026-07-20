@@ -1,6 +1,6 @@
 import { BaseAgent } from "./base";
 import { type GlobalGraphState, AgentNode } from "../types";
-import { dispatchCustomEvent } from "@langchain/core/callbacks/dispatch";
+import { dispatchAgentEvent } from "../callbacks";
 import { createHarnessTools } from "../tools";
 
 export class DiscussionAgent extends BaseAgent {
@@ -9,9 +9,12 @@ export class DiscussionAgent extends BaseAgent {
 	}
 
 	async execute(): Promise<Partial<GlobalGraphState>> {
-		await dispatchCustomEvent("agent_status", {
-			status: "thinking",
-			agent: "discussion",
+		await dispatchAgentEvent({
+			name: "agent_status",
+			data: {
+				status: "thinking",
+				agent: AgentNode.DISCUSSION,
+			},
 		});
 
 		const systemPrompt = `You are the primary Discussion Agent for Fluxify — a powerful No/Low Code Backend Engine and REST API builder platform.
@@ -41,7 +44,7 @@ CRITICAL INSTRUCTIONS:
 		// Instantiate tools
 		const tools = createHarnessTools(
 			this.state.internal?.dbService as any,
-			this.state.internal?.metadata || {}
+			this.state.internal?.metadata || {},
 		);
 
 		const response: any = await this.state.agentWrapper.invokeAgent({
@@ -51,9 +54,8 @@ CRITICAL INSTRUCTIONS:
 			tools: tools,
 		});
 
-		let markdownContent = typeof response === "string" 
-			? response 
-			: response?.content || "";
+		let markdownContent =
+			typeof response === "string" ? response : response?.content || "";
 
 		if (typeof markdownContent === "string") {
 			markdownContent = markdownContent
@@ -62,14 +64,17 @@ CRITICAL INSTRUCTIONS:
 				.trim();
 		}
 
-		await dispatchCustomEvent("agent_status", {
-			status: "Completed discussion",
-			agent: "discussion",
+		await dispatchAgentEvent({
+			name: "agent_status",
+			data: {
+				status: "analyzing conversation",
+				agent: AgentNode.DISCUSSION,
+			},
 		});
 
 		return {
 			currentAgent: AgentNode.DISCUSSION,
-			discussion: {
+			discussionState: {
 				markdown: markdownContent,
 			},
 		};

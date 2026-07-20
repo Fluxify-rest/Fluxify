@@ -1,6 +1,6 @@
 import { BaseAgent } from "./base";
 import { type GlobalGraphState, AgentNode } from "../types";
-import { dispatchCustomEvent } from "@langchain/core/callbacks/dispatch";
+import { dispatchAgentEvent } from "../callbacks";
 import { blockAiDescriptions } from "@fluxify/blocks";
 import { z } from "zod";
 
@@ -40,9 +40,12 @@ export class VerifyUserQueryAgent extends BaseAgent {
 	}
 
 	async execute(): Promise<Partial<GlobalGraphState>> {
-		await dispatchCustomEvent("agent_status", {
-			status: "verifying capabilities",
-			agent: "verifyUserQuery",
+		await dispatchAgentEvent({
+			name: "agent_status",
+			data: {
+				status: "verifying capabilities",
+				agent: AgentNode.VERIFY_USER_QUERY,
+			},
 		});
 
 		const systemPrompt = `You are the Verify User Query Agent for Fluxify — The Agentic Low-Code Backend Development Platform.
@@ -92,16 +95,21 @@ Analyze the request internally. Instead of raw reasoning, provide a 'scratchpad'
 			userQuery: this.state.userQuery,
 		})) as z.infer<typeof verifySchema>;
 
-		await dispatchCustomEvent("agent_status", {
-			status: response.capable ? "Capability Verified" : "Capability Rejected",
-			agent: "verifyUserQuery",
-			data: response,
+		await dispatchAgentEvent({
+			name: "agent_status",
+			data: {
+				status: response.capable
+					? "Capability Verified"
+					: "Capability Rejected",
+				agent: AgentNode.VERIFY_USER_QUERY,
+				data: response,
+			},
 		});
 
 		return {
 			currentAgent: AgentNode.VERIFY_USER_QUERY,
 			nextRoute: response.capable ? AgentNode.PLANNER : undefined,
-			verifyUserQuery: {
+			verifyUserQueryState: {
 				capable: response.capable,
 				rejectReason: response.rejectReason,
 			},

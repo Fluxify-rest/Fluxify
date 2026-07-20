@@ -1,6 +1,6 @@
-import { StateGraph, END, START } from "@langchain/langgraph";
+import { StateGraph, END, START, Send } from "@langchain/langgraph";
 import { GraphState, type GlobalGraphState, AgentNode } from "./types";
-import { RouterAgent, DiscussionAgent, VerifyUserQueryAgent } from "./agents";
+import { RouterAgent, DiscussionAgent, VerifyUserQueryAgent, PlannerAgent, OrchestratorAgent, HumanInTheLoopAgent, SupervisorAgent, RouteConfigAgent } from "./agents";
 
 const workflow = new StateGraph(GraphState)
 	.addNode(AgentNode.ROUTER, async (state: GlobalGraphState) => {
@@ -16,12 +16,24 @@ const workflow = new StateGraph(GraphState)
 		return await agent.execute();
 	})
 	.addNode(AgentNode.PLANNER, async (state: GlobalGraphState) => {
-		// To be implemented
-		return {};
+		const agent = new PlannerAgent(state);
+		return await agent.execute();
 	})
-	.addNode(AgentNode.BUILDER, async (state: GlobalGraphState) => {
-		// To be implemented
-		return {};
+	.addNode(AgentNode.ORCHESTRATOR, async (state: GlobalGraphState) => {
+		const agent = new OrchestratorAgent(state);
+		return await agent.execute();
+	})
+	.addNode(AgentNode.HUMAN_IN_THE_LOOP, async (state: GlobalGraphState) => {
+		const agent = new HumanInTheLoopAgent(state);
+		return await agent.execute();
+	})
+	.addNode(AgentNode.ROUTE_CONFIG_AGENT, async (state: GlobalGraphState) => {
+		const agent = new RouteConfigAgent(state);
+		return await agent.execute();
+	})
+	.addNode(AgentNode.SUPERVISOR, async (state: GlobalGraphState) => {
+		const agent = new SupervisorAgent(state);
+		return await agent.execute();
 	})
 	.addEdge(START, AgentNode.ROUTER)
 	.addConditionalEdges(AgentNode.ROUTER, (state: GlobalGraphState) => {
@@ -38,8 +50,31 @@ const workflow = new StateGraph(GraphState)
 		}
 		return END;
 	})
-	.addEdge(AgentNode.PLANNER, AgentNode.BUILDER)
+	.addConditionalEdges(AgentNode.PLANNER, (state: GlobalGraphState) => {
+		if (state.nextRoute === AgentNode.HUMAN_IN_THE_LOOP) {
+			return AgentNode.HUMAN_IN_THE_LOOP;
+		}
+		if (state.nextRoute === AgentNode.ORCHESTRATOR) {
+			return AgentNode.ORCHESTRATOR;
+		}
+		return END;
+	})
+	.addConditionalEdges(AgentNode.ORCHESTRATOR, (state: GlobalGraphState) => {
+		const dispatched = state.orchestratorState?.dispatchedTasks;
+		if (dispatched && dispatched.length > 0) {
+			return dispatched.map(
+				(task) =>
+					new Send(task.assignedAgentNode, {
+						...state,
+						activeTask: task,
+					}),
+			);
+		}
+		return END;
+	})
+	.addEdge(AgentNode.HUMAN_IN_THE_LOOP, END)
 	.addEdge(AgentNode.DISCUSSION, END)
-	.addEdge(AgentNode.BUILDER, END);
+	.addEdge(AgentNode.ROUTE_CONFIG_AGENT, AgentNode.SUPERVISOR)
+	.addEdge(AgentNode.SUPERVISOR, AgentNode.ORCHESTRATOR);
 
 export const app = workflow.compile();

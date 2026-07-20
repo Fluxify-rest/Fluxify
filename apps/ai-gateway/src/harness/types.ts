@@ -8,16 +8,34 @@ export enum AgentNode {
 	VERIFY_USER_QUERY = "verifyUserQuery",
 	PLANNER = "planner",
 	DISCUSSION = "discussion",
-	BUILDER = "builder"
+	BUILDER = "builder",
+	ORCHESTRATOR = "orchestrator",
+	HUMAN_IN_THE_LOOP = "humanInTheLoop",
+	ROUTE_CONFIG_AGENT = "routeConfig",
+	SUPERVISOR = "supervisor",
 }
 
 export type AgentNodeName = `${AgentNode}`;
 
 export type CustomEventName = "agent_status" | "human_in_the_loop_required";
 
-export interface AgentCustomEvent {
-  name: CustomEventName;
-  data: unknown;
+export type AgentCustomEvent =
+	| {
+			name: "agent_status";
+			data: { status: string; agent: AgentNode; data?: any };
+	  }
+	| {
+			name: "human_in_the_loop_required";
+			data: { agent: string; reason: string; data?: any };
+	  };
+
+export interface Task {
+	id: string;
+	title: string;
+	description: string;
+	dependsOnAgentId: string[];
+	status: "pending" | "running" | "completed" | "failed";
+	assignedAgentNode: AgentNodeName;
 }
 
 export interface RouterState {
@@ -41,8 +59,36 @@ export interface BuilderState {
 	// Additional builder sub-agents state can be added here
 }
 
+export interface PlannerState {
+	markdownPlan?: string;
+	scratchpadNote?: string;
+	confidenceScore?: number;
+	implementationComplexity?: "high" | "mid" | "low";
+}
+
 export interface DiscussionState {
 	markdown?: string;
+}
+
+export interface RouteConfigAgentResult {
+	action: "create" | "delete" | "update-partial";
+	routeId?: string;
+	data?: {
+		method?: string;
+		path?: string;
+		bodySchema?: any;
+		paramsSchema?: any;
+		querySchema?: any;
+	};
+}
+
+export type SubAgentResult = RouteConfigAgentResult | Record<string, any>;
+
+export interface OrchestratorState {
+	tasks?: Task[];
+	taskQueue?: string[][]; // Topologically sorted task IDs grouped by independent execution levels
+	dispatchedTasks?: Task[]; // Tasks dispatched in the current tick
+	subAgentResults?: Record<string, SubAgentResult>;
 }
 
 export const GraphState = Annotation.Root({
@@ -67,31 +113,44 @@ export const GraphState = Annotation.Root({
 		reducer: (oldState, newState) => newState ?? oldState,
 		default: () => undefined,
 	}),
-	nextRoute: Annotation<AgentNodeName | undefined>({
-		reducer: (oldState, newState) => newState !== undefined ? newState : oldState,
+	nextRoute: Annotation<AgentNodeName | AgentNodeName[] | undefined>({
+		reducer: (oldState, newState) =>
+			newState !== undefined ? newState : oldState,
+		default: () => undefined,
+	}),
+	activeTask: Annotation<Task | undefined>({
+		reducer: (oldState, newState) => newState ?? oldState,
 		default: () => undefined,
 	}),
 	currentAgent: Annotation<AgentNodeName | undefined>({
 		reducer: (oldState, newState) => newState ?? oldState,
 		default: () => undefined,
 	}),
-	router: Annotation<RouterState>({
+	routerState: Annotation<RouterState>({
 		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
 		default: () => ({}),
 	}),
-	discussion: Annotation<DiscussionState>({
+	discussionState: Annotation<DiscussionState>({
 		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
 		default: () => ({}),
 	}),
-	classifier: Annotation<ClassifierState>({
+	classifierState: Annotation<ClassifierState>({
 		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
 		default: () => ({}),
 	}),
-	verifyUserQuery: Annotation<VerifyUserQueryState>({
+	verifyUserQueryState: Annotation<VerifyUserQueryState>({
 		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
 		default: () => ({}),
 	}),
-	builder: Annotation<BuilderState>({
+	builderState: Annotation<BuilderState>({
+		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
+		default: () => ({}),
+	}),
+	plannerState: Annotation<PlannerState>({
+		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
+		default: () => ({}),
+	}),
+	orchestratorState: Annotation<OrchestratorState>({
 		reducer: (oldState, newState) => ({ ...oldState, ...newState }),
 		default: () => ({}),
 	}),
