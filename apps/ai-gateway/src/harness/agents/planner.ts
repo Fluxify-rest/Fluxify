@@ -3,6 +3,22 @@ import { type GlobalGraphState, AgentNode } from "../types";
 import { dispatchAgentEvent } from "../callbacks";
 import { blockAiDescriptions } from "@fluxify/blocks";
 import { z } from "zod";
+import { subAgents } from "./sub-agents";
+import { createFindResourceTool } from "../tools/findResource";
+
+function buildSubAgentsTable(): string {
+	if (subAgents.length === 0) {
+		return "No sub-agents currently available.";
+	}
+	const header =
+		"| Agent Name | Node Name | Ability | Description |\n| --- | --- | --- | --- |";
+	const rows = subAgents.map(
+		(a) => `| ${a.name} | ${a.nodeName} | ${a.ability} | ${a.description} |`,
+	);
+	return [header, ...rows].join("\n");
+}
+
+const SUB_AGENTS_TABLE = buildSubAgentsTable();
 
 function buildBlockCatalogTable(): string {
 	const header = "| Block Name | Description |\n| --- | --- |";
@@ -73,14 +89,28 @@ If the user provides feedback or reviews an existing plan, you must modify and u
 ## Available Blocks
 ${BLOCK_CATALOG_TABLE}
 
+## Sub-Agent Capabilities
+Your plan will eventually be broken down into tasks executed by specialized sub-agents. Understanding their capabilities will help you generate plans that are realistic and actionable. You do not need to reference the sub-agents in the plan as they are not for the user's eyes. The following sub-agents are available:
+${SUB_AGENTS_TABLE}
+
 ## External Dependencies
 Some blocks (like DB or AI blocks) require an **integration ID**.
 Other blocks may require secrets from **app configs**.
 - If an integration/config is missing based on context, DO NOT reject the request. Instead, add a prominent warning in your \`markdownPlan\` stating that the user must create it.
 
+## Available Tools
+You have access to the \`find_resource\` tool. You MUST use this tool to search the database for existing resources (e.g., routes, app configs, integrations, custom blocks) relevant to the user's request.
+- Always search for the exact resource ID if you are modifying, updating, or deleting an existing resource.
+- Store the found resource IDs (e.g., \`routeId\`) and relevant details in the \`scratchpadNote\` so downstream agents have the exact IDs needed to perform their tasks. Do NOT guess IDs.
+
 ## Output Instructions
 1. **Markdown Plan (\`markdownPlan\`)**: Create a crystal clear, user-perspective markdown plan.
    - For each task, explain WHAT will change (e.g., "Create a new 'getUser' route", "Add authentication").
+   - **Crucial Resource Naming (EXISTING RESOURCES ONLY)**: When referring to existing resources you found in the database by the find_resource tool, you MUST use the exact custom syntax \`@resource(type, identifier)\`. 
+     - \`type\` MUST be one of: \`route\`, \`app_config\`, \`integration\`, \`custom_block\`.
+     - \`identifier\` MUST be the EXACT unique ID fetched from the database (e.g. UUID).
+     - Example: "Update the @resource(route, 550e8400-e29b-41d4-a716-446655440000) route". 
+     - DO NOT use this syntax for new resources that haven't been created yet. The frontend relies on this specific syntax and exact ID to render interactive resource chips.
    - **Format Rules**: Use minimal markdown features. Use mostly headings, plain text, and bullet points. Use blockquotes, bolding, italic, or underlines for important hints. Use tables ONLY if strictly necessary. DO NOT use hyperlinks.
    - Group tasks logically under section headers.
    - **Crucial:** Keep it crystal clear for the user. DO NOT leak internal implementation details (e.g., "I will use a DbQueryBlock with ID xyz"). Describe the behavior and architecture from a user's perspective.
@@ -92,18 +122,24 @@ Other blocks may require secrets from **app configs**.
 
 Plan carefully, thoroughly, and output excellent English craft for the user's plan.${scratchPadText}`;
 
+		const tools = [
+			createFindResourceTool(
+				this.state.internal.dbService,
+				this.state.internal.metadata || {},
+			),
+		];
+
 		const response = (await this.state.agentWrapper.invokeAgent({
 			zodSchema: plannerSchema,
 			systemPrompt,
+			tools,
 			messages: this.state.messages,
 			userQuery: this.state.userQuery,
 		})) as z.infer<typeof plannerSchema>;
 
 		const requiresHITL =
-			(response.confidenceScore < 4 &&
-				response.implementationComplexity === "high") ||
-			(response.confidenceScore > 4 &&
-				response.implementationComplexity !== "high");
+			response.confidenceScore < 4 ||
+			response.implementationComplexity === "high";
 
 		// Halting the workflow loop to wait for user review (HITL) via nextRoute
 		if (requiresHITL) {

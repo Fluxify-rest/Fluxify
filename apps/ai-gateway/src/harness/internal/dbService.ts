@@ -51,6 +51,28 @@ export class DbService {
 		}
 	}
 
+	async getRouteDetails(
+		projectId: string,
+		routeId: string,
+	): Promise<any | null> {
+		try {
+			const route = await db
+				.select()
+				.from(routesEntity)
+				.where(
+					and(
+						eq(routesEntity.projectId, projectId),
+						eq(routesEntity.id, routeId),
+					),
+				)
+				.limit(1);
+			return route.length > 0 ? route[0] : null;
+		} catch (e) {
+			logger.error("[DbService] Error getting route details", { error: e });
+			return null;
+		}
+	}
+
 	async findAppConfigs(
 		projectId: string,
 		searchQuery: string,

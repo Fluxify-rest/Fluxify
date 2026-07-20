@@ -4,6 +4,7 @@ import {
 	SystemMessage,
 	HumanMessage,
 	AIMessage,
+	ToolMessage,
 } from "@langchain/core/messages";
 import { Runnable, RunnableConfig } from "@langchain/core/runnables";
 import { StructuredTool } from "@langchain/core/tools";
@@ -66,27 +67,83 @@ export abstract class BaseAgentWrapper {
 		}
 
 		let model = this.getModel();
+		const originalModel = model;
 
 		if (tools && tools.length > 0) {
 			if (model.bindTools) {
 				model = model.bindTools(tools) as any;
 			}
+
+			// Tool execution loop
+			const maxIterations = 5;
+			for (let i = 0; i < maxIterations; i++) {
+				const response = (await model.invoke(
+					finalMessages,
+					config,
+				)) as AIMessage;
+				finalMessages.push(response);
+
+				if (response.tool_calls && response.tool_calls.length > 0) {
+					for (const tc of response.tool_calls) {
+						const tool = tools.find((t) => t.name === tc.name);
+						if (tool) {
+							try {
+								const toolResult = await tool.invoke(tc.args, config);
+								finalMessages.push(
+									new ToolMessage({
+										tool_call_id: tc.id!,
+										content:
+											typeof toolResult === "string"
+												? toolResult
+												: JSON.stringify(toolResult),
+										name: tc.name,
+									}),
+								);
+							} catch (e) {
+								finalMessages.push(
+									new ToolMessage({
+										tool_call_id: tc.id!,
+										content: `Error executing tool ${tc.name}: ${e}`,
+										name: tc.name,
+									}),
+								);
+							}
+						} else {
+							finalMessages.push(
+								new ToolMessage({
+									tool_call_id: tc.id!,
+									content: `Tool ${tc.name} not found.`,
+									name: tc.name,
+								}),
+							);
+						}
+					}
+				} else {
+					// No more tool calls, model produced final text (but we need structured output)
+					// Remove the last AIMessage if we are going to force structured output below
+					if (zodSchema) {
+						finalMessages.pop();
+					}
+					break;
+				}
+			}
 		}
 
 		if (zodSchema) {
-			if (this.supportsStructuredOutput() && model.withStructuredOutput) {
-				const structuredModel = model.withStructuredOutput(zodSchema);
+			let result: any;
+			if (this.supportsStructuredOutput() && originalModel.withStructuredOutput) {
+				const structuredModel = originalModel.withStructuredOutput(zodSchema);
 				// By using invoke with config, it automatically logs to LangSmith/Langfuse
-				return await withRetry(
+				result = await withRetry(
 					() => structuredModel.invoke(finalMessages, config) as Promise<T>,
 					{ maxRetries: 3 },
 				);
 			} else {
 				// Fallback implementation for models that don't support withStructuredOutput natively
-				return await withRetry(
+				result = await withRetry(
 					() =>
 						this.fallbackStructuredOutput(
-							model,
+							originalModel,
 							finalMessages,
 							zodSchema,
 							config,
@@ -94,9 +151,13 @@ export abstract class BaseAgentWrapper {
 					{ maxRetries: 3 },
 				);
 			}
+			if (!result) {
+				throw new Error("Failed to get structured output from the model (it may have exceeded tool call limits without producing a JSON result).");
+			}
+			return result;
 		}
 
-		return await withRetry(() => model.invoke(finalMessages, config), {
+		return await withRetry(() => originalModel.invoke(finalMessages, config), {
 			maxRetries: 3,
 		});
 	}

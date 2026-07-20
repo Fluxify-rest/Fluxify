@@ -129,7 +129,7 @@ Determine the exact route configuration intent. Use your tools if you need more 
 
 		const tools = [
 			searchDocsTool,
-			createGetRouteDetailsTool(this.state.internal?.metadata || {}),
+			createGetRouteDetailsTool(this.state.internal.dbService, this.state.internal?.metadata || {}),
 		];
 
 		const response = (await this.state.agentWrapper.invokeAgent({
@@ -164,3 +164,21 @@ Determine the exact route configuration intent. Use your tools if you need more 
 		};
 	}
 }
+
+export const validateAgentOutput: import("../../types").AgentOutputValidator = (result, taskId, state) => {
+	const typedResult = result as import("../../types").RouteConfigAgentResult;
+	
+	if (!typedResult.action) {
+		return "Missing 'action' field. Must be one of: create, delete, update-partial.";
+	}
+
+	if ((typedResult.action === "update-partial" || typedResult.action === "delete") && !typedResult.routeId) {
+		return `Action '${typedResult.action}' requires a valid 'routeId'.`;
+	}
+
+	if (typedResult.action !== "delete" && !typedResult.data) {
+		return `Action '${typedResult.action}' requires a 'data' object with configuration details.`;
+	}
+
+	return null; // Valid
+};

@@ -15,27 +15,43 @@ export const createFindResourceTool = (
 				`[Tools] Searching ${resourceType} for '${searchQuery}' in project ${metadata.projectId}`,
 			);
 
+			let results: any[] = [];
 			switch (resourceType as ResourceType) {
 				case "route":
-					return await dbService.findRoutes(metadata.projectId, searchQuery);
+					results = await dbService.findRoutes(metadata.projectId, searchQuery);
+					break;
 				case "app_config":
-					return await dbService.findAppConfigs(
+					results = await dbService.findAppConfigs(
 						metadata.projectId,
 						searchQuery,
 					);
+					break;
 				case "integration":
-					return await dbService.findIntegrations(
+					results = await dbService.findIntegrations(
 						metadata.projectId,
 						searchQuery,
 					);
+					break;
 				case "custom_block":
-					return await dbService.findCustomBlocks(
+					results = await dbService.findCustomBlocks(
 						metadata.projectId,
 						searchQuery,
 					);
-				default:
-					return [];
+					break;
 			}
+
+			if (!results || results.length === 0) {
+				return "No resources found.";
+			}
+
+			// Format as Markdown table
+			const keys = Object.keys(results[0]);
+			const header = `| ${keys.join(" | ")} |\n| ${keys.map(() => "---").join(" | ")} |`;
+			const rows = results.map(row => 
+				`| ${keys.map(key => String(row[key] ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ")).join(" | ")} |`
+			).join("\n");
+
+			return `${header}\n${rows}`;
 		},
 		{
 			name: "find_resource",

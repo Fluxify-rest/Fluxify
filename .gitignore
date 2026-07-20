@@ -10,3 +10,4 @@ docs_index
 .models/
 docs/.vitepress/cache
 docs/.vitepress/dist
+apps/ai-gateway/src/harness/demo.ts

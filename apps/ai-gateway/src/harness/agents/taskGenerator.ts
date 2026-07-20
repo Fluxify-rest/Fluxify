@@ -76,6 +76,7 @@ ${SUB_AGENTS_TABLE}
 4. Provide a clear title and a highly detailed description for each task. The sub-agent will solely rely on your description and context.
 5. Generate a short 5-character ID for each task (3 letters, 2 digits).
 6. **STRICT NO-CYCLE RULE**: Ensure the Dependency Graph is strictly acyclic. No task should depend on itself or form a circular dependency chain.
+7. **Resource Identifiers**: The plan may contain \`@resource(type, identifier)\` tags. You MUST extract the exact \`identifier\` from these tags and explicitly include it in the task description for the assigned sub-agent so they know exactly which resource to operate on.
 
 If there are no sub-agents available, output an empty task list.
 ${scratchPadText}`;

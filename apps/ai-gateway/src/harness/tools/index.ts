@@ -10,7 +10,7 @@ export function createHarnessTools(
 ) {
 	return [
 		searchDocsTool,
-		createGetRouteDetailsTool(metadata),
+		createGetRouteDetailsTool(dbService, metadata),
 		createFindResourceTool(dbService, metadata),
 	];
 }

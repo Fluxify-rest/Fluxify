@@ -81,8 +81,17 @@ export interface RouteConfigAgentResult {
 		querySchema?: any;
 	};
 }
-
 export type SubAgentResult = RouteConfigAgentResult | Record<string, any>;
+
+/**
+ * Validator function for sub-agent outputs.
+ * 
+ * @param result - The result outputted by the sub-agent.
+ * @param taskId - The ID of the task that was executed.
+ * @param state - The global graph state.
+ * @returns null if valid, or a string describing the error if invalid.
+ */
+export type AgentOutputValidator = (result: SubAgentResult, taskId: string, state: GlobalGraphState) => string | null;
 
 export interface OrchestratorState {
 	tasks?: Task[];
