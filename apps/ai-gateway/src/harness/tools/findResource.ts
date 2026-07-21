@@ -10,10 +10,27 @@ export const createFindResourceTool = (
 	metadata: WorkflowMetadata,
 ) => {
 	return tool(
-		async ({ searchQuery, resourceType }) => {
+		async ({ searchQuery, resourceType, metadata: toolMetadata }) => {
 			logger.info(
 				`[Tools] Searching ${resourceType} for '${searchQuery}' in project ${metadata.projectId}`,
 			);
+
+			if (resourceType === "route_canvas") {
+				if (toolMetadata?.isNewRoute) {
+					return JSON.stringify([
+						{ id: "entrypoint", blockType: "entrypoint" },
+						{ id: "response", blockType: "response" },
+						{ id: "error_handler", blockType: "error_handler" }
+					], null, 2);
+				}
+				const canvas = await dbService.getRouteCanvas(metadata.projectId, searchQuery);
+				return canvas ? JSON.stringify(canvas, null, 2) : "No canvas found.";
+			}
+
+			if (resourceType === "custom_block_canvas") {
+				const canvas = await dbService.getCustomBlockCanvas(metadata.projectId, searchQuery);
+				return canvas ? JSON.stringify(canvas, null, 2) : "No canvas found.";
+			}
 
 			let results: any[] = [];
 			switch (resourceType as ResourceType) {
@@ -56,14 +73,17 @@ export const createFindResourceTool = (
 		{
 			name: "find_resource",
 			description:
-				"Search the production database for existing resources (routes, app configs, integrations, custom blocks) in the user's project.",
+				"Search the production database for existing resources (routes, app configs, integrations, custom blocks) in the user's project, or retrieve canvas details.",
 			schema: z.object({
 				searchQuery: z
 					.string()
-					.describe("The name, path, or description keyword to search for."),
+					.describe("The name, path, description keyword, or ID to search for."),
 				resourceType: z
-					.enum(["route", "app_config", "integration", "custom_block"])
+					.enum(["route", "app_config", "integration", "custom_block", "route_canvas", "custom_block_canvas"])
 					.describe("The type of resource to search for."),
+				metadata: z.object({
+					isNewRoute: z.boolean().optional(),
+				}).optional(),
 			}),
 		},
 	);

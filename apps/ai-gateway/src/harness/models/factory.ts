@@ -20,6 +20,7 @@ export interface AgentFactoryOptions {
 	apiKey?: string;
 	additionalHeaders?: Record<string, string>;
 	baseUrl?: string;
+	maxToolIterations?: number;
 }
 
 export class AgentFactory {
@@ -30,7 +31,7 @@ export class AgentFactory {
 	}
 
 	public createAgent(): BaseAgentWrapper {
-		const { provider, modelName, apiKey, additionalHeaders, baseUrl } =
+		const { provider, modelName, apiKey, additionalHeaders, baseUrl, maxToolIterations } =
 			this.options;
 
 		switch (provider) {
@@ -40,6 +41,7 @@ export class AgentFactory {
 					apiKey,
 					additionalHeaders,
 					baseUrl,
+					maxToolIterations,
 				);
 			case "anthropic":
 				return new AnthropicAgentWrapper(
@@ -47,15 +49,16 @@ export class AgentFactory {
 					apiKey,
 					additionalHeaders,
 					baseUrl,
+					maxToolIterations,
 				);
 			case "google":
-				return new GoogleAgentWrapper(modelName, apiKey, additionalHeaders);
+				return new GoogleAgentWrapper(modelName, apiKey, additionalHeaders, baseUrl, maxToolIterations);
 			case "mistral":
-				return new MistralAgentWrapper(modelName, apiKey, additionalHeaders);
+				return new MistralAgentWrapper(modelName, apiKey, additionalHeaders, baseUrl, maxToolIterations);
 			case "openrouter":
-				return new OpenRouterAgentWrapper(modelName, apiKey, additionalHeaders);
+				return new OpenRouterAgentWrapper(modelName, apiKey, additionalHeaders, baseUrl, maxToolIterations);
 			case "ollama":
-				return new OllamaAgentWrapper(modelName, baseUrl, additionalHeaders);
+				return new OllamaAgentWrapper(modelName, baseUrl, additionalHeaders, maxToolIterations);
 			default:
 				throw new Error(`Unsupported agent provider: ${provider}`);
 		}

@@ -9,8 +9,9 @@ export class OllamaAgentWrapper extends BaseAgentWrapper {
 		modelName: string,
 		baseUrl?: string,
 		additionalHeaders?: Record<string, string>,
+		maxToolIterations?: number,
 	) {
-		super(modelName, undefined, additionalHeaders);
+		super(modelName, undefined, additionalHeaders, baseUrl, maxToolIterations);
 		this.baseUrl = baseUrl;
 	}
 

@@ -105,7 +105,7 @@ You have access to the \`find_resource\` tool. You MUST use this tool to search 
 
 ## Output Instructions
 1. **Markdown Plan (\`markdownPlan\`)**: Create a crystal clear, user-perspective markdown plan.
-   - For each task, explain WHAT will change (e.g., "Create a new 'getUser' route", "Add authentication").
+   - For each task, explain WHAT will change (e.g., "Create a new 'getUser' route", "Add authentication"). Combine related steps (e.g., adding blocks and connecting blocks) into single logical tasks rather than splitting them granularly.
    - **Crucial Resource Naming (EXISTING RESOURCES ONLY)**: When referring to existing resources you found in the database by the find_resource tool, you MUST use the exact custom syntax \`@resource(type, identifier)\`. 
      - \`type\` MUST be one of: \`route\`, \`app_config\`, \`integration\`, \`custom_block\`.
      - \`identifier\` MUST be the EXACT unique ID fetched from the database (e.g. UUID).

@@ -2,6 +2,7 @@ import { BaseAgent } from "./base";
 import { type GlobalGraphState, AgentNode } from "../types";
 import { dispatchAgentEvent } from "../callbacks";
 import { validateAgentOutput as validateRouteConfig } from "./sub-agents/routeConfig";
+import { validateBlockBuilderOutput } from "./sub-agents/blockBuilder";
 
 export class SupervisorAgent extends BaseAgent {
 	constructor(state: GlobalGraphState) {
@@ -43,7 +44,10 @@ export class SupervisorAgent extends BaseAgent {
 			let error: string | null = null;
 			switch (task.assignedAgentNode) {
 				case AgentNode.ROUTE_CONFIG_AGENT:
-					error = validateRouteConfig(result, task.id, this.state);
+					error = await validateRouteConfig(result, task.id, this.state);
+					break;
+				case AgentNode.BUILDER:
+					error = await validateBlockBuilderOutput(result, task.id, this.state);
 					break;
 				default:
 					// No validator for this agent

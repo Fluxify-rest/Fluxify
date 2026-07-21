@@ -6,7 +6,7 @@ import { DbService } from "./internal/dbService";
 import { HumanMessage, type BaseMessage } from "@langchain/core/messages";
 import { HarnessCallbacks } from "./callbacks";
 import { context as otelContext } from "@opentelemetry/api";
-import { FLUXIFY_CONTEXT_KEY } from "../instrumentation";
+import { FLUXIFY_CONTEXT_KEY } from "@fluxify/common";
 
 export interface HarnessStartOptions {
   conversationId: string;

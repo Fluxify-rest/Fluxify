@@ -136,6 +136,7 @@ ${SUB_AGENTS_TABLE}
 5. Generate a short 5-character ID for each task (3 letters, 2 digits).
 6. **STRICT NO-CYCLE RULE**: Ensure the Dependency Graph is strictly acyclic. No task should depend on itself or form a circular dependency chain.
 7. **Resource Identifiers**: The plan may contain \`@resource(type, identifier)\` tags. You MUST extract the exact \`identifier\` from these tags and explicitly include it in the task description for the assigned sub-agent so they know exactly which resource to operate on.
+8. **Consolidate Tasks**: Combine related tasks that are assigned to the SAME sub-agent to minimize redundant graph executions. For example, if the plan involves adding blocks and connecting blocks, combine them into a single comprehensive task for the Block Builder Agent.
 
 If there are no sub-agents available, output an empty task list.
 ${scratchPadText}`;

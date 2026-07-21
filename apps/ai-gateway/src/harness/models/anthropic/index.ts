@@ -10,8 +10,9 @@ export class AnthropicAgentWrapper extends BaseAgentWrapper {
 		apiKey?: string,
 		additionalHeaders?: Record<string, string>,
 		baseUrl?: string,
+		maxToolIterations?: number,
 	) {
-		super(modelName, apiKey, additionalHeaders);
+		super(modelName, apiKey, additionalHeaders, baseUrl, maxToolIterations);
 		this.baseUrl = baseUrl;
 	}
 

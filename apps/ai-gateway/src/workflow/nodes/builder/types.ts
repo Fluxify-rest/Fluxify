@@ -21,7 +21,9 @@ export type ResourceType =
 	| "route"
 	| "app_config"
 	| "integration"
-	| "custom_block";
+	| "custom_block"
+	| "route_canvas"
+	| "custom_block_canvas";
 
 export interface FindResourceResult {
 	type: ResourceType;

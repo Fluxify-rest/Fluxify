@@ -1,6 +1,6 @@
 import { StateGraph, END, START, Send } from "@langchain/langgraph";
 import { GraphState, type GlobalGraphState, AgentNode } from "./types";
-import { RouterAgent, DiscussionAgent, VerifyUserQueryAgent, PlannerAgent, OrchestratorAgent, HumanInTheLoopAgent, SupervisorAgent, RouteConfigAgent, TaskGeneratorAgent } from "./agents";
+import { RouterAgent, DiscussionAgent, VerifyUserQueryAgent, PlannerAgent, OrchestratorAgent, HumanInTheLoopAgent, SupervisorAgent, RouteConfigAgent, TaskGeneratorAgent, BlockBuilderAgent } from "./agents";
 
 const workflow = new StateGraph(GraphState)
 	.addNode(AgentNode.ROUTER, async (state: GlobalGraphState) => {
@@ -33,6 +33,10 @@ const workflow = new StateGraph(GraphState)
 	})
 	.addNode(AgentNode.ROUTE_CONFIG_AGENT, async (state: GlobalGraphState) => {
 		const agent = new RouteConfigAgent(state);
+		return await agent.execute();
+	})
+	.addNode(AgentNode.BUILDER, async (state: GlobalGraphState) => {
+		const agent = new BlockBuilderAgent(state);
 		return await agent.execute();
 	})
 	.addNode(AgentNode.SUPERVISOR, async (state: GlobalGraphState) => {
@@ -85,6 +89,7 @@ const workflow = new StateGraph(GraphState)
 	.addEdge(AgentNode.HUMAN_IN_THE_LOOP, END)
 	.addEdge(AgentNode.DISCUSSION, END)
 	.addEdge(AgentNode.ROUTE_CONFIG_AGENT, AgentNode.SUPERVISOR)
+	.addEdge(AgentNode.BUILDER, AgentNode.SUPERVISOR)
 	.addEdge(AgentNode.SUPERVISOR, AgentNode.ORCHESTRATOR);
 
 export const app = workflow.compile();

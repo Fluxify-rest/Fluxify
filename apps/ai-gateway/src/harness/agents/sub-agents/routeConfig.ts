@@ -4,6 +4,7 @@ import { dispatchAgentEvent } from "../../callbacks";
 import { z } from "zod";
 import { searchDocsTool } from "../../tools/searchDocs";
 import { createGetRouteDetailsTool } from "../../tools/getRouteDetails";
+import { generateID } from "@fluxify/lib";
 
 const routeConfigSchema = z.object({
 	action: z.enum(["create", "delete", "update-partial"]).describe("The operation to perform"),
@@ -139,6 +140,10 @@ Determine the exact route configuration intent. Use your tools if you need more 
 			messages: [], 
 			userQuery: userQuery,
 		})) as z.infer<typeof routeConfigSchema>;
+
+		if (response.action === "create" && !response.routeId) {
+			response.routeId = generateID();
+		}
 
 		await dispatchAgentEvent({
 			name: "agent_status",

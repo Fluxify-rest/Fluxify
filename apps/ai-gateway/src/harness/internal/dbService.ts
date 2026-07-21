@@ -4,8 +4,11 @@ import {
 	appConfigEntity,
 	integrationsEntity,
 	customBlocksListEntity,
+	blocksEntity,
+	edgesEntity,
+	customBlockGraphsEntity,
 } from "@fluxify/server";
-import { eq, ilike, or, and, sql } from "drizzle-orm";
+import { eq, ilike, or, and, sql, inArray } from "drizzle-orm";
 import { logger } from "@fluxify/common";
 import type {
 	FindResourceResult,
@@ -174,6 +177,146 @@ export class DbService {
 		} catch (e) {
 			logger.error("[DbService] Error searching custom blocks", { error: e });
 			return [];
+		}
+	}
+
+	async getRouteCanvas(
+		projectId: string,
+		routeId: string,
+	): Promise<any | null> {
+		try {
+			const [blocks, edges] = await Promise.all([
+				db.select().from(blocksEntity).where(eq(blocksEntity.routeId, routeId)),
+				db.select().from(edgesEntity).where(eq(edgesEntity.routeId, routeId)),
+			]);
+
+			return blocks.map((block) => {
+				const blockData = (block.data as Record<string, any>) ?? {};
+				const connections = edges
+					.filter((e) => e.from === block.id && e.to)
+					.map((e) => ({
+						blockId: e.to!,
+						handle: e.fromHandle ?? "source",
+					}));
+
+				return {
+					id: block.id,
+					blockType: block.type ?? "unknown",
+					blockName: blockData.blockName ?? undefined,
+					blockDescription: blockData.blockDescription ?? undefined,
+					data: blockData,
+					position: block.position ?? { x: 0, y: 0 },
+					connections,
+				};
+			});
+		} catch (e) {
+			logger.error("[DbService] Error getting route canvas", { error: e });
+			return null;
+		}
+	}
+
+	async getCustomBlockCanvas(
+		projectId: string,
+		blockId: string,
+	): Promise<any | null> {
+		try {
+			const blocks = await db
+				.select()
+				.from(customBlockGraphsEntity)
+				.where(eq(customBlockGraphsEntity.customBlockId, blockId));
+			
+			return blocks.map((block) => {
+				const connections = block.next ? [{ blockId: block.next, handle: "source" }] : [];
+				return {
+					id: block.id,
+					blockType: block.type ?? "unknown",
+					data: block.data ?? {},
+					connections,
+				};
+			});
+		} catch (e) {
+			logger.error("[DbService] Error getting custom block canvas", { error: e });
+			return null;
+		}
+	}
+
+	async getAllCustomBlocks(projectId: string): Promise<{ name: string; label: string; description: string }[]> {
+		try {
+			const customBlocks = await db
+				.select({
+					name: customBlocksListEntity.name,
+					label: customBlocksListEntity.label,
+					description: customBlocksListEntity.description,
+				})
+				.from(customBlocksListEntity)
+				.where(
+					or(
+						eq(customBlocksListEntity.projectId, projectId),
+						eq(customBlocksListEntity.sourceType, "inhouse"),
+					),
+				);
+			return customBlocks.map((c) => ({
+				name: c.name,
+				label: c.label || c.name,
+				description: c.description || "",
+			}));
+		} catch (e) {
+			logger.error("[DbService] Error getting all custom blocks", { error: e });
+			return [];
+		}
+	}
+
+	async getCustomBlockInputParams(projectId: string, name: string): Promise<any[] | null> {
+		try {
+			const block = await db
+				.select({ inputParams: customBlocksListEntity.inputParams })
+				.from(customBlocksListEntity)
+				.where(
+					and(
+						eq(customBlocksListEntity.name, name),
+						or(
+							eq(customBlocksListEntity.projectId, projectId),
+							eq(customBlocksListEntity.sourceType, "inhouse"),
+						),
+					),
+				)
+				.limit(1);
+			return block.length > 0 ? (block[0].inputParams as any[]) : null;
+		} catch (e) {
+			logger.error("[DbService] Error getting custom block input params", { error: e });
+			return null;
+		}
+	}
+
+	async getCustomBlocksBatch(
+		projectId: string,
+		names: string[],
+	): Promise<Map<string, any[]>> {
+		const resultMap = new Map<string, any[]>();
+		if (!names || names.length === 0) return resultMap;
+		try {
+			const blocks = await db
+				.select({
+					name: customBlocksListEntity.name,
+					inputParams: customBlocksListEntity.inputParams,
+				})
+				.from(customBlocksListEntity)
+				.where(
+					and(
+						inArray(customBlocksListEntity.name, names),
+						or(
+							eq(customBlocksListEntity.projectId, projectId),
+							eq(customBlocksListEntity.sourceType, "inhouse"),
+						),
+					),
+				);
+			for (const b of blocks) {
+				resultMap.set(b.name, (b.inputParams as any[]) || []);
+			}
+			return resultMap;
+		} catch (e) {
+			logger.error("[DbService] Error getting custom blocks batch", { error: e });
+			return resultMap;
 		}
 	}
 }

@@ -19,21 +19,26 @@ export interface AgentInvokeOptions {
 	messages?: BaseMessage[];
 	tools?: StructuredTool[];
 	config?: RunnableConfig;
+	maxToolIterations?: number;
 }
 
 export abstract class BaseAgentWrapper {
 	protected modelName: string;
 	protected apiKey?: string;
 	protected additionalHeaders?: Record<string, string>;
+	protected maxToolIterations?: number;
 
 	constructor(
 		modelName: string,
 		apiKey?: string,
 		additionalHeaders?: Record<string, string>,
+		baseUrl?: string,
+		maxToolIterations?: number,
 	) {
 		this.modelName = modelName;
 		this.apiKey = apiKey;
 		this.additionalHeaders = additionalHeaders;
+		this.maxToolIterations = maxToolIterations;
 	}
 
 	// Each subclass implements this to return the initialized LangChain chat model
@@ -75,7 +80,7 @@ export abstract class BaseAgentWrapper {
 			}
 
 			// Tool execution loop
-			const maxIterations = 5;
+			const maxIterations = options.maxToolIterations ?? this.maxToolIterations ?? 15;
 			for (let i = 0; i < maxIterations; i++) {
 				const response = (await model.invoke(
 					finalMessages,
@@ -138,8 +143,11 @@ export abstract class BaseAgentWrapper {
 					() => structuredModel.invoke(finalMessages, config) as Promise<T>,
 					{ maxRetries: 3 },
 				);
-			} else {
-				// Fallback implementation for models that don't support withStructuredOutput natively
+			}
+
+			if (!result) {
+				// Fallback implementation for models that don't support withStructuredOutput natively,
+				// or if the native method failed silently (common with some model wrappers on complex inputs)
 				result = await withRetry(
 					() =>
 						this.fallbackStructuredOutput(
@@ -151,6 +159,7 @@ export abstract class BaseAgentWrapper {
 					{ maxRetries: 3 },
 				);
 			}
+
 			if (!result) {
 				throw new Error("Failed to get structured output from the model (it may have exceeded tool call limits without producing a JSON result).");
 			}

@@ -37,6 +37,7 @@ export interface Task {
 	dependsOnAgentId: string[];
 	status: "pending" | "running" | "completed" | "failed";
 	assignedAgentNode: AgentNodeName;
+	supervisorReviews?: string;
 }
 
 export interface RouterState {
@@ -82,7 +83,17 @@ export interface RouteConfigAgentResult {
 		querySchema?: any;
 	};
 }
-export type SubAgentResult = RouteConfigAgentResult | Record<string, any>;
+
+export interface BlockBuilderAgentResult {
+	reasoning: string;
+	status: "success" | "impossible";
+	targetType?: "route" | "custom_block";
+	targetId?: string;
+	canvasChanges: Record<string, unknown>[];
+	blocks: Record<string, unknown>[];
+}
+
+export type SubAgentResult = RouteConfigAgentResult | BlockBuilderAgentResult | Record<string, any>;
 
 /**
  * Validator function for sub-agent outputs.
@@ -92,7 +103,7 @@ export type SubAgentResult = RouteConfigAgentResult | Record<string, any>;
  * @param state - The global graph state.
  * @returns null if valid, or a string describing the error if invalid.
  */
-export type AgentOutputValidator = (result: SubAgentResult, taskId: string, state: GlobalGraphState) => string | null;
+export type AgentOutputValidator = (result: SubAgentResult, taskId: string, state: GlobalGraphState) => Promise<string | null> | string | null;
 
 export interface OrchestratorState {
 	tasks?: Task[];
