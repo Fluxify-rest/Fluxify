@@ -12,6 +12,9 @@ import { Resource } from "@opentelemetry/resources";
 import { context, createContextKey } from "@opentelemetry/api";
 import type { Context } from "@opentelemetry/api";
 
+export { trace, context } from "@opentelemetry/api";
+export type { Context, Span } from "@opentelemetry/api";
+
 // Import the internal SDK span type directly from trace-base to satisfy SDK type system
 import type { Span as SdkSpan } from "@opentelemetry/sdk-trace-base";
 
