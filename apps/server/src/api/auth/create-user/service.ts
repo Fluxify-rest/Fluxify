@@ -54,7 +54,5 @@ export default async function handleRequest(
       },
     },
   });
-  return {
-    id: result.user.id,
-  };
+  return { id: su.id };
 }

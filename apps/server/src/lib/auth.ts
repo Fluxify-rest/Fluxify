@@ -5,6 +5,7 @@ import { accessControlEntity } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { customSession } from "better-auth/plugins";
 import * as authSchemas from "../db/auth-schema";
+import { systemUsers } from "../db/auth-schema";
 import { admin } from "better-auth/plugins";
 import { sso } from "@better-auth/sso";
 import { generateID } from "@fluxify/lib";
@@ -137,25 +138,25 @@ export function initializeAuth(db: DB) {
   return _auth;
 }
 
-async function getUserAccessControls(db: DB, userId: string) {
-  const user = await db
-    .select()
-    .from(authSchemas.user)
-    .where(eq(authSchemas.user.id, userId));
-  if (user[0]?.isSystemAdmin) {
-    return [
-      {
-        projectId: "*",
-        role: "system_admin",
-      },
-    ];
-  }
-  const userAccessControls = await db
-    .select({
-      projectId: accessControlEntity.projectId,
-      role: accessControlEntity.role,
-    })
-    .from(accessControlEntity)
-    .where(eq(accessControlEntity.userId, userId));
-  return userAccessControls;
+async function getUserAccessControls(
+	db: DB,
+	userId: string,
+	isSystemAdmin: boolean,
+) {
+	if (isSystemAdmin) {
+		return [
+			{
+				projectId: "*",
+				role: "system_admin",
+			},
+		];
+	}
+	const userAccessControls = await db
+		.select({
+			projectId: accessControlEntity.projectId,
+			role: accessControlEntity.role,
+		})
+		.from(accessControlEntity)
+		.where(eq(accessControlEntity.userId, userId));
+	return userAccessControls;
 }
