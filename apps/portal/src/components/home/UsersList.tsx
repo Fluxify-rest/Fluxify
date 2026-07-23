@@ -81,8 +81,8 @@ export function UsersList() {
 					<Table.Column id="admin">Admin</Table.Column>
 					<Table.Column id="actions" aria-label="Actions">{""}</Table.Column>
 				</Table.Header>
-				<Table.Body>
-					{data.data.map((user: UserRow) => {
+				<Table.Body items={data.data as UserRow[]}>
+					{(user: UserRow) => {
 						const isMe = user.id === userData?.id;
 						const role = user.role
 							? user.role === "instance_admin"
@@ -90,7 +90,7 @@ export function UsersList() {
 								: "User"
 							: "No role";
 						return (
-							<Table.Row key={user.id} id={user.id}>
+							<Table.Row id={user.id}>
 								<Table.Cell>
 									<span className="flex items-center gap-2">
 										{user.name || "<no name>"}
@@ -114,7 +114,7 @@ export function UsersList() {
 								</Table.Cell>
 							</Table.Row>
 						);
-					})}
+						}}
 				</Table.Body>
 			</Table>
 

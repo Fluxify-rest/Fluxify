@@ -70,9 +70,9 @@ function RoutesPage() {
 						<Table.Column id="status">Status</Table.Column>
 						<Table.Column id="actions" aria-label="Actions">{""}</Table.Column>
 					</Table.Header>
-					<Table.Body>
-						{(data?.data ?? []).map((route: RouteRow) => (
-							<Table.Row key={route.id} id={route.id}>
+					<Table.Body items={(data?.data ?? []) as RouteRow[]}>
+						{(route: RouteRow) => (
+							<Table.Row id={route.id}>
 								<Table.Cell>
 									<Chip>{route.method}</Chip>
 								</Table.Cell>
@@ -107,7 +107,7 @@ function RoutesPage() {
 									</div>
 								</Table.Cell>
 							</Table.Row>
-						))}
+						)}
 					</Table.Body>
 				</Table>
 			)}
