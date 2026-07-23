@@ -14,6 +14,15 @@ export const routesQuery = {
 			});
 		},
 	},
+	canvasItems: {
+		useQuery(routeId: string) {
+			return useQuery({
+				queryKey: ["routes", routeId, "canvas-items"],
+				queryFn: () => routesService.getCanvasItems(routeId),
+				refetchOnWindowFocus: false,
+			});
+		},
+	},
 	create: {
 		mutation() {
 			const qc = useQueryClient();

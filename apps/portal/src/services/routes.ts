@@ -5,6 +5,7 @@ import {
 	responseSchema as createResponseSchema,
 } from "@fluxify/server/src/api/v1/routes/create/dto";
 import { requestBodySchema as updatePartialRequestSchema } from "@fluxify/server/src/api/v1/routes/update-partial/dto";
+import { responseSchema as canvasItemsResponseSchema } from "@fluxify/server/src/api/v1/routes/get-canvas-items/dto";
 import { httpClient } from "@/lib/http";
 
 const baseUrl = "/v1/routes";
@@ -37,6 +38,12 @@ export const routesService = {
 	},
 	async delete(id: string) {
 		await httpClient.delete(`${baseUrl}/${id}`);
+	},
+	async getCanvasItems(
+		routeId: string,
+	): Promise<z.infer<typeof canvasItemsResponseSchema>> {
+		const result = await httpClient.get(`${baseUrl}/${routeId}/canvas-items`);
+		return result.data;
 	},
 	createRequestSchema,
 };
