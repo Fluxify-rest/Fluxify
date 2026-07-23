@@ -86,7 +86,7 @@ export const createCanvasStore = (initProps?: Partial<State>) => {
 						layoutOptions: {
 							"elk.algorithm": "layered",
 							"elk.direction": "DOWN",
-							"elk.spacing.nodeNode": "15",
+							"elk.spacing.nodeNode": "10",
 							"elk.layered.spacing.nodeNodeBetweenLayers": "15",
 							"elk.spacing.edgeNode": "15",
 							"elk.spacing.edgeEdge": "15",
@@ -94,10 +94,11 @@ export const createCanvasStore = (initProps?: Partial<State>) => {
 						},
 						children: blocksToFormat.map((block) => {
 							const nodePorts = Array.from(portsMap.get(block.id) || []);
+							const measured = (block as any).measured;
 							return {
 								id: block.id,
-								width: 75,
-								height: 75,
+								width: measured?.width ?? block.width ?? 75,
+								height: measured?.height ?? block.height ?? 75,
 								layoutOptions: {
 									"elk.portConstraints": "FIXED_SIDE",
 								},

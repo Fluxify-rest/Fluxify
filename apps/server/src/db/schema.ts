@@ -554,5 +554,25 @@ export const instanceSettingsEntity = pgTable("instance_settings", {
 		.$onUpdate(() => new Date()),
 });
 
+/* ============================================================================
+ * SSO ALLOWLIST (pre-authorized emails for SSO JIT provisioning)
+ * ============================================================================ */
+
+export const ssoAllowlistEntity = pgTable("sso_allowlist", {
+	id: varchar({ length: 50 })
+		.primaryKey()
+		.$defaultFn(() => generateID()),
+	email: varchar({ length: 255 }).notNull().unique(),
+	// linked on first SSO login so deleting the user cascades away the entry
+	userId: varchar("user_id", { length: 50 }).references(() => user.id, {
+		onDelete: "cascade",
+	}),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.notNull()
+		.$onUpdate(() => new Date()),
+});
+
 export * from "./agent-harness-schema";
 

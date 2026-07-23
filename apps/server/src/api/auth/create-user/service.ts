@@ -1,11 +1,9 @@
 import { requestBodySchema, responseSchema } from "./dto";
 import { z } from "zod";
 import { auth } from "../../../lib/auth";
-import { db } from "../../../db";
-import { user } from "../../../db/auth-schema";
-import { generateID } from "@fluxify/lib";
 import { getSetting } from "../../../loaders/instanceSettingsLoader";
 import { ValidationError } from "../../../errors/validationError";
+import { addAllowlistEmail } from "../../v1/sso-allowlist/repository";
 
 export default async function handleRequest(
   data: z.infer<typeof requestBodySchema>
@@ -13,8 +11,9 @@ export default async function handleRequest(
   const mode = getSetting("auth_config")?.mode ?? "traditional";
 
   if (mode === "sso_only") {
-    // Auth is offloaded to the IdP: create a pre-provisioned user row only,
-    // no credential account. Enforce the IdP domain (no cross-domain accounts).
+    // Auth is offloaded to the IdP. We don't create a user row — SSO login
+    // JIT-creates it. We only allowlist the email (domain-checked); the JIT
+    // create.before hook lets that email through, everyone else is rejected.
     const sso = getSetting("sso_config");
     if (!sso) {
       throw new ValidationError([
@@ -27,15 +26,8 @@ export default async function handleRequest(
         { field: "email", message: `Email must be on the ${sso.domain} domain` },
       ]);
     }
-    const id = generateID();
-    await db.insert(user).values({
-      id,
-      email: data.email,
-      name: data.fullname || "",
-      emailVerified: true,
-      isSystemAdmin: data.isSystemAdmin,
-    });
-    return { id };
+    const row = await addAllowlistEmail(data.email);
+    return { id: row.id };
   }
 
   // traditional: email + password required
