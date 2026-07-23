@@ -3,20 +3,23 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	Background,
 	Controls,
+	Panel,
 	ReactFlow,
 	ReactFlowProvider,
 	useEdgesState,
 	useNodesState,
+	useReactFlow,
 	type Edge,
 	type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Button, Spinner, Switch, toast } from "@fluxify/components";
-import { TbArrowLeft } from "react-icons/tb";
+import { TbArrowLeft, TbPlus } from "react-icons/tb";
 import { routesQuery } from "@/query/routesQuery";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { GenericBlockNode } from "@/components/editor/GenericBlockNode";
 import { blocksList } from "@/components/editor/blocks/nodes";
+import { BlockPalette } from "@/components/editor/BlockPalette";
 
 export const Route = createFileRoute("/_authed/$projectId_/editor/$routeId")({
 	component: EditorPage,
@@ -152,24 +155,61 @@ function EditorPage() {
 function Canvas({ nodes: initN, edges: initE }: { nodes: Node[]; edges: Edge[] }) {
 	const [nodes, setNodes, onNodesChange] = useNodesState(initN);
 	const [edges, setEdges, onEdgesChange] = useEdgesState(initE);
+	const [paletteOpen, setPaletteOpen] = useState(false);
+	const { screenToFlowPosition } = useReactFlow();
 
 	useEffect(() => {
 		setNodes(initN);
 		setEdges(initE);
 	}, [initN, initE, setNodes, setEdges]);
 
+	function addBlock(type: string) {
+		const position = screenToFlowPosition({
+			x: window.innerWidth / 2,
+			y: window.innerHeight / 2,
+		});
+		setNodes((n) => [
+			...n,
+			{
+				id: crypto.randomUUID(),
+				type,
+				position,
+				data: { sources: [], targets: [] },
+			},
+		]);
+		setPaletteOpen(false);
+		toast.success("Block added");
+	}
+
 	return (
-		<ReactFlow
-			nodes={nodes}
-			edges={edges}
-			onNodesChange={onNodesChange}
-			onEdgesChange={onEdgesChange}
-			nodeTypes={nodeTypes}
-			fitView
-			proOptions={{ hideAttribution: true }}
-		>
-			<Background />
-			<Controls />
-		</ReactFlow>
+		<>
+			<ReactFlow
+				nodes={nodes}
+				edges={edges}
+				onNodesChange={onNodesChange}
+				onEdgesChange={onEdgesChange}
+				nodeTypes={nodeTypes}
+				fitView
+				proOptions={{ hideAttribution: true }}
+			>
+				<Background />
+				<Controls />
+				<Panel position="top-right">
+					<Button
+						isIconOnly
+						variant="primary"
+						aria-label="Add block"
+						onPress={() => setPaletteOpen(true)}
+					>
+						<TbPlus size={18} />
+					</Button>
+				</Panel>
+			</ReactFlow>
+			<BlockPalette
+				open={paletteOpen}
+				onClose={() => setPaletteOpen(false)}
+				onAdd={addBlock}
+			/>
+		</>
 	);
 }

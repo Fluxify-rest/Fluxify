@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	Button,
 	Chip,
@@ -32,6 +32,7 @@ type RouteRow = {
 
 function RoutesPage() {
 	const { projectId } = Route.useParams();
+	const navigate = useNavigate();
 	const [page, setPage] = useState(1);
 	const { data, isLoading, isError } = routesQuery.getAll.useQuery({
 		projectId,
@@ -86,6 +87,7 @@ function RoutesPage() {
 								</Table.Cell>
 								<Table.Cell>
 									<div className="flex items-center justify-end gap-2">
+										<Button variant="primary" onPress={() => navigate({ to: "/$projectId/editor/$routeId", params: { projectId, routeId: route.id } })}>Open</Button>
 										<Button
 											variant="outline"
 											onPress={() =>
