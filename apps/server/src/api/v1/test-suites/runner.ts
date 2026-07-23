@@ -90,7 +90,7 @@ export async function runSuiteAssertions(
 	const resHeaders: Record<string, string> = {}; // executeRouteInternal doesn't currently return headers
 
 	const assertions = (suite.assertions as AssertionType[]) || [];
-	const result = assertions.map(async (a: AssertionType) => {
+	const result = await Promise.all(assertions.map(async (a: AssertionType) => {
 		let actualValue: unknown;
 		let targetDesc = "";
 
@@ -206,10 +206,9 @@ export async function runSuiteAssertions(
 				message: `Evaluation error: ${err instanceof Error ? err.message : String(err)}`,
 			};
 		}
-	});
+	}));
 
-	const allPassed =
-		result.length === 0 || result.every(async (r) => (await r).success);
+	const allPassed = result.length === 0 || result.every((r) => r.success);
 
 	return {
 		success: allPassed,
