@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Tabs } from "@fluxify/components";
 import { ProfileNav } from "@/components/home/ProfileNav";
 import { ProjectsTab } from "@/components/home/ProjectsTab";
+import { UsersList } from "@/components/home/UsersList";
 import { useAuthStore } from "@/store/auth";
 
 const logo = `${import.meta.env.BASE_URL}logo_title.webp`;
@@ -53,7 +54,7 @@ function Home() {
 						<ProjectsTab />
 					</Tabs.Panel>
 					<Tabs.Panel id="users">
-						<Stub label="Users" />
+						<UsersList />
 					</Tabs.Panel>
 					<Tabs.Panel id="instance">
 						<Stub label="Instance Settings" />
