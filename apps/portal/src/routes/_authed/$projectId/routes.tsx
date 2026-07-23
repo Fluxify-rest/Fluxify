@@ -62,7 +62,8 @@ function RoutesPage() {
 					No routes yet. Create your first one.
 				</p>
 			) : (
-				<Table aria-label="Routes">
+				<Table>
+					<Table.Content aria-label="Routes">
 					<Table.Header>
 						<Table.Column id="method">Method</Table.Column>
 						<Table.Column id="path" isRowHeader>Path</Table.Column>
@@ -109,6 +110,7 @@ function RoutesPage() {
 							</Table.Row>
 						)}
 					</Table.Body>
+					</Table.Content>
 				</Table>
 			)}
 

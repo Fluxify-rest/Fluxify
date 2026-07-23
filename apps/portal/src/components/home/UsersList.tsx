@@ -73,7 +73,8 @@ export function UsersList() {
 				{isAdmin && <AddUserButton />}
 			</div>
 
-			<Table aria-label="Users">
+			<Table>
+				<Table.Content aria-label="Users">
 				<Table.Header>
 					<Table.Column id="name" isRowHeader>Name</Table.Column>
 					<Table.Column id="email">Email</Table.Column>
@@ -116,6 +117,7 @@ export function UsersList() {
 						);
 						}}
 				</Table.Body>
+				</Table.Content>
 			</Table>
 
 			{totalPages > 1 && (
