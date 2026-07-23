@@ -7,7 +7,7 @@ type Props = {
 	icon?: ReactNode;
 	children?: ReactNode; // handles
 	selected?: boolean;
-	labelPlacement?: "top" | "bottom";
+	labelPlacement?: "top" | "bottom" | "left" | "right";
 	topLeftRounded?: boolean;
 	topRightRounded?: boolean;
 	bottomLeftRounded?: boolean;
@@ -45,8 +45,15 @@ export function BaseBlock({
 			{children}
 			<span
 				className={cn(
-					"absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-medium text-muted",
-					labelPlacement === "top" ? "-top-4" : "-bottom-4",
+					"absolute whitespace-nowrap text-[9px] font-medium text-muted",
+					labelPlacement === "top" &&
+						"-top-4 left-1/2 -translate-x-1/2",
+					labelPlacement === "bottom" &&
+						"-bottom-4 left-1/2 -translate-x-1/2",
+					labelPlacement === "left" &&
+						"right-[calc(100%+8px)] top-1/2 -translate-y-1/2 text-right",
+					labelPlacement === "right" &&
+						"left-[calc(100%+8px)] top-1/2 -translate-y-1/2",
 				)}
 			>
 				{blockName}
