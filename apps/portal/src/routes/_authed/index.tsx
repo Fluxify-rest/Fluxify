@@ -35,7 +35,7 @@ function Home() {
 						navigate({ to: "/", search: { tab: String(key) } })
 					}
 				>
-					<Tabs.List className="justify-start gap-8 border-b border-border">
+					<Tabs.List>
 						<Tabs.Tab id="projects">Projects</Tabs.Tab>
 						{userData?.isSystemAdmin && (
 							<Tabs.Tab id="users">Users</Tabs.Tab>
@@ -49,14 +49,18 @@ function Home() {
 					<Tabs.Panel id="projects">
 						<ProjectsTab />
 					</Tabs.Panel>
-					<Tabs.Panel id="users">
-						<UsersList />
-					</Tabs.Panel>
-					<Tabs.Panel id="instance">
-						<p className="py-16 text-center text-muted">
-							Instance settings aren't available yet.
-						</p>
-					</Tabs.Panel>
+					{userData?.isSystemAdmin && (
+						<Tabs.Panel id="users">
+							<UsersList />
+						</Tabs.Panel>
+					)}
+					{userData?.isSystemAdmin && (
+						<Tabs.Panel id="instance">
+							<p className="py-16 text-center text-muted">
+								Instance settings aren't available yet.
+							</p>
+						</Tabs.Panel>
+					)}
 					<Tabs.Panel id="account">
 						<AccountDetails />
 					</Tabs.Panel>

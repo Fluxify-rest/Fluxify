@@ -76,11 +76,11 @@ export function UsersList() {
 
 			<Table aria-label="Users">
 				<Table.Header>
-					<Table.Column isRowHeader>Name</Table.Column>
-					<Table.Column>Email</Table.Column>
-					<Table.Column>Role</Table.Column>
-					<Table.Column>Admin</Table.Column>
-					<Table.Column aria-label="Actions">{""}</Table.Column>
+					<Table.Column id="name" isRowHeader>Name</Table.Column>
+					<Table.Column id="email">Email</Table.Column>
+					<Table.Column id="role">Role</Table.Column>
+					<Table.Column id="admin">Admin</Table.Column>
+					<Table.Column id="actions" aria-label="Actions">{""}</Table.Column>
 				</Table.Header>
 				<Table.Body>
 					{data.data.map((user: UserRow) => {
@@ -91,7 +91,7 @@ export function UsersList() {
 								: "User"
 							: "No role";
 						return (
-							<Table.Row key={user.id}>
+							<Table.Row key={user.id} id={user.id}>
 								<Table.Cell>
 									<span className="flex items-center gap-2">
 										{user.name || "<no name>"}
@@ -104,10 +104,11 @@ export function UsersList() {
 								<Table.Cell>
 									{isAdmin && !isMe && (
 										<Dropdown>
-											<Dropdown.Trigger>
-												<Button isIconOnly variant="ghost" aria-label="Row actions">
-													<TbDots size={16} />
-												</Button>
+											<Dropdown.Trigger
+												aria-label="Row actions"
+												className="inline-flex size-8 items-center justify-center rounded-md text-muted outline-none hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--focus)]"
+											>
+												<TbDots size={16} />
 											</Dropdown.Trigger>
 											<Dropdown.Popover>
 												<Dropdown.Menu>
