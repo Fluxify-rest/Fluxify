@@ -6,7 +6,7 @@
 # Build from the repo root (the CBE directory):
 #   docker build -f docker/worker/Dockerfile -t fluxify-worker .
 # Run:
-#   docker run --rm -p 5600:5600 --env-file apps/server/.env fluxify-worker
+#   docker run --rm -p 5600:5600 --env-file .env fluxify-worker
 # ==============================================================================
 
 # ------------------------------------------------------------------------------

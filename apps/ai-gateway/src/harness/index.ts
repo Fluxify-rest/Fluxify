@@ -184,7 +184,7 @@ export class FluxifyHarness {
 				error,
 			});
 			// Raw dump so the underlying stack is visible in foreground runs.
-			console.error("[FluxifyHarness] graph error:", error);
+			logger.error("Graph error", "FluxifyHarness", { error });
 			await callbacks.flush().catch(() => {});
 			await this.failRun(ctx, harnessService, error);
 			throw error;
