@@ -1,12 +1,18 @@
 # ==============================================================================
-# Stage 1: deps — Install dependencies (cached layer)
-# Only invalidated when package.json / bun.lock files change
+# Fluxify admin (control plane) — server + web + ai-gateway + caddy proxy.
+# No request worker: user API traffic is proxied to a separate worker service
+# (WORKER_UPSTREAM). Run the worker from docker/worker/Dockerfile.
+#
+# Build from the repo root (the CBE directory):
+#   docker build -f docker/admin/Dockerfile -t fluxify-admin .
+# ==============================================================================
+
+# ==============================================================================
+# Stage 1: deps — install dependencies (cached until manifests/lockfile change)
 # ==============================================================================
 FROM oven/bun:1.3.14-alpine AS deps
-
 WORKDIR /app
 
-# Copy only package manifests + lockfile for maximum cache reuse
 COPY package.json bun.lock ./
 COPY apps/server/package.json apps/server/package.json
 COPY apps/web/package.json apps/web/package.json
@@ -22,86 +28,61 @@ COPY scripts/setup-hooks.ts scripts/setup-hooks.ts
 RUN bun install --frozen-lockfile
 
 # ==============================================================================
-# Stage 2: build — Compile all services
+# Stage 2: build — compile server (standalone), web, and ai-gateway
 # ==============================================================================
 FROM deps AS build
-
 WORKDIR /app
 
-# Copy full source (deps already installed from stage 1)
 COPY . .
-
-# Re-link workspace binaries — near-instant since packages are cached from deps stage.
-# Required because turbo sub-package builds need per-workspace .bin symlinks.
 RUN bun install --frozen-lockfile
 
-# Build all workspace packages + server + web (via turbo)
+# Turbo builds server standalone + web + workspace packages + ai-gateway.
 RUN bun run build
 
-# Bundle the request worker (single file + sourcemap + snappy native asset) into
-# the same server dist so the entrypoint can run it alongside the admin server.
-RUN bun --cwd apps/server run build:worker
-
-# Prepare Next.js standalone output
+# Next.js standalone output needs public/ and static assets copied in.
 WORKDIR /app/apps/web
 RUN cp -r public .next/standalone/apps/web/public && \
     cp -r .next/static .next/standalone/apps/web/.next/static
 
-# Build ai-gateway and gather docs index
+# AI Gateway docs index.
 WORKDIR /app/apps/ai-gateway
 RUN bun run gather
 
 # ==============================================================================
-# Stage 3: production — Minimal runtime image
+# Stage 3: production — minimal runtime image
 # ==============================================================================
 FROM oven/bun:1.3.14-alpine AS production
-
 WORKDIR /app
 
-# Install only tini for init process management
-RUN apk add --no-cache tini caddy nss-tools
-
-# Create non-root user with no login shell
+RUN apk add --no-cache caddy nss-tools
 RUN adduser -D -s /sbin/nologin -h /app appuser
-
-# --- Copy built artifacts with correct ownership ---
 
 # Server: standalone bundle + docs index + schema
 COPY --from=build --chown=appuser:appuser /app/apps/server/dist /app/server
-
 # Web: Next.js standalone build
 COPY --from=build --chown=appuser:appuser /app/apps/web/.next/standalone /app/web
-
 # AI Gateway: minified single-file bundle
 COPY --from=build --chown=appuser:appuser /app/apps/ai-gateway/dist /app/ai-gateway
 
-# Caddy config
-COPY --chown=appuser:appuser docker/kit/Caddyfile /app/Caddyfile
-
-# Copy entrypoint script
-COPY --chown=appuser:appuser docker/kit/entrypoint.sh /app/entrypoint.sh
+COPY --chown=appuser:appuser docker/admin/Caddyfile /app/Caddyfile
+COPY --chown=appuser:appuser docker/admin/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Switch to non-root user
 USER appuser
 
-# Ports: proxy (8080), server (5500), worker (5600), web (3000), ai-gateway (8001)
-EXPOSE 8080 5500 5600 3000 8001
+# Ports: proxy (8080), server (5500), web (3000), ai-gateway (8001)
+EXPOSE 8080 5500 3000 8001
 
-# --- Environment defaults ---
-# Admin server is control-plane only; the in-container worker serves user API.
 ENV NODE_ENV=production \
     ENVIRONMENT=production \
     HOSTNAME=0.0.0.0 \
     WEB_PORT=3000 \
     SERVER_PORT=5500 \
-    WORKER_PORT=5600 \
     PROXY_PORT=8080 \
     AI_GATEWAY_PORT=8001 \
     ENABLE_ADMIN=true \
     ENABLE_BUILTIN_WORKER=false \
+    WORKER_UPSTREAM=worker:5600 \
     ENABLE_AI=false
 
-# tini as PID 1 for proper signal handling
-ENTRYPOINT ["tini", "--"]
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -10,7 +10,7 @@ import {
 	OTLP_AUTH_HEADER_NAME,
 	OTLP_LOGGER_ENABLED,
 } from "./lib/env";
-import { drizzleInit, initializeRedis } from "@fluxify/server";
+import { drizzleInit, initializeRedis, initializePubSub } from "@fluxify/server";
 import { initializeWorkflowQueue } from "./workflow/queue";
 import { initializeHarnessQueue } from "./harness/queue";
 
@@ -26,6 +26,7 @@ initializeLogger({
 	useOtlp: OTLP_LOGGER_ENABLED === "true",
 });
 initializeRedis(true);
+await initializePubSub();
 await drizzleInit(false);
 
 initializeWorkflowQueue();

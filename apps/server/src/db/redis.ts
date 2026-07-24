@@ -1,63 +1,31 @@
 import { logger } from "@fluxify/common";
-import EventEmitter from "events";
 import { Redis } from "ioredis";
 
+// Pub/sub moved off Redis to NATS (ioredis subscriber-mode reconnect kept
+// killing hot reload). Re-exported here so existing `db/redis` importers keep
+// working; the real implementation lives in ./pubsub + ./nats.
+export {
+	CHAN_ON_ROUTE_CHANGE,
+	CHAN_ON_APPCONFIG_CHANGE,
+	CHAN_ON_INTEGRATION_CHANGE,
+	CHAN_AI_WORKER,
+	CHAN_AI_SSE_PREFIX,
+	CHAN_ON_PROJECT_SETTING_CHANGE,
+	CHAN_ON_CUSTOM_BLOCK_CHANGE,
+	CHAN_ON_INSTANCE_SETTING_CHANGE,
+	publishMessage,
+	subscribeToChannel,
+	initializePubSub,
+} from "./pubsub";
+
 let redisClient: Redis = null!;
-let publisherClient: Redis = null!;
-let subscriberClient: Redis = null!;
 
-export const CHAN_ON_ROUTE_CHANGE = "chan:on-route-change";
-export const CHAN_ON_APPCONFIG_CHANGE = "chan:on-appconfig-change";
-export const CHAN_ON_INTEGRATION_CHANGE = "chan:on-integration-change";
-export const CHAN_AI_WORKER = "chan:ai-worker";
-export const CHAN_AI_SSE_PREFIX = "chan:ai-sse:";
-export const CHAN_ON_PROJECT_SETTING_CHANGE = "chan:on-project-setting-change";
-export const CHAN_ON_CUSTOM_BLOCK_CHANGE = "chan:on-custom-block-change";
-export const CHAN_ON_INSTANCE_SETTING_CHANGE = "chan:on-instance-setting-change";
-
-export function initializeRedis(hotReload?: boolean) {
-	const canHotreload = hotReload || process.env.HOT_RELOAD_ROUTES == "true";
-
+// hotReload param kept for signature compat (hot reload now runs over NATS).
+export function initializeRedis(_hotReload?: boolean) {
 	redisClient = createRedisClient();
 	redisClient.connect(() => {
 		logger.info("[Redis] connected");
 	});
-
-	if (canHotreload) {
-		subscriberClient = createRedisClient();
-		subscriberClient.subscribe(
-			CHAN_ON_ROUTE_CHANGE,
-			CHAN_ON_APPCONFIG_CHANGE,
-			CHAN_ON_INTEGRATION_CHANGE,
-			CHAN_ON_CUSTOM_BLOCK_CHANGE,
-			CHAN_ON_INSTANCE_SETTING_CHANGE,
-		);
-	}
-}
-
-export async function publishMessage(chan: string, data: string | object) {
-	if (publisherClient == null) {
-		publisherClient = createRedisClient();
-	}
-	data = typeof data === "object" ? JSON.stringify(data) : data;
-	await publisherClient.publish(chan, data);
-}
-
-export async function subscribeToChannel(
-	chan: string,
-	callback: (data: string) => void,
-) {
-	await subscriberClient.subscribe(chan);
-	const listener = (channel: string, data: string) => {
-		if (chan !== channel) return;
-		callback(data);
-	};
-	subscriberClient.on("message", listener);
-
-	return async () => {
-		subscriberClient.off("message", listener);
-		await subscriberClient.unsubscribe(chan);
-	};
 }
 
 function createRedisClient() {

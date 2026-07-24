@@ -20,35 +20,39 @@ COPY package.json bun.lock ./
 COPY apps/server/package.json apps/server/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY apps/ai-gateway/package.json apps/ai-gateway/package.json
+COPY apps/portal/package.json apps/portal/package.json
 COPY packages/adapters/package.json packages/adapters/package.json
 COPY packages/blocks/package.json packages/blocks/package.json
 COPY packages/common/package.json packages/common/package.json
+COPY packages/components/package.json packages/components/package.json
 COPY packages/lib/package.json packages/lib/package.json
 COPY scripts/setup-hooks.ts scripts/setup-hooks.ts
 
 RUN bun install --frozen-lockfile
 
 # ------------------------------------------------------------------------------
-# Stage 2: build — bundle the worker to a single minified file (+ native assets).
-# bun bundles the workspace packages from source; no turbo / full monorepo build.
-# Runs in-image so native bindings (e.g. snappy) resolve to linux-musl.
+# Stage 2: build — bundle the worker to a single minified file (+ sourcemap).
+# Copies ONLY apps/server and the four workspace packages it imports; no web,
+# ai-gateway, portal, docs, or turbo full build. node_modules is inherited from
+# the deps stage, so no second install. bun bundles the packages from source
+# (they export ./index.ts), so nothing needs pre-building.
 # ------------------------------------------------------------------------------
 FROM deps AS build
 WORKDIR /app
 
-COPY . .
-# Re-link workspace bins (near-instant; packages cached from deps stage).
-RUN bun install --frozen-lockfile
-RUN bun --cwd apps/server run build:worker
+COPY packages/common packages/common
+COPY packages/lib packages/lib
+COPY packages/blocks packages/blocks
+COPY packages/adapters packages/adapters
+COPY apps/server apps/server
+
+RUN bun run --cwd apps/server build:worker
 
 # ------------------------------------------------------------------------------
 # Stage 3: production — minimal runtime, no node_modules or source.
 # ------------------------------------------------------------------------------
 FROM oven/bun:1.3.14-alpine AS production
 WORKDIR /app
-
-# tini = PID 1 for correct SIGTERM handling (graceful k8s pod shutdown).
-RUN apk add --no-cache tini
 
 # Non-root, no login shell.
 RUN adduser -D -s /sbin/nologin -h /app appuser
@@ -65,6 +69,7 @@ ENV NODE_ENV=production \
     WORKER_PORT=5600
 
 # PG_URL, redis, and OTLP_* come from the deploy env (--env-file / k8s secrets).
-# No HTTP health route exists; use a TCP liveness/readiness probe on 5600.
-ENTRYPOINT ["tini", "--"]
-CMD ["bun", "run", "/app/worker/worker.js"]
+# Probes (port 5600):
+#   startup: GET /_/admin/api/healthchecks/startup  -> 200 once listening
+#   ready:   GET /_/admin/api/healthchecks/ready     -> 200 only when deps loaded
+ENTRYPOINT ["bun", "run", "/app/worker/worker.js"]
