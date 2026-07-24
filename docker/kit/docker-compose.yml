@@ -10,7 +10,7 @@
 # ==============================================================================
 services:
   fluxify:
-    image: ghcr.io/fluxify-rest/fluxify-kit:latest
+    image: ghcr.io/fluxify-rest/fluxify-kit:nightly
     # Or build locally:
     # build:
     #   context: ../..

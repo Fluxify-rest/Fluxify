@@ -39,7 +39,13 @@ Traffic enters on port `8080` and is routed for you:
 
 ## Step 1 — Create your `.env` {#env}
 
-Create a `.env` file next to the compose file. At minimum:
+Copy `docker/kit/env.example` to `docker/kit/.env` next to the compose file:
+
+```bash
+cp docker/kit/env.example docker/kit/.env
+```
+
+At minimum verify the key environment variables:
 
 ```env
 #====================== ENVIRONMENT ======================

@@ -69,6 +69,6 @@ export function initializeHarnessWorker() {
 		});
 	});
 
-	logger.info("[HarnessWorker] Initialized");
+	logger.info("Initialized", "HarnessWorker");
 	return worker;
 }

@@ -2,6 +2,7 @@ import { GraphNode } from "@langchain/langgraph";
 import { AgentStateSchema } from "../state";
 import { DiscussionOutputSchema } from "../schemas";
 import { withRetry } from "../../agentRetry";
+import { logger } from "@fluxify/common";
 
 export const DISCUSSION_NODE_ID = "discussion";
 
@@ -31,10 +32,10 @@ export const DiscussionNode: GraphNode<typeof AgentStateSchema> = async (
   await state.tracker?.update(2, "started", "Discussion");
   const result = await withRetry(
     async (history) => {
-      console.log("history", history);
+      logger.debug("Discussion history", "discussion", { history });
 
       const response = await agent.invoke({ messages: history });
-      console.log("response", response);
+      logger.debug("Discussion response", "discussion", { response });
       return response.structuredResponse;
     },
     DiscussionOutputSchema,
