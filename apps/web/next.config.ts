@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
 		"@fluxify/blocks",
 		"@fluxify/ai-gateway",
 	],
+	turbopack: {
+		resolveAlias: {
+			fs: { browser: "./src/empty-module.ts" },
+			net: { browser: "./src/empty-module.ts" },
+			tls: { browser: "./src/empty-module.ts" },
+			dns: { browser: "./src/empty-module.ts" },
+			child_process: { browser: "./src/empty-module.ts" },
+		},
+	},
 	webpack: (config, { isServer }) => {
 		if (!isServer) {
 			config.resolve.fallback = {
