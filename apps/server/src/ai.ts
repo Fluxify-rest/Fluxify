@@ -4,6 +4,8 @@ import { ToolsContext } from "./lib/ai/schemas";
 import { BlockTypes } from "@fluxify/blocks";
 import { mapBuilderOutput } from "./lib/ai/responseMapper";
 
+import { logger } from "@fluxify/common";
+
 const cloudModel = new OpenAICompatibleIntegration({
   apiKey: process.env.AI_API_KEY!,
   model: "mistral-medium-3-5",
@@ -73,7 +75,7 @@ const result = await aiAgentGraph.invoke(
   { context: { toolCalls: new Set() } satisfies ToolsContext },
 );
 
-console.log(result.discussionMode);
+logger.info("AI discussion mode result", "ai", { discussionMode: result.discussionMode });
 
 // console.log(
 //   result.classifierOutput.intent === "DISCUSSION"

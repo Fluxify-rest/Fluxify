@@ -110,7 +110,7 @@ export class HarnessCallbacks {
 				await this.redisService.appendEvent(event);
 				await this.job?.updateProgress(event as any);
 			} catch (error) {
-				logger.error("[HarnessCallbacks] Error emitting event", {
+				logger.error("Error emitting event", "HarnessCallbacks", {
 					runId: this.runId,
 					node: event.node,
 					error,

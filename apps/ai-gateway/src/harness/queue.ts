@@ -71,5 +71,5 @@ export function initializeHarnessQueue() {
 	});
 
 	initialized = true;
-	logger.info("[HarnessQueue] Initialized");
+	logger.info("Initialized", "HarnessQueue");
 }

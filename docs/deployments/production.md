@@ -62,7 +62,13 @@ each replica and holds traffic back until its dependencies have loaded.
 
 ## Step 1 — Create your `.env` {#env}
 
-The admin and every worker share the same `.env`:
+Copy `docker/production/env.example` to `docker/production/.env` next to the compose file. The admin and every worker share the same `.env`:
+
+```bash
+cp docker/production/env.example docker/production/.env
+```
+
+At minimum verify the key environment variables:
 
 ```env
 #====================== ENVIRONMENT ======================

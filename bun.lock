@@ -224,6 +224,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@fluxify/adapters": "workspace:*",
+        "@fluxify/common": "workspace:*",
         "@fluxify/lib": "workspace:*",
         "dayjs": "^1.11.19",
         "jsonwebtoken": "^9.0.3",
@@ -283,6 +284,7 @@
       "name": "@fluxify/lib",
       "version": "1.0.0",
       "dependencies": {
+        "@fluxify/common": "workspace:*",
         "axios": "^1.13.1",
         "pino": "^10.3.0",
         "uuidv7": "^1.0.2",
