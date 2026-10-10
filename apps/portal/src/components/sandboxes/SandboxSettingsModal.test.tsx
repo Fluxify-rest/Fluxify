@@ -19,7 +19,8 @@ async function until<T>(check: () => T, timeout = 1500): Promise<T> {
 }
 const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
 const { triggersService } = await import("@/services/triggers");
-const { SandboxTriggersModal } = await import("./SandboxTriggersModal");
+const { sandboxesService } = await import("@/services/sandboxes");
+const { SandboxSettingsModal } = await import("./SandboxSettingsModal");
 
 afterEach(() => {
 	cleanup();
@@ -54,12 +55,15 @@ function mockList() {
 	}));
 }
 
-const mount = (readOnly = false) =>
-	render(
+const sandbox = { id: "s1", projectId: "p1", name: "orders", settings: { tracingEnabled: false } };
+
+const mount = (readOnly = false) => {
+	spyOn(sandboxesService, "getById").mockResolvedValue(sandbox as never);
+	return render(
 		<QueryClientProvider
 			client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
 		>
-			<SandboxTriggersModal
+			<SandboxSettingsModal
 				projectId="p1"
 				sandboxId="s1"
 				readOnly={readOnly}
@@ -68,6 +72,20 @@ const mount = (readOnly = false) =>
 			/>
 		</QueryClientProvider>,
 	);
+};
+
+/** Open the modal and switch to its Triggers section. */
+async function openTriggers(readOnly = false) {
+	mount(readOnly);
+	const tab = await until(() => {
+		const found = [...document.body.querySelectorAll("[role=tab]")].find(
+			(t) => t.textContent === "Triggers",
+		);
+		if (!found) throw new Error("no tab yet");
+		return found;
+	});
+	fireEvent.click(tab);
+}
 
 const button = (name: string) =>
 	[...document.body.querySelectorAll("button")].find((b) => b.textContent?.trim() === name) as
@@ -76,7 +94,7 @@ const button = (name: string) =>
 
 test("lists the sandbox's triggers, asked for by sandbox id", async () => {
 	const list = mockList();
-	mount();
+	await openTriggers();
 	await until(() => expect(document.body.textContent).toContain("orders stream"));
 	expect(list).toHaveBeenCalledWith({ projectId: "p1", sandboxId: "s1" });
 	expect(document.body.textContent).toContain("development worker");
@@ -85,7 +103,7 @@ test("lists the sandbox's triggers, asked for by sandbox id", async () => {
 test("offers only unattached triggers that can run a sandbox, and attaches by patching sandboxId", async () => {
 	mockList();
 	const update = spyOn(triggersService, "update").mockResolvedValue({} as never);
-	mount();
+	await openTriggers();
 	const select = await until(() => {
 		const el = document.body.querySelector("select");
 		if (!el || el.options.length < 2) throw new Error("no options yet");
@@ -103,7 +121,7 @@ test("offers only unattached triggers that can run a sandbox, and attaches by pa
 test("detaching patches sandboxId to null after a confirm", async () => {
 	mockList();
 	const update = spyOn(triggersService, "update").mockResolvedValue({} as never);
-	mount();
+	await openTriggers();
 	await until(() => expect(button("Detach")).toBeDefined());
 	fireEvent.click(button("Detach") as HTMLButtonElement);
 	const dialog = await until(() => {
@@ -120,8 +138,29 @@ test("detaching patches sandboxId to null after a confirm", async () => {
 
 test("read-only: no attach and no detach", async () => {
 	mockList();
-	mount(true);
+	await openTriggers(true);
 	await until(() => expect(document.body.textContent).toContain("orders stream"));
 	expect(button("Attach")).toBeUndefined();
 	expect(button("Detach")).toBeUndefined();
+});
+
+test("General saves the name and the tracing flag", async () => {
+	const update = spyOn(sandboxesService, "update").mockResolvedValue(sandbox as never);
+	mount();
+	const input = await until(() => {
+		const el = document.body.querySelector("input[type=text], input:not([type])");
+		if (!el) throw new Error("no name field yet");
+		return el as HTMLInputElement;
+	});
+	fireEvent.change(input, { target: { value: "orders v2" } });
+	const box = document.body.querySelector("input[type=checkbox]") as HTMLInputElement;
+	fireEvent.click(box);
+	await until(() => expect(button("Save changes")?.hasAttribute("disabled")).toBe(false));
+	fireEvent.click(button("Save changes") as HTMLButtonElement);
+	await until(() =>
+		expect(update).toHaveBeenCalledWith("p1", "s1", {
+			name: "orders v2",
+			settings: { tracingEnabled: true },
+		}),
+	);
 });

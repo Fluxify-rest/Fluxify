@@ -161,6 +161,8 @@ describe("a queue trigger on a sandbox", () => {
 	it("stops once the sandbox is deleted", async () => {
 		await ok(api(stack, "creator", `${SANDBOXES()}/${box}`, { method: "DELETE" }));
 		await until("the trigger to leave the development bucket", async () => !(await buckets.development.get(key())));
+		// the worker drops its consumer when its bucket watch sees the delete, a beat after the bucket is empty
+		await Bun.sleep(3_000);
 		const id = await redis.xadd(stream, "*", "id", "after");
 		await Bun.sleep(3_000);
 		// nobody in the trigger's group read it

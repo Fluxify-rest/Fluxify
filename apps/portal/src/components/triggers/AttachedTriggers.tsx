@@ -1,13 +1,4 @@
-import {
-	Button,
-	Description,
-	Label,
-	ListBox,
-	Select,
-	Spinner,
-	Switch,
-	toast,
-} from "@fluxify/components";
+import { Button, Label, ListBox, Select, Spinner, Switch, toast } from "@fluxify/components";
 import { useState } from "react";
 import { TbBolt, TbExternalLink, TbPlus } from "react-icons/tb";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -102,62 +93,64 @@ export function AttachedTriggers({
 			)}
 
 			{!readOnly && (
-				<div className="flex flex-wrap items-end gap-2">
-					<Select
-						fullWidth
-						variant="secondary"
-						className="min-w-56 flex-1"
-						value={picked || null}
-						isDisabled={available.length === 0}
-						onChange={(next) => setPicked(String(next))}
-					>
-						<Label>Attach an existing trigger</Label>
-						<Select.Trigger>
-							<Select.Value />
-							<Select.Indicator />
-						</Select.Trigger>
-						<Description>
-							{available.length === 0
-								? "Every trigger in this project is already attached."
-								: "Triggers are made on the Triggers page."}
-						</Description>
-						<Select.Popover>
-							<ListBox>
-								{available.map((trigger) => (
-									<ListBox.Item key={trigger.id} id={trigger.id} textValue={trigger.name}>
-										{trigger.name}
-										<ListBox.ItemIndicator />
-									</ListBox.Item>
-								))}
-							</ListBox>
-						</Select.Popover>
-					</Select>
+				<div className="flex flex-col gap-1.5">
+					<div className="flex flex-wrap items-end gap-2">
+						<Select
+							fullWidth
+							variant="secondary"
+							className="min-w-56 flex-1"
+							value={picked || null}
+							isDisabled={available.length === 0}
+							onChange={(next) => setPicked(String(next))}
+						>
+							<Label>Attach an existing trigger</Label>
+							<Select.Trigger>
+								<Select.Value />
+								<Select.Indicator />
+							</Select.Trigger>
+							<Select.Popover>
+								<ListBox>
+									{available.map((trigger) => (
+										<ListBox.Item key={trigger.id} id={trigger.id} textValue={trigger.name}>
+											{trigger.name}
+											<ListBox.ItemIndicator />
+										</ListBox.Item>
+									))}
+								</ListBox>
+							</Select.Popover>
+						</Select>
 
-					<Button
-						variant="primary"
-						size="sm"
-						isDisabled={!picked}
-						isPending={attach.isPending}
-						onPress={attachPicked}
-					>
-						<TbPlus size={14} /> Attach
-					</Button>
+						<Button
+							variant="primary"
+							size="sm"
+							isDisabled={!picked}
+							isPending={attach.isPending}
+							onPress={attachPicked}
+						>
+							<TbPlus size={14} /> Attach
+						</Button>
 
-					{/* A new tab, not a navigation: this panel is a modal over an unsaved
+						{/* A new tab, not a navigation: this panel is a modal over an unsaved
 				    canvas, and leaving it would throw that away. */}
-					<Button
-						variant="outline"
-						size="sm"
-						onPress={() =>
-							window.open(
-								withBasePath(`/${projectId}/triggers/new`),
-								"_blank",
-								"noopener,noreferrer",
-							)
-						}
-					>
-						<TbExternalLink size={14} /> New trigger
-					</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onPress={() =>
+								window.open(
+									withBasePath(`/${projectId}/triggers/new`),
+									"_blank",
+									"noopener,noreferrer",
+								)
+							}
+						>
+							<TbExternalLink size={14} /> New trigger
+						</Button>
+					</div>
+					<p className="text-xs text-muted">
+						{available.length === 0
+							? "Every trigger in this project is already attached."
+							: "Triggers are made on the Triggers page."}
+					</p>
 				</div>
 			)}
 		</Section>

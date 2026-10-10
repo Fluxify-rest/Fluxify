@@ -33,9 +33,8 @@ viewers don't.
 | **Canvas** | The same editor as a route or workflow canvas. Add blocks, connect them and **Save**. |
 | **Playground** | Open it from the canvas. Pick any method, type a path, add headers and a body, and press **Send**. You see the status, headers and body of the answer, and an **Open recording** link for the call. Fluxify adds the development token for you and never shows it. |
 | **Run** | Starts the sandbox as a workflow with the JSON (or plain text) you type. |
-| **Triggers** | The triggers that run this sandbox. Attach one you made on the Triggers page, switch it on or off, or detach it. |
 | **Runs** | Every recorded run of this sandbox, newest first. Open one to see it on the canvas. |
-| **Settings** | Rename the sandbox, and turn **Export traces** on to send its spans to the project's telemetry destination. |
+| **Settings** | **General**: rename the sandbox, and turn **Export traces** on to send its spans to the project's telemetry destination. **Triggers**: the triggers that run this sandbox. Attach one you made on the Triggers page, switch it on or off, or detach it. |
 
 If no development worker is running, a banner says so and **Run** and the
 playground are switched off until one starts.
@@ -111,7 +110,7 @@ FLUXIFY_ENV=development"**. See
 A [trigger](/concepts/triggers) can run a sandbox instead of a workflow, for
 example to try how your blocks handle real messages from a queue.
 
-- **Attach** a trigger from the sandbox's **Triggers** button. Make the trigger
+- **Attach** a trigger from the sandbox's **Settings > Triggers**. Make the trigger
   on the Triggers page first and leave it attached to nothing. A trigger runs one
   workflow **or** one sandbox, never both.
 - **It runs on development workers only**, with your development values: a

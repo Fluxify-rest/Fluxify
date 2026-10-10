@@ -1,7 +1,7 @@
 import { Button, toast } from "@fluxify/components";
 import { createFileRoute, isRedirect, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { TbActivity, TbArrowLeft, TbBolt, TbSettings } from "react-icons/tb";
+import { TbActivity, TbArrowLeft, TbSettings } from "react-icons/tb";
 import z from "zod";
 import { CanvasWorkbench } from "@/components/canvas";
 import { RecordingsModal } from "@/components/recordings/ExecutionRecordings";
@@ -9,7 +9,6 @@ import { DevWorkerBanner } from "@/components/sandboxes/DevWorkerBanner";
 import { SandboxPlayground } from "@/components/sandboxes/SandboxPlayground";
 import { SandboxRunButton, SandboxRunModal } from "@/components/sandboxes/SandboxRunModal";
 import { SandboxSettingsModal } from "@/components/sandboxes/SandboxSettingsModal";
-import { SandboxTriggersModal } from "@/components/sandboxes/SandboxTriggersModal";
 import { createRouteHead, usePageTitle } from "@/lib/seo";
 import { useProjectPackageTypes } from "@/query/projectPackagesQuery";
 import { sandboxesQuery } from "@/query/sandboxesQuery";
@@ -56,7 +55,6 @@ function SandboxCanvasPage() {
 
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [runOpen, setRunOpen] = useState(false);
-	const [triggersOpen, setTriggersOpen] = useState(false);
 	const [runsOpen, setRunsOpen] = useState(false);
 	const [focusRun, setFocusRun] = useState<string | undefined>();
 	const name = sandbox?.name ?? "Sandbox";
@@ -117,9 +115,6 @@ function SandboxCanvasPage() {
 							online={online}
 							onPress={() => setRunOpen(true)}
 						/>
-						<Button variant="outline" onPress={() => setTriggersOpen(true)}>
-							<TbBolt size={16} /> Triggers
-						</Button>
 						<Button variant="outline" onPress={() => setSettingsOpen(true)}>
 							<TbSettings size={16} /> Settings
 						</Button>
@@ -131,17 +126,9 @@ function SandboxCanvasPage() {
 				<SandboxSettingsModal
 					projectId={projectId}
 					sandboxId={sandboxId}
+					readOnly={!canEdit}
 					isOpen={settingsOpen}
 					onOpenChange={setSettingsOpen}
-				/>
-			)}
-			{triggersOpen && (
-				<SandboxTriggersModal
-					projectId={projectId}
-					sandboxId={sandboxId}
-					readOnly={!canEdit}
-					isOpen={triggersOpen}
-					onOpenChange={setTriggersOpen}
 				/>
 			)}
 			{runOpen && (
