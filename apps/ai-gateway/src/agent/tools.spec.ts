@@ -59,6 +59,20 @@ describe("agent tools", () => {
 		]);
 	});
 
+	it("replaces a projectId the model sends with the run's project", async () => {
+		const other = "019a0000-0000-7000-8000-0000000000ff";
+		const { tools, calls } = setup(() => ({ data: [], blocks: [], edges: [] }));
+		await exec(tools.list_sandboxes, { projectId: other });
+		await exec(tools.get_canvas, { target: { kind: "sandbox", id: "s1", projectId: other } });
+		expect(calls.map((c) => c.path.split("?")[0])).toEqual([
+			`/v1/projects/${P}/sandboxes`,
+			`/v1/projects/${P}/sandboxes/s1/canvas-items`,
+		]);
+		// optional for the model: it may leave it out
+		const field = (tools.list_sandboxes.inputSchema as any).shape.projectId;
+		expect(field.safeParse(undefined).success).toBe(true);
+	});
+
 	it("list reads every type for the project in one call and keeps errors per type", async () => {
 		const { tools, calls } = setup((path) =>
 			path.includes("middlewares")

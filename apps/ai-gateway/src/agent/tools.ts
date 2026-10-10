@@ -21,6 +21,11 @@ const ALL: McpTool[] = [
 	...docsTools,
 ];
 
+const PROJECT_FIELD = z
+	.string()
+	.optional()
+	.describe("This chat's project. Leave it out: it is filled in for you");
+
 /** What `list` reads: each one only needs the project id. */
 export const LIST_TYPES = {
 	routes: "list_routes",
@@ -141,14 +146,27 @@ export function agentTools(
 		loaded.add(name);
 		return true;
 	};
-	const wrap = (t: McpTool): Tool =>
-		tool({
+	/**
+	 * The run's project is not the model's to pick: the field stays (descriptions
+	 * mention it) but is optional, and whatever it sends is replaced. A canvas
+	 * `target` carries one too, for a sandbox.
+	 */
+	const wrap = (t: McpTool): Tool => {
+		const own = "projectId" in t.input;
+		const shape = own ? { ...t.input, projectId: PROJECT_FIELD } : t.input;
+		const pin = (args: any) => ({
+			...args,
+			...(own && { projectId }),
+			...("target" in t.input && args.target && { target: { ...args.target, projectId } }),
+		});
+		return tool({
 			title: t.title,
 			description: t.description,
-			inputSchema: z.object(lenient(t.input)),
+			inputSchema: z.object(lenient(shape)),
 			execute: (args, { abortSignal }) =>
-				t.call(adminApi(fetcher, auth, t.role, abortSignal), args),
+				t.call(adminApi(fetcher, auth, t.role, abortSignal), pin(args)),
 		});
+	};
 	const tools: Record<string, Tool> = Object.fromEntries(
 		ALL.filter((t) => !COVERED.has(t.name)).map((t) => [t.name, wrap(t)]),
 	);
