@@ -9,8 +9,8 @@ export const DEBUG_TRACE_HEADER = "x-fluxify-debug-trace";
 export const MAX_DEBUG_TRACE_HEADER = 4_096;
 const MAX_OUTPUT = 240;
 const MAX_ERROR = 300;
-/** base64 spends 4 chars per 3 bytes; the rest is the `more` count */
-const BUDGET = Math.floor((MAX_DEBUG_TRACE_HEADER * 3) / 4) - 40;
+/** base64 spends 4 chars per 3 bytes; the rest is the run id and the `more` count */
+const BUDGET = Math.floor((MAX_DEBUG_TRACE_HEADER * 3) / 4) - 100;
 
 export type DebugTraceSpan = {
 	blockId: string;
@@ -24,6 +24,8 @@ export type DebugTraceSpan = {
 };
 
 export type DebugTrace = {
+	/** the run's recording id */
+	runId?: string;
 	spans: DebugTraceSpan[];
 	/** blocks that ran but did not fit */
 	more?: number;
@@ -48,7 +50,7 @@ function entry(span: TraceSpanRecord): DebugTraceSpan {
  * The route's own blocks in run order, as many as fit in the header. Blocks
  * inside a custom block are left out: their ids belong to another canvas.
  */
-export function encodeDebugTrace(spans: TraceSpanRecord[]) {
+export function encodeDebugTrace(spans: TraceSpanRecord[], runId?: string) {
 	const own = spans.filter((s) => s.parentSeq === undefined).sort((a, b) => a.seq - b.seq);
 	const kept: DebugTraceSpan[] = [];
 	let size = 0;
@@ -59,7 +61,7 @@ export function encodeDebugTrace(spans: TraceSpanRecord[]) {
 		kept.push(next);
 	}
 	const more = own.length - kept.length;
-	const trace: DebugTrace = { spans: kept, ...(more ? { more } : {}) };
+	const trace: DebugTrace = { ...(runId ? { runId } : {}), spans: kept, ...(more ? { more } : {}) };
 	return Buffer.from(JSON.stringify(trace)).toString("base64url");
 }
 

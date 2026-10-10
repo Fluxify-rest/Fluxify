@@ -9,7 +9,11 @@ export type EnvStack = {
 	creatorId: string;
 	/** the data Postgres behind each environment */
 	data: Record<"production" | "development", { port: number; password: string; database: string }>;
-	tokens: { creator: string; viewer: string };
+	/** `other` is a second creator in the same project */
+	tokens: { creator: string; viewer: string; other: string };
+	/** the admin's own Redis (valkey) */
+	redisPort: number;
+	nats: { servers: string; token: string };
 	/** a signed-in browser session: what the portal sends */
 	portalCookie: string;
 };
@@ -55,7 +59,7 @@ export async function stopEnvStack() {
 /** One admin API call as the creator's token, or as the portal's cookie. */
 export async function api(
 	stack: EnvStack,
-	as: "creator" | "viewer" | "portal",
+	as: "creator" | "viewer" | "other" | "portal",
 	path: string,
 	init: { method?: string; body?: unknown } = {},
 ) {

@@ -246,6 +246,7 @@ export async function listTriggers(
 			type: triggersEntity.type,
 			projectId: triggersEntity.projectId,
 			workflowId: triggersEntity.workflowId,
+			sandboxId: triggersEntity.sandboxId,
 			groupId: triggersEntity.groupId,
 			integrationId: triggersEntity.integrationId,
 			batchSize: triggersEntity.batchSize,

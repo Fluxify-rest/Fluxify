@@ -11,8 +11,7 @@ A "You need the X role" error means ask a project admin for that role. Do not re
 
 What things are:
 - Project: holds everything below. Start with list_projects; most tools need its id.
-- Route: an HTTP endpoint (method + path). Its canvas is a graph of blocks that starts at the
-  entrypoint block and ends at a response block.
+- Route: an HTTP endpoint (method + path). Its canvas is a graph of blocks that starts at the entrypoint block and ends at a response block.
 - Workflow: a background job with its own canvas. It has no URL; a trigger starts it.
 - Trigger: what starts a workflow, e.g. a cron schedule or messages from a queue.
 - Custom block: a reusable block with your own JavaScript and typed inputs. Its usage says where
@@ -22,6 +21,7 @@ What things are:
   secret value in a block.
 - Integration: a connection to a database, KV store, AI provider or queue. Blocks pick one by id.
 - Test suite: a saved request (route) or input (workflow) plus assertions.
+- Sandbox: your own private scratch canvas on development data. Try blocks there (e.g. DB Native to inspect a table) with call_sandbox or run_sandbox, without touching real routes.
 
 Building tips:
 - Call get_block_schemas with no input to see the built-in blocks, then with blockTypes for the

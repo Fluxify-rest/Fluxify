@@ -9,6 +9,7 @@ import { docsTools } from "./docsTools";
 import { MCP_INSTRUCTIONS } from "./instructions";
 import { projectTools } from "./projectTools";
 import { routeTools } from "./routeTools";
+import { sandboxTools } from "./sandboxTools";
 import { testSuiteTools } from "./testSuiteTools";
 import { lenient, readTools } from "./tools";
 import { writeTools } from "./writeTools";
@@ -62,6 +63,7 @@ export function createMcpServer(
 		...readTools,
 		...writeTools,
 		...routeTools,
+		...sandboxTools,
 		...canvasTools,
 		...projectTools,
 		...testSuiteTools,

@@ -59,6 +59,8 @@ export const callResultSchema = z.object({
 	headers: z.record(z.string(), z.string()).optional(),
 	/** the route alone, as the caller waited for it */
 	durationMs: z.number().int().optional(),
+	/** with `debug`: the run's recording id, when the run is recorded */
+	runId: z.string().optional(),
 	error: z.string().optional(),
 	/** with `debug`: why the run failed, when it did */
 	debugError: debugErrorSchema.optional(),
@@ -109,15 +111,36 @@ export async function callRoute(
 	const url = new URL(fillPath(route.path!, input.params), base);
 	for (const [k, v] of Object.entries(input.query ?? {})) url.searchParams.set(k, v);
 
+	return sendCall(url, route.method!, input, {
+		target: { projectId: route.projectId!, id },
+		timeoutSeconds: route.timeoutSeconds,
+	});
+}
+
+/**
+ * One request to a worker, as an admin debug call: with `debug`, a token
+ * signed here asks the worker for the run's real error and a short trace.
+ * Shared by routes and sandboxes (#735); `headers` are added last, so a caller
+ * cannot override them.
+ */
+export async function sendCall(
+	url: URL,
+	method: string,
+	input: z.infer<typeof callBodySchema>,
+	options: {
+		target: { projectId: string; id: string };
+		timeoutSeconds: number;
+		headers?: Record<string, string>;
+	},
+): Promise<z.infer<typeof callResultSchema>> {
 	const headers = new Headers(input.headers);
 	// the caller's own header is never trusted: only a token signed here counts
 	headers.delete(DEBUG_TOKEN_HEADER);
 	const debugKey = input.debug ? routeDebugKey(getEnv("MASTER_ENCRYPTION_KEY")) : "";
-	if (debugKey) {
-		headers.set(DEBUG_TOKEN_HEADER, signDebugToken(debugKey, { projectId: route.projectId!, id }));
-	}
+	if (debugKey) headers.set(DEBUG_TOKEN_HEADER, signDebugToken(debugKey, options.target));
+	for (const [name, value] of Object.entries(options.headers ?? {})) headers.set(name, value);
 	let body: string | undefined;
-	if (input.body !== undefined && route.method !== "GET") {
+	if (input.body !== undefined && method !== "GET") {
 		body = typeof input.body === "string" ? input.body : JSON.stringify(input.body);
 		if (!headers.has("content-type") && typeof input.body !== "string")
 			headers.set("content-type", "application/json");
@@ -126,11 +149,11 @@ export async function callRoute(
 	const startedAt = performance.now();
 	try {
 		const res = await fetchRoute(url, {
-			method: route.method!,
+			method,
 			headers,
 			body,
 			redirect: "manual",
-			signal: AbortSignal.timeout((route.timeoutSeconds + 5) * 1000),
+			signal: AbortSignal.timeout((options.timeoutSeconds + 5) * 1000),
 		});
 		const contentType = res.headers.get("content-type");
 		const text = await res.text();
@@ -141,15 +164,18 @@ export async function callRoute(
 			} catch {}
 		}
 		const debugError = debugKey ? decodeDebugError(res.headers.get(DEBUG_ERROR_HEADER)) : undefined;
-		const debugTrace = debugKey ? decodeDebugTrace(res.headers.get(DEBUG_TRACE_HEADER)) : undefined;
+		const trace = debugKey ? decodeDebugTrace(res.headers.get(DEBUG_TRACE_HEADER)) : undefined;
 		return {
 			status: res.status,
 			contentType,
 			body: parsed,
 			headers: Object.fromEntries(res.headers),
 			durationMs: Math.round(performance.now() - startedAt),
+			...(trace?.runId && { runId: trace.runId }),
 			...(debugError && { debugError }),
-			...(debugTrace && { debugTrace }),
+			...(trace && {
+				debugTrace: { spans: trace.spans, ...(trace.more ? { more: trace.more } : {}) },
+			}),
 		};
 	} catch (error) {
 		return {

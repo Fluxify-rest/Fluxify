@@ -66,13 +66,20 @@ export function suiteResult(s: any) {
 	};
 }
 
-const kind = z.enum(["route", "workflow"]).describe("Whether targetId is a route or a workflow");
+const kind = z
+	.enum(["route", "workflow", "sandbox"])
+	.describe("Whether targetId is a route, a workflow or one of your sandboxes");
 const targetId = z
 	.string()
-	.describe("The route or workflow id, from list_routes or list_workflows");
-const recordings = (a: { projectId: string; kind: string; targetId: string }) =>
-	`/v1/${a.projectId}/recordings/${a.kind}/${a.targetId}/runs`;
-const RECORDING_NOTE = `Runs exist only while the route or workflow has recordExecution on (save_route, save_workflow), and for every test run. Recorded data is kept as-is, so it can hold headers, bodies and secrets. To debug and fix: read_doc ${DEBUG_RECIPE}.`;
+	.describe(
+		"The route, workflow or sandbox id, from list_routes, list_workflows or list_sandboxes",
+	);
+type RunTarget = { projectId: string; kind: "route" | "workflow" | "sandbox"; targetId: string };
+const recordings = (a: RunTarget) =>
+	a.kind === "sandbox"
+		? `/v1/projects/${a.projectId}/sandboxes/${a.targetId}/runs`
+		: `/v1/${a.projectId}/recordings/${a.kind}/${a.targetId}/runs`;
+const RECORDING_NOTE = `Runs exist only while the route or workflow has recordExecution on (save_route, save_workflow), and for every test run; a sandbox records every run. Recorded data is kept as-is, so it can hold headers, bodies and secrets. To debug and fix: read_doc ${DEBUG_RECIPE}.`;
 
 /** A span without its payloads: enough to find the block that failed. */
 const shortSpan = ({ input: _i, output: _o, metadata, error, ...span }: any) => ({
@@ -139,7 +146,7 @@ export const projectTools: McpTool[] = [
 	{
 		name: "list_recordings",
 		title: "List recordings",
-		description: `A route's or workflow's recorded runs, newest first: outcome, status code, timing and span count. ${RECORDING_NOTE} Read one run with get_recording.`,
+		description: `A route's, workflow's or sandbox's recorded runs, newest first: outcome, status code, timing and span count. ${RECORDING_NOTE} Read one run with get_recording.`,
 		role: "creator",
 		input: {
 			projectId,
@@ -200,7 +207,7 @@ export const projectTools: McpTool[] = [
 			const run = await get(`${recordings(a)}/${a.runId}`);
 			// spans only carry the block's uuid: the canvas knows its key. The agent works by
 			// key, so the uuid stays only for a block deleted since (stored spans are unchanged)
-			const keys = await blockKeys(get, a.kind, a.targetId);
+			const keys = await blockKeys(get, { kind: a.kind, id: a.targetId, projectId: a.projectId });
 			const keyed = ({ blockId, ...s }: any) =>
 				keys.has(blockId) ? { blockKey: keys.get(blockId), ...s } : { blockId, ...s };
 			if (a.spanSeq !== undefined) {

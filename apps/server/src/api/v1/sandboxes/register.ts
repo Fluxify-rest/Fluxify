@@ -20,7 +20,9 @@ import {
 	responseSchema as runsSchema,
 } from "../recordings/get-runs/dto";
 import getRecordedRuns from "../recordings/get-runs/service";
+import { callResultSchema } from "../routes/call/service";
 import { runAcceptedSchema, runSchema } from "../workflows/dto";
+import { callSandbox, sandboxCallSchema } from "./call";
 import {
 	createdSchema,
 	createSchema,
@@ -238,6 +240,33 @@ export default {
 			async (ctx) => {
 				const { projectId, id } = ctx.req.valid("param");
 				return ctx.json(await runSandbox(projectId, id, userOf(ctx), ctx.req.valid("json")));
+			},
+		);
+
+		router.post(
+			"/:id/call",
+			describeRoute(
+				describe(
+					"call-sandbox",
+					"Sends one request to the sandbox on a development worker, with the project's development token added here. With debug, a failed run also returns its real error, a short trace and the run id",
+					{
+						...json(callResultSchema, "The sandbox's answer, or why it could not be reached"),
+						409: {
+							description: "No development worker is running",
+							content: { "application/json": { schema: resolver(errorSchema) } },
+						},
+					},
+				),
+			),
+			creator,
+			validator("param", idParamSchema, zodErrorCallbackParser),
+			validator("json", sandboxCallSchema, zodErrorCallbackParser),
+			async (ctx) => {
+				const { projectId, id } = ctx.req.valid("param");
+				const origin = new URL(ctx.req.url).origin;
+				return ctx.json(
+					await callSandbox(projectId, id, userOf(ctx), ctx.req.valid("json"), origin),
+				);
 			},
 		);
 

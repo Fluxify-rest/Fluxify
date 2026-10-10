@@ -279,7 +279,7 @@ function addDebugError(headers: Headers, error: unknown) {
 /** the blocks that ran, for the admin's debug call only (#704) */
 function addDebugTrace(headers: Headers, run: TraceRunPayload) {
 	try {
-		headers.set(DEBUG_TRACE_HEADER, encodeDebugTrace(run.spans));
+		headers.set(DEBUG_TRACE_HEADER, encodeDebugTrace(run.spans, run.runId));
 	} catch {}
 }
 

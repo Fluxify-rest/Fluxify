@@ -18,10 +18,10 @@ import { useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Section } from "@/components/common/Section";
 import { RecordingSwitch, useRetentionNote } from "@/components/recordings/RecordingControls";
+import { AttachedTriggers } from "@/components/triggers/AttachedTriggers";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { workflowsQuery } from "@/query/workflowsQuery";
 import type { Workflow } from "@/services/workflows";
-import { WorkflowTriggersTab } from "./WorkflowTriggersTab";
 
 /**
  * Everything editable about a workflow, reachable from its canvas — the same
@@ -203,8 +203,8 @@ function WorkflowSettingsForm({
 					</Tabs.Panel>
 
 					<Tabs.Panel id="triggers" className="min-h-0 flex-1 overflow-y-auto p-5">
-						<WorkflowTriggersTab
-							workflowId={workflow.id}
+						<AttachedTriggers
+							target={{ kind: "workflow", id: workflow.id }}
 							projectId={workflow.projectId}
 							readOnly={readOnly}
 						/>

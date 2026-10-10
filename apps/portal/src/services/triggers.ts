@@ -20,6 +20,7 @@ const baseUrl = "/v1/triggers";
 export type ListTriggersQuery = {
 	projectId?: string;
 	workflowId?: string;
+	sandboxId?: string;
 	groupId?: string;
 	page?: number;
 	perPage?: number;
@@ -41,7 +42,7 @@ export const triggersService = {
 			page: String(query.page ?? 1),
 			perPage: String(query.perPage ?? 50),
 		});
-		for (const key of ["projectId", "workflowId", "groupId", "search"] as const) {
+		for (const key of ["projectId", "workflowId", "sandboxId", "groupId", "search"] as const) {
 			if (query[key]) params.set(key, query[key] as string);
 		}
 		if (query.active !== undefined) params.set("active", String(query.active));

@@ -189,6 +189,10 @@ describe("tasks", () => {
 	it("--task also finds the tasks in tasks2", () => {
 		expect(pickTasks("greeting-expression").map((t) => t.id)).toEqual(["greeting-expression"]);
 		expect(pickTasks("broken-sql")[0]?.needsEnv).toEqual(["EVAL_POSTGRES_URL"]);
+		expect(pickTasks("sandbox-call")[0]?.checks.map((c) => c.name)).toEqual([
+			"a sandbox answers POST /add with the sum",
+			"made no route",
+		]);
 	});
 
 	it("the compaction task gets a small window and wants both exact messages asserted", async () => {
@@ -203,6 +207,16 @@ describe("tasks", () => {
 		expect((await asserts.run(ctxWith(suite(both)))).pass).toBe(true);
 		const weak = '[{"propertyPath":"success","expectedValue":"false"}]';
 		expect(await asserts.run(ctxWith(suite(weak)))).toMatchObject({ pass: false });
+	});
+
+	it("the sandbox task passes on a sandbox that adds, and fails without one or with a route", async () => {
+		const [adds, noRoute] = pickTasks("sandbox-call")[0].checks;
+		const world = (sum: number, sandboxes = [{ id: "s1", name: "add" }]) => (name: string) =>
+			name === "list_sandboxes" ? sandboxes : name === "list_routes" ? { items: [] } : { status: 200, body: { sum } };
+		expect((await adds.run(ctxWith(world(5)))).pass).toBe(true);
+		expect((await adds.run(ctxWith(world(4)))).pass).toBe(false);
+		expect((await adds.run(ctxWith(world(5, [])))).message).toBe("no sandbox");
+		expect((await noRoute.run(ctxWith(() => ({ items: [{ id: "r1" }] })))).pass).toBe(false);
 	});
 
 	it("--task picks in suite order and refuses unknown ids", () => {

@@ -18,34 +18,59 @@ import { showErrorNotification } from "@/lib/errorNotifier";
 import { triggersQuery } from "@/query/triggersQuery";
 import type { TriggerListItem } from "@/services/triggers";
 
+/** What the triggers start: a workflow, or one of the user's own sandboxes (#735). */
+export type TriggerTarget = { kind: "workflow" | "sandbox"; id: string };
+
+const WORDS = {
+	workflow: {
+		description:
+			"What starts this workflow. Each trigger starts one workflow, so only unattached triggers can be added here.",
+		empty: "Nothing starts this workflow except a manual run or the Trigger Workflow block.",
+		detach: "starting this workflow",
+	},
+	sandbox: {
+		description:
+			"What runs this sandbox, on a development worker with development values. Only unattached triggers can be added here; a schedule cannot run a sandbox.",
+		empty: "Nothing runs this sandbox except Run and the playground.",
+		detach: "running this sandbox",
+	},
+};
+
 /**
- * The triggers attached to one workflow.
+ * The triggers attached to one workflow or sandbox.
  *
- * This tab attaches and detaches; it does not create. A trigger starts one
- * workflow, so only triggers attached to nothing are offered here.
+ * This attaches and detaches; it does not create. A trigger starts one
+ * workflow or sandbox, so only triggers attached to nothing are offered here.
  */
-export function WorkflowTriggersTab({
-	workflowId,
+export function AttachedTriggers({
+	target,
 	projectId,
 	readOnly = false,
 }: {
-	workflowId: string;
+	target: TriggerTarget;
 	projectId: string;
 	readOnly?: boolean;
 }) {
-	const attached = triggersQuery.getAll.useQuery({ projectId, workflowId });
+	const words = WORDS[target.kind];
+	const filter = target.kind === "sandbox" ? { sandboxId: target.id } : { workflowId: target.id };
+	const attached = triggersQuery.getAll.useQuery({ projectId, ...filter });
 	// Everything in the project, to offer the triggers attached to nothing.
 	const all = triggersQuery.getAll.useQuery({ projectId, perPage: 50 });
-	const attach = triggersQuery.attach.mutation();
+	const attach = useLink(target);
 
 	const triggers = attached.data?.data ?? [];
-	const available = (all.data?.data ?? []).filter((trigger) => !trigger.workflowId);
+	const available = (all.data?.data ?? []).filter(
+		(trigger) =>
+			!trigger.workflowId &&
+			!trigger.sandboxId &&
+			(target.kind === "workflow" || trigger.type !== "schedule"),
+	);
 	const [picked, setPicked] = useState("");
 
 	function attachPicked() {
 		if (!picked) return;
 		attach.mutate(
-			{ id: picked, workflowId },
+			{ id: picked, linked: true },
 			{
 				onSuccess: () => {
 					toast.success("Trigger attached");
@@ -57,10 +82,7 @@ export function WorkflowTriggersTab({
 	}
 
 	return (
-		<Section
-			title="Triggers"
-			description="What starts this workflow. Each trigger starts one workflow, so only unattached triggers can be added here."
-		>
+		<Section title="Triggers" description={words.description}>
 			{attached.isLoading ? (
 				<div className="flex justify-center py-8">
 					<Spinner />
@@ -69,19 +91,12 @@ export function WorkflowTriggersTab({
 				<div className="flex flex-col items-center rounded-lg border border-dashed border-border px-4 py-10 text-center">
 					<TbBolt size={26} className="mb-2 text-muted" />
 					<p className="text-sm font-medium text-foreground">No triggers attached</p>
-					<p className="mt-1 text-xs text-muted">
-						Nothing starts this workflow except a manual run or the Trigger Workflow block.
-					</p>
+					<p className="mt-1 text-xs text-muted">{words.empty}</p>
 				</div>
 			) : (
 				<div className="flex flex-col gap-2">
 					{triggers.map((trigger) => (
-						<TriggerRow
-							key={trigger.id}
-							trigger={trigger}
-							workflowId={workflowId}
-							readOnly={readOnly}
-						/>
+						<TriggerRow key={trigger.id} trigger={trigger} target={target} readOnly={readOnly} />
 					))}
 				</div>
 			)}
@@ -103,7 +118,7 @@ export function WorkflowTriggersTab({
 						</Select.Trigger>
 						<Description>
 							{available.length === 0
-								? "Every trigger in this project already starts a workflow."
+								? "Every trigger in this project is already attached."
 								: "Triggers are made on the Triggers page."}
 						</Description>
 						<Select.Popover>
@@ -149,17 +164,38 @@ export function WorkflowTriggersTab({
 	);
 }
 
+/**
+ * Attaching or detaching. A workflow has its own endpoints; a sandbox is a
+ * field on the trigger, so its link is a patch.
+ */
+function useLink(target: TriggerTarget) {
+	const attach = triggersQuery.attach.mutation();
+	const detach = triggersQuery.detach.mutation();
+	const update = triggersQuery.update.mutation();
+	type Link = { id: string; linked: boolean };
+	type Callbacks = { onSuccess: () => void; onError: (error: unknown) => void };
+	return {
+		isPending: attach.isPending || detach.isPending || update.isPending,
+		mutate({ id, linked }: Link, callbacks: Callbacks) {
+			if (target.kind === "sandbox")
+				return update.mutate({ id, body: { sandboxId: linked ? target.id : null } }, callbacks);
+			const link = linked ? attach : detach;
+			link.mutate({ id, workflowId: target.id }, callbacks);
+		},
+	};
+}
+
 function TriggerRow({
 	trigger,
-	workflowId,
+	target,
 	readOnly,
 }: {
 	trigger: TriggerListItem;
-	workflowId: string;
+	target: TriggerTarget;
 	readOnly: boolean;
 }) {
 	const update = triggersQuery.update.mutation();
-	const detach = triggersQuery.detach.mutation();
+	const detach = useLink(target);
 	const [confirming, setConfirming] = useState(false);
 
 	return (
@@ -209,7 +245,7 @@ function TriggerRow({
 				pending={detach.isPending}
 				onConfirm={() =>
 					detach.mutate(
-						{ id: trigger.id, workflowId },
+						{ id: trigger.id, linked: false },
 						{
 							onSuccess: () => {
 								toast.success("Trigger detached");
@@ -220,8 +256,8 @@ function TriggerRow({
 					)
 				}
 			>
-				Stop <b className="text-foreground">{trigger.name}</b> starting this workflow? The trigger
-				itself stays on the Triggers page, idle until it is attached again.
+				Stop <b className="text-foreground">{trigger.name}</b> {WORDS[target.kind].detach}? The
+				trigger itself stays on the Triggers page, idle until it is attached again.
 			</ConfirmDialog>
 		</div>
 	);

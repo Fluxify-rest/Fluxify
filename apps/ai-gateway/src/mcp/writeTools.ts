@@ -61,7 +61,7 @@ export const writeTools: McpTool[] = [
 		name: "save_trigger",
 		title: "Save trigger",
 		description:
-			"Create or update a trigger. To create pass projectId, name and type ('internal' is started by workflows, 'schedule' needs schedule: '@every 5m', '@daily' or six-field cron with seconds first; queue types need integrationId and source). On update pass triggerId and only what changes; type and project cannot change. workflowId null detaches the workflow.",
+			"Create or update a trigger. To create pass projectId, name and type ('internal' is started by workflows, 'schedule' needs schedule: '@every 5m', '@daily' or six-field cron with seconds first; queue types need integrationId and source). On update pass triggerId and only what changes; type and project cannot change. workflowId null detaches the workflow. sandboxId runs one of your sandboxes instead of a workflow, on a development worker (not with 'schedule'); null detaches it.",
 		role: "creator",
 		annotations: SAVE,
 		input: {

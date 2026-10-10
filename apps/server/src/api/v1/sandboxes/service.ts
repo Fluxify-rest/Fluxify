@@ -1,19 +1,23 @@
 import type { z } from "zod";
-import { type DbTransactionType, db } from "../../../db";
+import { db } from "../../../db";
+import { deleteArtifactEverywhere } from "../../../db/natsKv";
 import { CHAN_ON_SANDBOX_CHANGE, publishMessage } from "../../../db/redis";
 import { ConflictError } from "../../../errors/conflictError";
 import { NotFoundError } from "../../../errors/notFoundError";
 import { dropSandbox } from "../../../modules/compiler/sandbox";
+import { triggerKey } from "../../../modules/compiler/subjects";
 import { devWorkerOnline } from "../../../modules/orchestrator/status";
 import { fireInternalTrigger } from "../../../modules/triggers/publisher";
+import { assertOwnSandbox } from "../triggers/sandboxes";
 import type { runAcceptedSchema, runSchema } from "../workflows/dto";
 import { projectExists, seedDefaultBlocks } from "../workflows/repository";
 import type { createSchema, patchSchema, sandboxSchema } from "./dto";
 import {
 	deleteSandboxRow,
-	findSandbox,
+	type findSandbox,
 	insertSandbox,
 	listSandboxes,
+	sandboxTriggerIds,
 	updateSandboxRow,
 } from "./repository";
 
@@ -27,18 +31,7 @@ import {
 type Sandbox = NonNullable<Awaited<ReturnType<typeof findSandbox>>>;
 
 /** Loads a sandbox the caller owns in this project, or reports it as missing. */
-export async function mustOwn(
-	projectId: string,
-	id: string,
-	userId: string,
-	tx?: DbTransactionType,
-) {
-	const sandbox = await findSandbox(id, tx);
-	if (!sandbox || sandbox.projectId !== projectId || sandbox.userId !== userId) {
-		throw new NotFoundError("Sandbox not found");
-	}
-	return sandbox;
-}
+export const mustOwn = assertOwnSandbox;
 
 export async function createSandbox(
 	projectId: string,
@@ -94,13 +87,20 @@ export async function updateSandbox(
 	return present(updated);
 }
 
-/** Blocks, edges and recordings go with the row; both development artifacts are dropped here. */
+/**
+ * Blocks, edges, triggers and recordings go with the row; both development
+ * artifacts and every trigger's are dropped here, so its consumers stop.
+ */
 export async function deleteSandbox(projectId: string, id: string, userId: string) {
-	await db.transaction(async (tx) => {
+	const triggerIds = await db.transaction(async (tx) => {
 		await mustOwn(projectId, id, userId, tx);
+		const triggers = await sandboxTriggerIds(id, tx);
 		await deleteSandboxRow(id, tx);
+		return triggers;
 	});
 	await dropSandbox(projectId, id);
+	for (const triggerId of triggerIds)
+		await deleteArtifactEverywhere(triggerKey(projectId, triggerId));
 	return { id };
 }
 

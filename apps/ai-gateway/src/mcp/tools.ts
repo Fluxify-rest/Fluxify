@@ -147,7 +147,7 @@ export const readTools: McpTool[] = [
 			resourceId: z
 				.string()
 				.optional()
-				.describe("Only logs about this route, workflow or trigger id"),
+				.describe("Only logs about this route, workflow, trigger or sandbox id"),
 			limit: z.number().int().min(1).max(200).optional().describe("How many, 50 by default"),
 		},
 		call: async ({ get }, a) => {
@@ -266,6 +266,7 @@ export const readTools: McpTool[] = [
 		input: {
 			projectId,
 			workflowId: z.string().optional().describe("Only triggers that start this workflow"),
+			sandboxId: z.string().optional().describe("Only triggers that run this sandbox of yours"),
 			page,
 			search,
 		},
@@ -274,11 +275,12 @@ export const readTools: McpTool[] = [
 				await get("/v1/triggers/list", {
 					projectId: a.projectId,
 					workflowId: a.workflowId,
+					sandboxId: a.sandboxId,
 					page: a.page,
 					perPage: PER_PAGE,
 					search: a.search,
 				}),
-				["id", "name", "type", "active", "workflow", "disabledReason"],
+				["id", "name", "type", "active", "workflow", "sandboxId", "disabledReason"],
 			),
 	},
 	{

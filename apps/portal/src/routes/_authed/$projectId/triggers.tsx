@@ -171,6 +171,9 @@ function TriggersPage() {
 									<Table.Cell>
 										{trigger.workflow ? (
 											<span className="line-clamp-1 text-muted">{trigger.workflow.name}</span>
+										) : trigger.sandboxId ? (
+											// only its owner sees a sandbox's trigger at all
+											<span className="text-muted">Your sandbox</span>
 										) : (
 											// An active trigger attached to nothing is the one state
 											// that looks fine and does nothing at all.
