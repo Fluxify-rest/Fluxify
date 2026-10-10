@@ -12,8 +12,15 @@ export type RouteTrace = BlockTrace & {
  */
 export type TraceSinks = { tracingEnabled: boolean; recordExecution: boolean };
 
-export const wantsSpans = (target: { tracingEnabled?: boolean; recordExecution?: boolean }) =>
-	Boolean(target.tracingEnabled || target.recordExecution);
+/**
+ * `debugSpans` is an ephemeral run (#741): nothing is exported or stored, but
+ * the admin's debug call still gets the run's short trace back.
+ */
+export const wantsSpans = (target: {
+	tracingEnabled?: boolean;
+	recordExecution?: boolean;
+	debugSpans?: boolean;
+}) => Boolean(target.tracingEnabled || target.recordExecution || target.debugSpans);
 
 export type RouteTraceFactory = {
 	start(
@@ -31,6 +38,7 @@ export type RouteTraceFactory = {
 type TraceableRoute = {
 	tracingEnabled?: boolean;
 	recordExecution?: boolean;
+	debugSpans?: boolean;
 	id: string;
 	projectId?: string;
 	routeVersion?: string;

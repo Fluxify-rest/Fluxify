@@ -107,3 +107,57 @@ describe("sandbox tools", () => {
 		expect(MCP_INSTRUCTIONS).toContain("- Sandbox:");
 	});
 });
+
+describe("run_blocks", () => {
+	it("posts the blocks to the ephemeral endpoint with debug on, and names things by ref", async () => {
+		const { api, calls } = fakeApi(() => ({
+			id: "eph_1",
+			status: 500,
+			body: "x".repeat(20_000),
+			durationMs: 12,
+			debugError: { block: { id: "calc", type: "jsrunner" }, message: "boom", stack: "at calc" },
+			debugTrace: {
+				spans: [{ blockId: "calc", blockType: "jsrunner", outcome: "failure", ms: 2, error: "boom" }],
+			},
+		}));
+		const result: any = await run(
+			"run_blocks",
+			{
+				projectId: P,
+				blocks: [{ ref: "calc", type: "jsrunner", data: { value: "throw new Error('boom')" } }],
+				edges: [],
+				input: { n: 1 },
+				timeoutSeconds: 5,
+			},
+			api,
+		);
+		expect(calls).toEqual([
+			{
+				method: "POST",
+				path: `/v1/projects/${P}/ephemeral-runs`,
+				body: {
+					blocks: [{ ref: "calc", type: "jsrunner", data: { value: "throw new Error('boom')" } }],
+					edges: [],
+					body: { n: 1 },
+					timeoutSeconds: 5,
+				},
+			},
+		]);
+		expect(result).toMatchObject({
+			id: "eph_1",
+			status: 500,
+			error: { block: { key: "calc", type: "jsrunner" }, message: "boom", stack: "at calc" },
+			trace: ["calc (jsrunner) ERROR 2ms: boom"],
+		});
+		expect(result.body).toContain("truncated");
+		expect(result.debugError).toBeUndefined();
+	});
+
+	it("is a creator's, runs user code for real, and is described as keeping nothing", () => {
+		const t = tool("run_blocks");
+		expect(t.role).toBe("creator");
+		expect(t.annotations).toMatchObject({ destructiveHint: true, openWorldHint: true });
+		expect(t.description).toContain("leave nothing behind");
+		expect(MCP_INSTRUCTIONS).toContain("run_blocks");
+	});
+});

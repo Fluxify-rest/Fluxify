@@ -131,6 +131,8 @@ export async function sendCall(
 		target: { projectId: string; id: string };
 		timeoutSeconds: number;
 		headers?: Record<string, string>;
+		/** gives up after this long instead of `timeoutSeconds` plus its slack */
+		abortAfterMs?: number;
 	},
 ): Promise<z.infer<typeof callResultSchema>> {
 	const headers = new Headers(input.headers);
@@ -153,7 +155,7 @@ export async function sendCall(
 			headers,
 			body,
 			redirect: "manual",
-			signal: AbortSignal.timeout((options.timeoutSeconds + 5) * 1000),
+			signal: AbortSignal.timeout(options.abortAfterMs ?? (options.timeoutSeconds + 5) * 1000),
 		});
 		const contentType = res.headers.get("content-type");
 		const text = await res.text();

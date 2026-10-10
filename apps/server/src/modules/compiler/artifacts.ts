@@ -41,6 +41,12 @@ export type RouteArtifact = {
 	 * at `/_sandbox/<id>/*` with any method, never through the route table.
 	 */
 	sandbox?: true;
+	/**
+	 * An ephemeral run (#741): a sandbox-shaped route that lives in the bucket for
+	 * one call. It records and exports nothing; the worker still builds spans so
+	 * the admin's debug call can answer with the trace.
+	 */
+	ephemeral?: true;
 };
 
 /**

@@ -39,7 +39,7 @@ Basics:
 - Keep notes true: after an edit, re-check every blockDescription and sticky note (yours or earlier ones) against the new edges, and fix any the edit made false in the same edit_canvas call.
 - Block names (blockName) are unique per canvas and say where the block sits ("200 OK: cached users", "200 OK: users from DB"). Rename a block when you clone it.
 - Say "no behaviour change" only after you call the rewired branch with input that takes it (call_route or a test suite), not just any 200.
-- search_docs when unsure. list_advanced_tools and load_tools give you deletes, members, packages, integrations and more.
+- To try a few blocks without saving anything, run_blocks does it in one call (an advanced tool). search_docs when unsure. list_advanced_tools and load_tools give you deletes, members, packages, integrations and more.
 
 Referring to resources: when you mention one that exists, write :ref[Label]{type=<type> id=<id>} instead of a bare name or path ("see :ref[GET /users]{type=route id=abc}", not "see the /users api"). The chat shows it as a link. Types: route, workflow, trigger, custom_block, middleware, integration, app_config, test_suite. Take the id from list, get or what a save returned; never invent one.
 
@@ -101,6 +101,8 @@ type Run = {
 	history: ModelMessage[];
 	limits: Limits;
 	mode: Mode;
+	/** The project's "Ask before ephemeral runs" (#741): run_blocks asks in every mode. */
+	askBeforeEphemeralRuns?: boolean;
 	/** Thinking level (`none` turns it off); sent only for models known to support it. */
 	effort?: Effort;
 	approve: Approve;
@@ -165,6 +167,7 @@ export function runAgent({
 	history,
 	limits,
 	mode,
+	askBeforeEphemeralRuns,
 	effort,
 	approve,
 	onLimit = async () => false,
@@ -306,7 +309,8 @@ export function runAgent({
 		},
 		toolApproval: async ({ toolCall: { toolCallId, toolName, input } }) => {
 			const del = isDelete(toolName);
-			if (!needsApproval(mode, toolName) || (!del && allowed.has(toolName))) return undefined;
+			if (!needsApproval(mode, toolName, askBeforeEphemeralRuns) || (!del && allowed.has(toolName)))
+				return undefined;
 			const call = { toolCallId, toolName, input };
 			const r = await Promise.race([approve({ ...call, isDelete: del }, abortSignal), stopped]);
 			if (!r.ok && r.defer) return "user-approval";

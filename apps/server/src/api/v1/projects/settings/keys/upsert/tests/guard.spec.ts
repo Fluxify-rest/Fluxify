@@ -40,3 +40,30 @@ describe("assertCanWriteKey", () => {
 		expect(() => assertCanWriteKey(user, acl("creator"), "p1", "settings.triggers.maxPayloadBytes")).not.toThrow();
 	});
 });
+
+describe("ephemeral run keys (#741)", () => {
+	const m = projectSettingsKeySchemaMap;
+	const ok = (k: keyof typeof m, v: string) => m[k].schema.safeParse(v).success;
+
+	it("default to 10 seconds and not asking", () => {
+		expect(m["settings.ai.ephemeralRunTimeoutSeconds"].defaultValue).toBe("10");
+		expect(m["settings.ai.askBeforeEphemeralRuns"].defaultValue).toBe("false");
+	});
+
+	it("keep the timeout inside 1-30 whole seconds", () => {
+		const key = "settings.ai.ephemeralRunTimeoutSeconds";
+		for (const bad of ["0", "31", "1.5", "-1", "abc"]) expect(ok(key, bad)).toBe(false);
+		for (const good of ["1", "10", "30"]) expect(ok(key, good)).toBe(true);
+	});
+
+	it("take only true or false for the ask setting", () => {
+		expect(ok("settings.ai.askBeforeEphemeralRuns", "true")).toBe(true);
+		expect(ok("settings.ai.askBeforeEphemeralRuns", "false")).toBe(true);
+		expect(ok("settings.ai.askBeforeEphemeralRuns", "yes")).toBe(false);
+	});
+
+	it("are a creator's to change, not only a project admin's", () => {
+		for (const key of ["settings.ai.ephemeralRunTimeoutSeconds", "settings.ai.askBeforeEphemeralRuns"])
+			expect(() => assertCanWriteKey(user, acl("creator"), "p1", key as never)).not.toThrow();
+	});
+});

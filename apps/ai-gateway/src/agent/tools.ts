@@ -98,13 +98,20 @@ export const titleOf = (name: string) =>
 /** Deletes ask in every mode and are never approved for the whole session. */
 export const isDelete = (name: string) => /^(delete|remove)_/.test(name);
 
+/** The one tool a project can make ask in every mode, auto included (#741). */
+export const EPHEMERAL_RUN_TOOL = "run_blocks";
+
 /**
  * The one ask rule. Deletes always ask; reads never do. Other calls ask in
  * manual (and plan, where they are not active anyway) but not in auto, so
  * call_route and run_test_suite run unasked in auto despite destructiveHint.
+ * `askBeforeEphemeral` is the project's "Ask before ephemeral runs" setting:
+ * run_blocks then asks in auto too.
  */
-export const needsApproval = (mode: Mode, name: string) =>
-	isDelete(name) || (!isRead(name) && mode !== "auto");
+export const needsApproval = (mode: Mode, name: string, askBeforeEphemeral = false) =>
+	isDelete(name) ||
+	(askBeforeEphemeral && name === EPHEMERAL_RUN_TOOL) ||
+	(!isRead(name) && mode !== "auto");
 
 /** Calls one MCP tool by name as the `auth` user, its input checked like the agent's. */
 export const mcpCall =

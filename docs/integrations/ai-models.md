@@ -43,6 +43,17 @@ Project settings → **AI configuration** holds the AI connection the agent uses
 | Max context length (tokens) | 128000 | 8000 to 2000000 | The model's context window. Set it to match your model. |
 | Token budget per run | 1000000 | 10000 and up | The agent stops and asks to continue after this many input plus output tokens. |
 
+### Ephemeral runs
+
+The same page has an **Ephemeral runs** section for the agent's `run_blocks` tool, which tries a few blocks in one call and keeps nothing. A creator can change both settings.
+
+| Setting | Default | Allowed | What it does |
+| :--- | :--- | :--- | :--- |
+| Run timeout (seconds) | 10 | 1 to 30 | How long one run may take. A call can ask for a different time inside the same range. |
+| Ask before ephemeral runs | Off | On or off | The agent waits for your approval before every run, in auto mode too. |
+
+See [Try blocks with an ephemeral run](/agents/recipes/ephemeral-run).
+
 A setting you have not changed uses its default. The offline agent CLI reads `AGENT_MAX_STEPS`, `AGENT_MAX_CONTEXT_TOKENS` and `AGENT_TOKEN_BUDGET` from the environment, and those win over the project values.
 
 ## Long conversations

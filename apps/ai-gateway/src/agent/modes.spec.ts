@@ -24,7 +24,7 @@ const text = (s: string) => [
 	{ type: "text-delta", id: "t", delta: s },
 	{ type: "text-end", id: "t" },
 ];
-const NAMES = ["save_route", "call_route", "get_canvas", "delete_route", "run_test_suite"];
+const NAMES = ["save_route", "call_route", "get_canvas", "delete_route", "run_test_suite", "run_blocks"];
 
 /**
  * One run: each entry of `steps` is the tools the model calls in that step,
@@ -34,7 +34,12 @@ async function run(
 	steps: string[][],
 	mode: Mode,
 	answer: (c: PendingCall) => Approval | Promise<Approval> = () => ({ ok: true }),
-	opts: { allowed?: Set<string>; signal?: AbortSignal; slowTool?: number } = {},
+	opts: {
+		allowed?: Set<string>;
+		signal?: AbortSignal;
+		slowTool?: number;
+		askBeforeEphemeralRuns?: boolean;
+	} = {},
 ) {
 	const asked: string[] = [];
 	const ran: string[] = [];
@@ -75,6 +80,7 @@ async function run(
 		history,
 		limits,
 		mode,
+		askBeforeEphemeralRuns: opts.askBeforeEphemeralRuns,
 		allowed: opts.allowed,
 		abortSignal: opts.signal,
 		approve: async (c) => {
@@ -99,6 +105,35 @@ describe("what asks", () => {
 		const r = await run([["save_route", "call_route", "run_test_suite", "delete_route"]], "auto");
 		expect(r.asked).toEqual(["delete_route"]);
 		expect(r.ran).toHaveLength(4);
+	});
+
+	it("run_blocks follows the project's ask setting: auto runs it unasked, unless the setting is on (#741)", async () => {
+		const off = await run([["run_blocks"]], "auto");
+		expect(off.asked).toEqual([]);
+		expect(off.ran).toEqual(["run_blocks"]);
+
+		const on = await run([["run_blocks"]], "auto", () => ({ ok: true }), {
+			askBeforeEphemeralRuns: true,
+		});
+		expect(on.asked).toEqual(["run_blocks"]);
+		expect(on.ran).toEqual(["run_blocks"]);
+	});
+
+	it("run_blocks asks in manual either way, and the setting changes no other tool", async () => {
+		const manual = await run([["run_blocks"]], "manual");
+		expect(manual.asked).toEqual(["run_blocks"]);
+
+		const others = await run([["save_route", "call_route"]], "auto", () => ({ ok: true }), {
+			askBeforeEphemeralRuns: true,
+		});
+		expect(others.asked).toEqual([]);
+	});
+
+	it("a rejected run_blocks does not run", async () => {
+		const r = await run([["run_blocks"]], "auto", () => ({ ok: false, reason: "not now" }), {
+			askBeforeEphemeralRuns: true,
+		});
+		expect(r.ran).toEqual([]);
 	});
 
 	it("'always' skips later prompts for that tool, never for a delete", async () => {

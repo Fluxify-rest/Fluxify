@@ -13,6 +13,10 @@ export type EnvStack = {
 	tokens: { creator: string; viewer: string; other: string };
 	/** the admin's own Redis (valkey) */
 	redisPort: number;
+	/** the admin's own Postgres */
+	adminDb: string;
+	/** the development worker's process, so a test can stop it */
+	devWorkerPid: number;
 	nats: { servers: string; token: string };
 	/** a signed-in browser session: what the portal sends */
 	portalCookie: string;

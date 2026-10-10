@@ -88,6 +88,21 @@ export const projectSettingsKeySchemaMap = {
 		defaultValue: "1000000",
 		dataType: "number",
 	},
+	/**
+	 * Ephemeral runs (#741): how long `run_blocks` waits for its one run. A call
+	 * can pass its own, clamped to the same 1–30 (30 is the route default).
+	 */
+	"settings.ai.ephemeralRunTimeoutSeconds": {
+		schema: z.coerce.number().int().min(1).max(30),
+		defaultValue: "10",
+		dataType: "number",
+	},
+	/** When on, the agent asks before every `run_blocks`, in auto mode too. */
+	"settings.ai.askBeforeEphemeralRuns": {
+		schema: z.enum(["true", "false"]),
+		defaultValue: "false",
+		dataType: "boolean",
+	},
 	"experimental.workerTimeouts.enabled": {
 		schema: z.enum(["true", "false"]),
 		defaultValue: "false",

@@ -152,6 +152,7 @@ request, runs your code or reaches the internet.
 | `delete_sandbox` | Delete one of your sandboxes | Creator |
 | `call_sandbox` | Send a request to your sandbox on a development worker (real) | Creator |
 | `run_sandbox` | Run your sandbox once as a workflow (real) | Creator |
+| `run_blocks` | Try a few blocks in one call on a development worker and keep nothing: no sandbox, no recording (real). See [Try blocks with an ephemeral run](../agents/recipes/ephemeral-run.md) | Creator |
 | `run_test_suite` | Run a test suite (real) | Creator |
 | `add_member` | Add a user to a project | Project Admin |
 | `update_member_role` | Change a member's role | Project Admin |
@@ -163,7 +164,7 @@ request, runs your code or reaches the internet.
 ## Safety
 
 ::: warning Runs are real
-`call_route`, `call_sandbox`, `run_sandbox` and `run_test_suite` run your code for real. If a route writes to
+`call_route`, `call_sandbox`, `run_sandbox`, `run_blocks` and `run_test_suite` run your code for real. If a route writes to
 a database, sends an email or calls another API, that happens. Point agents at
 a test project when you can.
 :::

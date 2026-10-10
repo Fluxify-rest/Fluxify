@@ -13,7 +13,8 @@ import {
 	workflowsEntity,
 } from "../../db/schema";
 import { RECORDING_MAX_AGE_DAYS } from "../../lib/env";
-import { RUNTIME_LOG_TYPE, systemLog } from "../../lib/systemLogs";
+import { deleteExpiredEphemeralLogs, RUNTIME_LOG_TYPE, systemLog } from "../../lib/systemLogs";
+import { sweepEphemeralArtifacts } from "../compiler/ephemeralSweep";
 import { onSystemTick } from "../schedules/system";
 import { MAX_SPANS_PER_RUN } from "../telemetry/routeRecorder";
 import { RECORDINGS_CONSUMER, RECORDINGS_STREAM, RECORDINGS_STREAM_SPEC } from "./stream";
@@ -128,8 +129,12 @@ export async function startRecordingConsumer(): Promise<QueueConsumer[]> {
 	const retention = await onSystemTick("daily", "recording-retention", async () => {
 		await deleteExpiredRecordings();
 	});
+	// ephemeral runs (#741) delete their own artifact; this catches one a crash left behind
+	const sweep = await onSystemTick("daily", "ephemeral-artifact-sweep", async () => {
+		await sweepEphemeralArtifacts();
+	});
 	logger.info("[recordings] consumer listening", "RECORDINGS");
-	return [recordings, retention];
+	return [recordings, retention, sweep];
 }
 
 /**
@@ -294,9 +299,11 @@ export async function deleteExpiredRecordings(maxAgeDays = RECORDING_MAX_AGE_DAY
 		deleted += rows.length;
 		if (rows.length < RETENTION_BATCH) break;
 	}
-	if (deleted) {
+	// ephemeral runs (#741) record nothing, so their log rows age out here too
+	const ephemeral = await deleteExpiredEphemeralLogs(cutoff);
+	if (deleted || ephemeral) {
 		logger.info(
-			`[recordings] deleted ${deleted} run(s) older than ${maxAgeDays} days`,
+			`[recordings] deleted ${deleted} run(s) and ${ephemeral} ephemeral log(s) older than ${maxAgeDays} days`,
 			"RECORDINGS",
 		);
 	}
