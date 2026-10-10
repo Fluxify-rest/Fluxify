@@ -13,15 +13,25 @@ export const BASE = {
 
 const target = z
 	.object({
-		kind: z.enum(["route", "workflow", "custom_block"]),
-		id: z.string().describe("The route, workflow or custom block id"),
+		kind: z.enum(["route", "workflow", "custom_block", "sandbox"]),
+		id: z.string().describe("The route, workflow, custom block or sandbox id"),
+		projectId: z.string().optional().describe("The sandbox's project id; a sandbox needs it"),
 	})
 	.describe("Whose canvas. Middlewares have none: use save_middleware.");
 
 export type Target = z.infer<typeof target>;
 
-export const read = (get: AdminApi["get"], t: Target) =>
-	get(`${BASE[t.kind]}/${t.id}/canvas-items`);
+/**
+ * Where a canvas lives in the admin API. A sandbox's sits under its project,
+ * behind the owner check (#735); the internal canvas bus is never used for one.
+ */
+export function canvasPath(t: Target) {
+	if (t.kind !== "sandbox") return `${BASE[t.kind]}/${t.id}`;
+	if (!t.projectId) throw new Error("A sandbox target needs projectId.");
+	return `/v1/projects/${t.projectId}/sandboxes/${t.id}`;
+}
+
+export const read = (get: AdminApi["get"], t: Target) => get(`${canvasPath(t)}/canvas-items`);
 
 const STALE = "Canvas changed since you read it. Read it again with get_canvas and redo the edit.";
 
@@ -33,7 +43,7 @@ export const canvasTools: McpTool[] = [
 		name: "get_canvas",
 		title: "Get canvas",
 		description: [
-			"The blocks and edges of a route, workflow or custom block canvas, and its version. Pass the version to edit_canvas.",
+			"The blocks and edges of a route, workflow, custom block or sandbox canvas, and its version. Pass the version to edit_canvas. A sandbox target also needs projectId.",
 			"Every block has a key like response_1 or db_insert_2 (its type and a number); use keys everywhere, edit_canvas takes them.",
 			'Edges read like "if_1.success → db_insert_1": from.handle → to. The handle is left out when the block has only one.',
 			"A block's note says why it is there (a workaround, a contract); a sticky note block's text is its note. Read notes before you change plumbing that looks pointless.",
@@ -88,7 +98,7 @@ export const canvasTools: McpTool[] = [
 			const validate = a.validate !== false;
 			if (checkOnly && !validate) return { version: a.version };
 			const query = `expectedVersion=${a.version}${checkOnly ? "&dryRun=true" : ""}`;
-			const path = `${BASE[(a.target as Target).kind]}/${a.target.id}/save-canvas?${query}`;
+			const path = `${canvasPath(a.target as Target)}/save-canvas?${query}`;
 			const result = await send("PUT", path, changes).catch((error: Error) => {
 				throw error.message.includes("Canvas changed")
 					? new Error(STALE)

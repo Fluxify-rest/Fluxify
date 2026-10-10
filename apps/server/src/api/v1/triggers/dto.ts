@@ -149,6 +149,11 @@ export const createSchema = z
 		 * the Triggers page before its workflow exists is saved and idle, not broken.
 		 */
 		workflowId: z.uuidv7().optional(),
+		/**
+		 * Your sandbox this trigger runs instead of a workflow (#735), on a
+		 * development worker. Never together with `workflowId`.
+		 */
+		sandboxId: z.uuidv7().optional(),
 		/** Omitted means the project's default group, which always exists. */
 		groupId: z.uuidv7().optional(),
 		/** The connector's credentials. Never set for `internal`. */
@@ -160,7 +165,15 @@ export const createSchema = z
 		...scheduleSchema,
 		...connectorSchema,
 	})
-	.superRefine(assertScheduleShape);
+	.superRefine((data, ctx) => {
+		assertScheduleShape(data, ctx);
+		if (data.workflowId && data.sandboxId)
+			ctx.addIssue({
+				code: "custom",
+				path: ["sandboxId"],
+				message: "A trigger starts a workflow or a sandbox, not both",
+			});
+	});
 
 /**
  * Patch cannot reuse `createSchema.omit(...)` — the refinement above needs the
@@ -175,6 +188,8 @@ export const patchSchema = z
 		integrationId: z.uuidv7(),
 		/** Null detaches the workflow and idles the trigger. */
 		workflowId: z.uuidv7().nullable(),
+		/** Attaches your sandbox; null detaches it. */
+		sandboxId: z.uuidv7().nullable(),
 		payload: z.unknown(),
 		active: z.boolean(),
 		...batchSchema,
@@ -219,6 +234,8 @@ export const triggerSchema = z.object({
 	type: z.string(),
 	projectId: z.string(),
 	workflowId: z.string().nullable(),
+	/** the owner's sandbox it runs instead (#735); only its owner sees this trigger */
+	sandboxId: z.string().nullable(),
 	groupId: z.string(),
 	integrationId: z.string().nullable(),
 	batchSize: z.number().int(),
@@ -249,6 +266,7 @@ export const listQuerySchema = z
 	.extend({
 		projectId: z.uuidv7().optional(),
 		workflowId: z.uuidv7().optional(),
+		sandboxId: z.uuidv7().optional(),
 		groupId: z.uuidv7().optional(),
 		search: z.string().optional(),
 		active: z.enum(["true", "false"]).optional(),
@@ -258,6 +276,7 @@ export const listQuerySchema = z
 		perPage: q.perPage,
 		projectId: q.projectId,
 		workflowId: q.workflowId,
+		sandboxId: q.sandboxId,
 		groupId: q.groupId,
 		search: q.search,
 		active: q.active === undefined ? undefined : q.active === "true",

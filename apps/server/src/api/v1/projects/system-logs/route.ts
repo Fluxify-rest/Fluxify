@@ -55,10 +55,10 @@ export default function (app: HonoServer) {
 		requireProjectAccess("viewer", { source: "param", key: "id" }),
 		validator("query", systemLogsQuerySchema, zodErrorCallbackParser),
 		async (c) => {
-			const items = await listSystemLogs({
-				...c.req.valid("query"),
-				projectId: c.req.param("id")!,
-			});
+			const items = await listSystemLogs(
+				{ ...c.req.valid("query"), projectId: c.req.param("id")! },
+				(c.get("user") as { id?: string } | undefined)?.id ?? "",
+			);
 			return c.json({ items });
 		},
 	);

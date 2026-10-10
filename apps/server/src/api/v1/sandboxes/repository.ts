@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { type DbTransactionType, db } from "../../../db";
-import { sandboxesEntity } from "../../../db/schema";
+import { sandboxesEntity, triggersEntity } from "../../../db/schema";
 
 type SandboxInsert = typeof sandboxesEntity.$inferInsert;
 
@@ -52,6 +52,15 @@ export async function updateSandboxRow(
 		.where(eq(sandboxesEntity.id, id))
 		.returning(columns);
 	return row!;
+}
+
+/** The triggers that run a sandbox; their rows go with it, their artifacts do not. */
+export async function sandboxTriggerIds(sandboxId: string, tx?: DbTransactionType) {
+	const rows = await (tx ?? db)
+		.select({ id: triggersEntity.id })
+		.from(triggersEntity)
+		.where(eq(triggersEntity.sandboxId, sandboxId));
+	return rows.map((row) => row.id);
 }
 
 export async function deleteSandboxRow(id: string, tx?: DbTransactionType) {

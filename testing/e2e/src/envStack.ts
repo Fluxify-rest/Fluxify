@@ -81,7 +81,9 @@ const devData = await dataPostgres("fluxify-env-data-dev", "dev-secret");
 }
 await seed(devData.url, "devdata", "development");
 
-const s = await startAuthServer();
+// picked before the server loads: it reads DEV_WORKER_URL once, for call_sandbox (#735)
+const devPort = freePort();
+const s = await startAuthServer({ DEV_WORKER_URL: `http://127.0.0.1:${devPort}` });
 // what a real admin also runs (#735): it writes the runs workers publish, and
 // knows the custom blocks a canvas save may name
 const { startRecordingConsumer } = await import(
@@ -96,6 +98,8 @@ initializeCustomBlocksSubscription();
 const projectId = await createProject(s);
 const creator = await createUser(s, "creator", projectId);
 const viewer = await createUser(s, "viewer", projectId);
+// another creator in the same project, who must never see the first one's sandboxes
+const other = await createUser(s, "creator", projectId);
 
 async function apiKey(email: string) {
 	const cookie = await signIn(s, email);
@@ -106,8 +110,7 @@ async function apiKey(email: string) {
 
 const children: Array<ReturnType<typeof Bun.spawn>> = [];
 
-async function worker(env: "production" | "development") {
-	const port = freePort();
+async function worker(env: "production" | "development", port = freePort()) {
 	const healthPort = freePort();
 	const child = Bun.spawn(
 		["bun", join(import.meta.dir, "../../../apps/server/deployments/compiledWorker.ts")],
@@ -140,7 +143,7 @@ async function worker(env: "production" | "development") {
 }
 
 const production = await worker("production");
-const development = await worker("development");
+const development = await worker("development", devPort);
 
 // the admin API, reachable from the test process
 const server = Bun.serve({ port: 0, fetch: (request) => s.app.fetch(request) });
@@ -155,7 +158,14 @@ console.log(
 			production: { port: prodData.port, password: "prod-secret", database: "postgres" },
 			development: { port: devData.port, password: "dev-secret", database: "devdata" },
 		},
-		tokens: { creator: await apiKey(creator.email), viewer: await apiKey(viewer.email) },
+		tokens: {
+			creator: await apiKey(creator.email),
+			viewer: await apiKey(viewer.email),
+			other: await apiKey(other.email),
+		},
+		// the admin's own Redis and NATS, for a queue trigger and a look in the artifact buckets
+		redisPort: Number(process.env.REDIS_PORT),
+		nats: { servers: process.env.NATS_URL, token: process.env.NATS_TOKEN },
 		// a browser login, as the portal holds it
 		portalCookie: await signIn(s, creator.email),
 	})}`,

@@ -87,7 +87,8 @@ export default {
 				describe("get-triggers-list", "Lists triggers, newest edit first", json(listSchema)),
 			),
 			validator("query", listQuerySchema, zodErrorCallbackParser),
-			async (ctx) => ctx.json(await listAllTriggers(ctx.req.valid("query"), ctx.get("acl") || [])),
+			async (ctx) =>
+				ctx.json(await listAllTriggers(ctx.req.valid("query"), ctx.get("acl") || [], userId(ctx))),
 		);
 
 		router.get(
@@ -175,7 +176,8 @@ export default {
 			"/:id",
 			describeRoute(describe("get-trigger", "Returns one trigger", json(triggerSchema))),
 			validator("param", idParamSchema, zodErrorCallbackParser),
-			async (ctx) => ctx.json(await getTrigger(ctx.req.valid("param").id, ctx.get("acl") || [])),
+			async (ctx) =>
+				ctx.json(await getTrigger(ctx.req.valid("param").id, ctx.get("acl") || [], userId(ctx))),
 		);
 
 		router.post(
@@ -207,6 +209,7 @@ export default {
 						ctx.req.valid("param").id,
 						ctx.req.valid("json"),
 						ctx.get("acl") || [],
+						userId(ctx),
 					),
 				),
 		);
@@ -223,7 +226,7 @@ export default {
 			validator("param", workflowIdParamSchema, zodErrorCallbackParser),
 			async (ctx) => {
 				const { id, workflowId } = ctx.req.valid("param");
-				return ctx.json(await attachWorkflow(id, workflowId, ctx.get("acl") || []));
+				return ctx.json(await attachWorkflow(id, workflowId, ctx.get("acl") || [], userId(ctx)));
 			},
 		);
 
@@ -236,7 +239,7 @@ export default {
 			validator("param", workflowIdParamSchema, zodErrorCallbackParser),
 			async (ctx) => {
 				const { id, workflowId } = ctx.req.valid("param");
-				return ctx.json(await detachWorkflow(id, workflowId, ctx.get("acl") || []));
+				return ctx.json(await detachWorkflow(id, workflowId, ctx.get("acl") || [], userId(ctx)));
 			},
 		);
 
@@ -245,7 +248,8 @@ export default {
 			describeRoute(describe("delete-trigger", "Deletes a trigger", json(createdSchema))),
 			requireLoggedIn(),
 			validator("param", idParamSchema, zodErrorCallbackParser),
-			async (ctx) => ctx.json(await deleteTrigger(ctx.req.valid("param").id, ctx.get("acl") || [])),
+			async (ctx) =>
+				ctx.json(await deleteTrigger(ctx.req.valid("param").id, ctx.get("acl") || [], userId(ctx))),
 		);
 	},
 };

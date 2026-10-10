@@ -167,7 +167,51 @@ const suiteAssertsMessages: Check = {
 	},
 };
 
+/** The agent's sandbox answers POST /add { a, b } with { sum }; the check calls it the way the agent can. */
+const sandboxAdds: Check = {
+	name: "a sandbox answers POST /add with the sum",
+	run: async (ctx) => {
+		const sandboxes = await ctx.tool("list_sandboxes", { projectId: ctx.projectId });
+		if (!sandboxes.length) return { pass: false, message: "no sandbox" };
+		const answers = [];
+		for (const s of sandboxes) {
+			const res = await ctx.tool("call_sandbox", {
+				projectId: ctx.projectId,
+				sandboxId: s.id,
+				method: "POST",
+				path: "/add",
+				body: { a: 2, b: 3 },
+			});
+			if (res.status === 200 && res.body?.sum === 5) return { pass: true, message: s.name };
+			answers.push(`${res.status} ${JSON.stringify(res.body)?.slice(0, 80)}`);
+		}
+		return { pass: false, message: answers.join("; ") };
+	},
+};
+
+/** No route was made for it: a sandbox is where it belongs. */
+const noRoute: Check = {
+	name: "made no route",
+	run: async (ctx) => {
+		const { items } = await ctx.tool("list_routes", { projectId: ctx.projectId });
+		return items.length
+			? { pass: false, message: `${items.length} routes` }
+			: { pass: true, message: "none" };
+	},
+};
+
 export const moreTasks: Task[] = [
+	{
+		id: "sandbox-call",
+		title: "Try something in a sandbox and call it (#735)",
+		prompt:
+			'Without making a route, try this out in a sandbox: POST /add with a JSON body { "a": number, "b": number } answers { "sum": a + b }. Call it to show it works. It needs a development worker running.',
+		checks: [sandboxAdds, noRoute],
+		judge: [
+			"Made a sandbox instead of a route",
+			"Called the sandbox with call_sandbox and reported the real answer",
+		],
+	},
 	{
 		id: "suite-after-compaction",
 		title: "Exact error messages in a suite, after the context was compacted (#704)",

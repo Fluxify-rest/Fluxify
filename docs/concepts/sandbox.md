@@ -34,7 +34,7 @@ viewers don't.
 | **Playground** | Open it from the canvas. Pick any method, type a path, add headers and a body, and press **Send**. You see the status, headers and body of the answer, and an **Open recording** link for the call. Fluxify adds the development token for you and never shows it. |
 | **Run** | Starts the sandbox as a workflow with the JSON (or plain text) you type. |
 | **Runs** | Every recorded run of this sandbox, newest first. Open one to see it on the canvas. |
-| **Settings** | Rename the sandbox, and turn **Export traces** on to send its spans to the project's telemetry destination. |
+| **Settings** | **General**: rename the sandbox, and turn **Export traces** on to send its spans to the project's telemetry destination. **Triggers**: the triggers that run this sandbox. Attach one you made on the Triggers page, switch it on or off, or detach it. |
 
 If no development worker is running, a banner says so and **Run** and the
 playground are switched off until one starts.
@@ -83,6 +83,12 @@ Fluxify from source, the development worker is on port `5602`.
 | A sandbox id that does not exist, or was deleted | `404` |
 | Anything, to a **production** worker | `404`, as for any unknown path. |
 
+::: warning `/_sandbox/` is reserved
+Every worker, development or production, keeps every path that starts with
+`/_sandbox/` for sandboxes. A route you make at such a path can never be
+reached: its requests go to the sandbox handler and get `401` or `404`.
+:::
+
 ::: info The token never reaches your blocks
 Fluxify removes the `x-fluxify-dev-token` header before your blocks run, so it
 does not show up in a recording either.
@@ -99,6 +105,24 @@ If no development worker is running, Run fails with **"start a worker with
 FLUXIFY_ENV=development"**. See
 [Starting one](/concepts/environments#starting-one).
 
+## Triggers
+
+A [trigger](/concepts/triggers) can run a sandbox instead of a workflow, for
+example to try how your blocks handle real messages from a queue.
+
+- **Attach** a trigger from the sandbox's **Settings > Triggers**. Make the trigger
+  on the Triggers page first and leave it attached to nothing. A trigger runs one
+  workflow **or** one sandbox, never both.
+- **It runs on development workers only**, with your development values: a
+  queue trigger reads through the development settings of its integration. A
+  production worker never picks it up.
+- **It is yours alone.** Like the sandbox, only you can see, change or delete a
+  trigger attached to it. On the Triggers page it shows as **Your sandbox**.
+- **Every run is recorded**, in the sandbox's **Runs**.
+- **A schedule can't run a sandbox.** Use **Run**, a queue trigger or an internal
+  trigger.
+- **Deleting the sandbox deletes its triggers** too, and they stop at once.
+
 ## Custom blocks
 
 Custom blocks work in a sandbox the same way they do on a route. A sandbox
@@ -109,17 +133,22 @@ again.
 ## Recordings
 
 Every run leaves a [recording](/concepts/execution-recording): each request over
-HTTP and each Run. If a run fails, the failure also appears in the project's
-system logs.
+HTTP, each Run and each run from a trigger. If a run fails, the failure also
+appears in the project's system logs, where only you can see it.
+
+## AI agents
+
+An agent connected through the [MCP server](/getting-started/ai-agents) can make
+and use sandboxes as you: `list_sandboxes`, `create_sandbox`, `get_canvas` and
+`edit_canvas` on a sandbox, `call_sandbox` to send it a request and
+`run_sandbox` to run it as a workflow. The agent never sees the development
+token; Fluxify adds it. See the recipe
+[Inspect data with DB Native in a sandbox](/agents/recipes/inspect-data-in-sandbox).
 
 ## Deleting a sandbox
 
-Deleting a sandbox removes its canvas and its recordings. Its address answers
-`404` from then on.
-
-::: tip Coming next
-Triggers that start a sandbox, and sandbox tools for AI agents, are on the way.
-:::
+Deleting a sandbox removes its canvas, its triggers and its recordings. Its
+address answers `404` from then on.
 
 ## Related
 

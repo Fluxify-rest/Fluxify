@@ -11,7 +11,7 @@ A trigger starts one workflow. It can run on the clock (a cron or interval sched
 
 | Tool | Role | What it does |
 | --- | --- | --- |
-| `list_triggers` | viewer | Triggers of a project: id, name, type, active, workflow, disabledReason. Args: `projectId`, `workflowId`, `page`, `search`. |
+| `list_triggers` | viewer | Triggers of a project: id, name, type, active, workflow, disabledReason. Args: `projectId`, `workflowId`, `sandboxId`, `page`, `search`. Triggers on other people's sandboxes are never listed. |
 | `get_trigger` | viewer | Every setting of one trigger. |
 | `save_trigger` | creator | Create (no `triggerId`) or update (`triggerId`). |
 | `delete_trigger` | creator | Deletes the trigger. The workflow stays. Nothing starts it from this trigger again. |
@@ -93,6 +93,7 @@ Pass `triggerId` and only the fields that change.
 | `description` | string | Up to 2000 characters. | none |
 | `type` | string | One of the types above. Create only. | none |
 | `workflowId` | string or null | A workflow of the same project. May be left out: the trigger is then saved and idle. | none |
+| `sandboxId` | string or null | One of **your own** sandboxes, run instead of a workflow, on development workers with development values. Never together with `workflowId`, never for `schedule`. Only you see such a trigger. `null` detaches it. | none |
 | `groupId` | string | A trigger group of the same project. Leave it out for the default group. | default group |
 | `integrationId` | string | Queue types only. An integration of the right kind in this project. Never for `schedule` or `internal`. | none |
 | `payload` | any JSON | Static data handed to the workflow. Use it for sources that carry none. | none |

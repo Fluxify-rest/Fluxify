@@ -5,6 +5,7 @@ import { canvasTools } from "../mcp/canvasTools";
 import { docsTools } from "../mcp/docsTools";
 import { projectTools } from "../mcp/projectTools";
 import { routeTools } from "../mcp/routeTools";
+import { sandboxTools } from "../mcp/sandboxTools";
 import { testSuiteTools } from "../mcp/testSuiteTools";
 import { lenient, type McpTool, readTools } from "../mcp/tools";
 import { writeTools } from "../mcp/writeTools";
@@ -13,6 +14,7 @@ const ALL: McpTool[] = [
 	...readTools,
 	...writeTools,
 	...routeTools,
+	...sandboxTools,
 	...canvasTools,
 	...projectTools,
 	...testSuiteTools,

@@ -1,7 +1,7 @@
 import { logger } from "@fluxify/common";
 import { and, desc, eq, type SQL, sql } from "drizzle-orm";
 import { db } from "../db";
-import { systemLogsEntity } from "../db/schema";
+import { sandboxesEntity, systemLogsEntity } from "../db/schema";
 
 /**
  * Logs meant for the UI (project logs, compile status), not stdout. Writing one
@@ -61,8 +61,12 @@ export const systemLog = {
 
 /** most recently written first */
 // ponytail: no paging; add a cursor when a project logs page needs more than `limit`
-export async function listSystemLogs(filter: SystemLogFilter) {
-	const where: SQL[] = [eq(systemLogsEntity.projectId, filter.projectId)];
+export async function listSystemLogs(filter: SystemLogFilter, userId: string) {
+	const where: SQL[] = [
+		eq(systemLogsEntity.projectId, filter.projectId),
+		// a sandbox's logs are its owner's alone (#735)
+		sql`(${systemLogsEntity.resourceType} <> 'sandbox' OR ${systemLogsEntity.resourceId} IN (SELECT ${sandboxesEntity.id} FROM ${sandboxesEntity} WHERE ${sandboxesEntity.userId} = ${userId}))`,
+	];
 	if (filter.resourceType) where.push(eq(systemLogsEntity.resourceType, filter.resourceType));
 	if (filter.resourceId) where.push(eq(systemLogsEntity.resourceId, filter.resourceId));
 	if (filter.type) where.push(eq(systemLogsEntity.type, filter.type));

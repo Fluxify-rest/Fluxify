@@ -126,6 +126,7 @@ function SandboxCanvasPage() {
 				<SandboxSettingsModal
 					projectId={projectId}
 					sandboxId={sandboxId}
+					readOnly={!canEdit}
 					isOpen={settingsOpen}
 					onOpenChange={setSettingsOpen}
 				/>

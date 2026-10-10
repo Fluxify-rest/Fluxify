@@ -3,7 +3,7 @@ import type { AdminApi } from "./adminApi";
 import { nameBlocks } from "./canvasNames";
 import { type CanvasItems, canvasAfterChanges } from "./canvasNormalize";
 import { type CanvasOp, opsToChanges } from "./canvasOps";
-import { BASE, canvasTools, read, type Target } from "./canvasTools";
+import { canvasPath, canvasTools, read, type Target } from "./canvasTools";
 import { lenient, type McpTool } from "./tools";
 
 /** A canvas as the preview shows it: every block named by key, edges by endpoint. */
@@ -74,7 +74,7 @@ export async function previewEdit(
 		return { version, before, error: (error as Error).message };
 	}
 	const { changes, refs, describe } = planned;
-	const path = `${BASE[target.kind]}/${target.id}/save-canvas?expectedVersion=${version}&dryRun=true`;
+	const path = `${canvasPath(target)}/save-canvas?expectedVersion=${version}&dryRun=true`;
 	const dry = await api.send("PUT", path, changes).catch((error: Error) => error);
 	const failed = dry instanceof Error;
 	const { name, keyed } = nameBlocks(canvas, refs, failed ? {} : dry.newKeys);

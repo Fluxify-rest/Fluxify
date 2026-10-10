@@ -55,6 +55,14 @@ describe("debug trace", () => {
 		expect(trace.more).toBeGreaterThan(0);
 	});
 
+	it("carries the run id, and still fits the cap with it", () => {
+		const runId = crypto.randomUUID();
+		const many = Array.from({ length: 60 }, (_, i) => span(i, { output: "y".repeat(200) }));
+		const encoded = encodeDebugTrace(many, runId);
+		expect(encoded.length).toBeLessThanOrEqual(MAX_DEBUG_TRACE_HEADER);
+		expect(decodeDebugTrace(encoded)!.runId).toBe(runId);
+	});
+
 	it("reads nothing from a missing or broken header", () => {
 		expect(decodeDebugTrace(null)).toBeUndefined();
 		expect(decodeDebugTrace("not-json")).toBeUndefined();

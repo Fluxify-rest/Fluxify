@@ -232,7 +232,8 @@ function workflowTimeoutSeconds(workflowId: string) {
 	// Scanned rather than keyed: a catch-all worker (`WORKER_PROJECT_ID=*`) does
 	// not know which project's key to build, and a worker holds few workflows.
 	for (const [key, entry] of artifacts) {
-		if (artifactKind(key) !== "workflow") continue;
+		const kind = artifactKind(key);
+		if (kind !== "workflow" && kind !== "sandbox-workflow") continue;
 		const artifact = entry.value as WorkflowArtifact | undefined;
 		if (artifact?.workflowId === workflowId) return artifact.timeoutSeconds;
 	}

@@ -41,6 +41,15 @@ import {
 	updateTriggerRow,
 	workflowNames,
 } from "./repository";
+import {
+	assertCanSeeTrigger,
+	assertOwnSandbox,
+	assertPatchTarget,
+	assertSandboxCanRun,
+	ONE_TARGET,
+	publishSandboxTrigger,
+	visibleTo,
+} from "./sandboxes";
 
 /**
  * Trigger CRUD.
@@ -52,8 +61,7 @@ import {
  * never saw the row cannot be left consuming a trigger that no longer exists.
  */
 
-/** `sandboxId` is unused until sandbox triggers land (#735 part 3) */
-type Trigger = Omit<typeof triggersEntity.$inferSelect, "createdBy" | "sandboxId">;
+type Trigger = Omit<typeof triggersEntity.$inferSelect, "createdBy">;
 
 export async function createTrigger(
 	userId: string,
@@ -63,6 +71,7 @@ export async function createTrigger(
 	if (!canAccessProject(acl, data.projectId, "creator")) throw new ForbiddenError();
 	assertSourceMatchesType(data.type, data.integrationId);
 	if (isEnterpriseTriggerType(data.type)) assertCanUse("connectors");
+	if (data.sandboxId) assertSandboxCanRun(data.type);
 
 	let warnings: string[] = [];
 	const created = await db.transaction(async (tx) => {
@@ -70,6 +79,7 @@ export async function createTrigger(
 			throw new NotFoundError(`project with id ${data.projectId} does not exist`);
 
 		if (data.workflowId) await assertWorkflowInProject(data.workflowId, data.projectId, tx);
+		if (data.sandboxId) await assertOwnSandbox(data.projectId, data.sandboxId, userId, tx);
 		warnings = await assertConnector({ ...data, probe: true }, tx);
 
 		if (await findTriggerByName(data.projectId, data.name, tx))
@@ -88,6 +98,7 @@ export async function createTrigger(
 				type: data.type,
 				projectId: data.projectId,
 				workflowId: data.workflowId ?? null,
+				sandboxId: data.sandboxId ?? null,
 				groupId,
 				integrationId: data.integrationId ?? null,
 				batchSize: data.batchSize,
@@ -116,11 +127,13 @@ export async function createTrigger(
 export async function updateTrigger(
 	id: string,
 	data: z.infer<typeof patchSchema>,
-	acl: AuthACL[] = [],
+	acl: AuthACL[],
+	userId: string,
 ): Promise<z.infer<typeof triggerSchema> & { warnings: string[] }> {
 	let warnings: string[] = [];
 	const updated = await db.transaction(async (tx) => {
-		const existing = await mustAccess(id, acl, "creator", tx);
+		const existing = await mustAccess(id, acl, "creator", userId, tx);
+		await assertPatchTarget(existing, data, userId, tx);
 		assertSourceMatchesType(
 			existing.type,
 			data.integrationId ?? existing.integrationId ?? undefined,
@@ -183,9 +196,9 @@ export async function disableTrigger(id: string, projectId: string, reason: stri
 	logger.warn(`[triggers] disabled ${id}: ${reason}`, "TRIGGERS");
 }
 
-export async function deleteTrigger(id: string, acl: AuthACL[] = []) {
+export async function deleteTrigger(id: string, acl: AuthACL[], userId: string) {
 	const existing = await db.transaction(async (tx) => {
-		const trigger = await mustAccess(id, acl, "creator", tx);
+		const trigger = await mustAccess(id, acl, "creator", userId, tx);
 		await deleteTriggerRow(id, tx);
 		return trigger;
 	});
@@ -200,9 +213,10 @@ export async function deleteTrigger(id: string, acl: AuthACL[] = []) {
 
 export async function getTrigger(
 	id: string,
-	acl: AuthACL[] = [],
+	acl: AuthACL[],
+	userId: string,
 ): Promise<z.infer<typeof triggerSchema>> {
-	return present(await mustAccess(id, acl, "viewer"));
+	return present(await mustAccess(id, acl, "viewer", userId));
 }
 
 /**
@@ -212,14 +226,16 @@ export async function getTrigger(
  * silently moved: taking a live source away from one workflow is not something
  * another workflow's settings page should do as a side effect.
  */
-export async function attachWorkflow(triggerId: string, workflowId: string, acl: AuthACL[] = []) {
+export async function attachWorkflow(
+	triggerId: string,
+	workflowId: string,
+	acl: AuthACL[],
+	userId: string,
+) {
 	const trigger = await db.transaction(async (tx) => {
-		const existing = await mustAccess(triggerId, acl, "creator", tx);
+		const existing = await mustAccess(triggerId, acl, "creator", userId, tx);
 		if (existing.workflowId === workflowId) return existing;
-		if (existing.workflowId)
-			throw new ConflictError(
-				"This trigger already starts another workflow. Detach it there first, or create a new trigger",
-			);
+		if (existing.workflowId || existing.sandboxId) throw new ConflictError(ONE_TARGET);
 		await assertWorkflowInProject(workflowId, existing.projectId, tx);
 		// an enabled trigger with no workflow starts consuming the moment it gets one
 		if (existing.active) await assertConnector({ ...existing, probe: true }, tx);
@@ -230,9 +246,14 @@ export async function attachWorkflow(triggerId: string, workflowId: string, acl:
 }
 
 /** Detaching a workflow the trigger does not start is a no-op, not an error. */
-export async function detachWorkflow(triggerId: string, workflowId: string, acl: AuthACL[] = []) {
+export async function detachWorkflow(
+	triggerId: string,
+	workflowId: string,
+	acl: AuthACL[],
+	userId: string,
+) {
 	const trigger = await db.transaction(async (tx) => {
-		const existing = await mustAccess(triggerId, acl, "creator", tx);
+		const existing = await mustAccess(triggerId, acl, "creator", userId, tx);
 		if (existing.workflowId !== workflowId) return existing;
 		return (await updateTriggerRow(triggerId, { workflowId: null }, tx))!;
 	});
@@ -242,7 +263,8 @@ export async function detachWorkflow(triggerId: string, workflowId: string, acl:
 
 export async function listAllTriggers(
 	query: z.infer<typeof listQuerySchema>,
-	acl: AuthACL[] = [],
+	acl: AuthACL[],
+	userId: string,
 ): Promise<z.infer<typeof listSchema>> {
 	const offset = query.perPage * (query.page - 1);
 	const isSystemAdmin = acl.some((a) => a.projectId === "*");
@@ -253,8 +275,10 @@ export async function listAllTriggers(
 					triggersEntity.projectId,
 					acl.map((a) => a.projectId),
 				),
+		visibleTo(userId),
 		query.projectId ? eq(triggersEntity.projectId, query.projectId) : undefined,
 		query.workflowId ? eq(triggersEntity.workflowId, query.workflowId) : undefined,
+		query.sandboxId ? eq(triggersEntity.sandboxId, query.sandboxId) : undefined,
 		query.groupId ? eq(triggersEntity.groupId, query.groupId) : undefined,
 		query.active === undefined ? undefined : eq(triggersEntity.active, query.active),
 		query.search ? ilike(triggersEntity.name, `%${query.search}%`) : undefined,
@@ -308,10 +332,12 @@ export async function mustAccess(
 	id: string,
 	acl: AuthACL[],
 	role: "viewer" | "creator",
+	userId: string,
 	tx?: Parameters<typeof findTriggerById>[1],
 ) {
 	const trigger = await findTriggerById(id, tx);
 	if (!trigger) throw new NotFoundError("Trigger not found");
+	await assertCanSeeTrigger(trigger, userId, tx);
 	if (!canAccessProject(acl, trigger.projectId, role)) throw new ForbiddenError();
 	return trigger;
 }
@@ -373,13 +399,14 @@ export async function republish(trigger: Trigger) {
 	const key = triggerKey(trigger.projectId, trigger.id);
 	// No workflow is the same as inactive as far as a worker is concerned: a
 	// consumer that read events and had nowhere to send them would drain the
-	// source into nothing.
-	if (!trigger.active || !trigger.workflowId) return withdraw(trigger.projectId, trigger.id);
+	// source into nothing. A sandbox runs as the workflow its id names (#735).
+	const target = trigger.workflowId ?? trigger.sandboxId;
+	if (!trigger.active || !target) return withdraw(trigger.projectId, trigger.id);
 
 	const artifact: TriggerArtifact = {
 		triggerId: trigger.id,
 		projectId: trigger.projectId,
-		workflowId: trigger.workflowId,
+		workflowId: target,
 		groupId: trigger.groupId,
 		type: trigger.type,
 		integrationId: trigger.integrationId,
@@ -394,7 +421,8 @@ export async function republish(trigger: Trigger) {
 		retryDelayMs: trigger.retryDelayMs,
 		publishedAt: new Date().toISOString(),
 	};
-	await putArtifactEverywhere(key, artifact);
+	if (trigger.sandboxId) await publishSandboxTrigger(key, artifact);
+	else await putArtifactEverywhere(key, artifact);
 	logger.debug(`[triggers] published ${key}`, "TRIGGERS");
 }
 
@@ -427,6 +455,7 @@ function present(row: Trigger): z.infer<typeof triggerSchema> {
 		type: row.type,
 		projectId: row.projectId,
 		workflowId: row.workflowId,
+		sandboxId: row.sandboxId,
 		groupId: row.groupId,
 		integrationId: row.integrationId,
 		batchSize: row.batchSize,

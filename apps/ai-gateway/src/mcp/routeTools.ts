@@ -10,6 +10,7 @@ import {
 import { ValidationSchemaZod } from "@fluxify/server/src/lib/validationSchemaZod";
 import { z } from "zod";
 import type { AdminApi } from "./adminApi";
+import { read, type Target } from "./canvasTools";
 import type { McpTool } from "./tools";
 import { optionalFields } from "./writeTools";
 
@@ -68,8 +69,8 @@ export function truncate(body: unknown) {
 }
 
 /** block id → canvas key, so the agent reads keys everywhere, like in get_canvas */
-export async function blockKeys(get: AdminApi["get"], kind: "route" | "workflow", id: string) {
-	const canvas = await get(`/v1/${kind}s/${id}/canvas-items`).catch(() => undefined);
+export async function blockKeys(get: AdminApi["get"], target: Target) {
+	const canvas = await read(get, target).catch(() => undefined);
 	return new Map<string, string>(
 		(canvas?.blocks ?? []).flatMap((b: { id: string; key?: string }) =>
 			b.key ? [[b.id, b.key]] : [],
@@ -78,7 +79,7 @@ export async function blockKeys(get: AdminApi["get"], kind: "route" | "workflow"
 }
 
 /** The failed block is named by its canvas key. */
-function withBlockKey(
+export function withBlockKey(
 	keys: Map<string, string>,
 	error: { block?: { id: string; type: string; name?: string } },
 ) {
@@ -206,7 +207,8 @@ export const routeTools: McpTool[] = [
 				`/v1/routes/${routeId}/call`,
 				{ ...a, debug },
 			);
-			const keys = debugError || debugTrace ? await blockKeys(get, "route", routeId) : new Map();
+			const keys =
+				debugError || debugTrace ? await blockKeys(get, { kind: "route", id: routeId }) : new Map();
 			return {
 				...result,
 				body: truncate(result.body),

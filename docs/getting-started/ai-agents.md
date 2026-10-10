@@ -117,7 +117,7 @@ request, runs your code or reaches the internet.
 | `get_middleware` | One middleware and its blocks | Viewer |
 | `list_test_suites` | The test suites of a route or workflow | Viewer |
 | `get_test_suite` | One test suite | Viewer |
-| `get_canvas` | The blocks and connections of a canvas | Viewer |
+| `get_canvas` | The blocks and connections of a canvas (a sandbox's needs Creator, and only its owner) | Viewer |
 | `list_app_config` | A project's app config keys (no values) | Creator |
 | `get_app_config` | One app config entry (secrets stay masked) | Creator |
 | `list_integrations` | A project's integrations | Creator |
@@ -125,7 +125,7 @@ request, runs your code or reaches the internet.
 | `list_members` | A project's members and roles | Creator |
 | `list_packages` | A project's npm packages | Creator |
 | `get_test_runs` | A test suite's recent runs and results, with each case's trace id | Creator |
-| `list_recordings` | A route's or workflow's [recorded runs](../concepts/execution-recording.md) | Creator |
+| `list_recordings` | A route's, workflow's or sandbox's [recorded runs](../concepts/execution-recording.md) | Creator |
 | `get_recording` | One recorded run, block by block | Creator |
 | `save_route` | Create or change a route | Creator |
 | `delete_route` | Delete a route | Creator |
@@ -146,6 +146,12 @@ request, runs your code or reaches the internet.
 | `kv_get` | Read one key from a KV integration, with its expiry | Creator |
 | `edit_canvas` | Add, change and connect blocks on a canvas | Creator |
 | `call_route` | Send a request to a route (real) | Creator |
+| `list_sandboxes` | Your own [sandboxes](../concepts/sandbox.md) in a project | Creator |
+| `get_sandbox` | One of your sandboxes | Creator |
+| `create_sandbox` | Create a sandbox | Creator |
+| `delete_sandbox` | Delete one of your sandboxes | Creator |
+| `call_sandbox` | Send a request to your sandbox on a development worker (real) | Creator |
+| `run_sandbox` | Run your sandbox once as a workflow (real) | Creator |
 | `run_test_suite` | Run a test suite (real) | Creator |
 | `add_member` | Add a user to a project | Project Admin |
 | `update_member_role` | Change a member's role | Project Admin |
@@ -157,7 +163,7 @@ request, runs your code or reaches the internet.
 ## Safety
 
 ::: warning Runs are real
-`call_route` and `run_test_suite` run your code for real. If a route writes to
+`call_route`, `call_sandbox`, `run_sandbox` and `run_test_suite` run your code for real. If a route writes to
 a database, sends an email or calls another API, that happens. Point agents at
 a test project when you can.
 :::
