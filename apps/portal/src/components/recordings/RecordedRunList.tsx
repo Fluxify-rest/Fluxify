@@ -40,12 +40,15 @@ export function RecordedRunList({
 	target,
 	emptyHint,
 	onOpen,
+	showSourceFilter = true,
 }: {
 	projectId: string;
 	target: RecordingTarget;
 	/** how to produce a run, e.g. "switch to the API Playground tab and send a request" */
 	emptyHint: string;
 	onOpen: (run: RecordedRunSummary) => void;
+	/** the All / Test / Live switch; hide it where a target has no test runs (a sandbox) */
+	showSourceFilter?: boolean;
 }) {
 	const [page, setPage] = useState(1);
 	const [outcomeFilter, setOutcomeFilter] = useState<"all" | "success" | "failure">("all");
@@ -150,34 +153,36 @@ export function RecordedRunList({
 				</div>
 
 				<div className="flex items-center gap-2">
-					<div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
-						{(
-							[
-								["all", "All runs"],
-								["test", "Test runs"],
-								["live", "Live runs"],
-							] as const
-						).map(([value, label]) => (
-							<button
-								key={value}
-								type="button"
-								aria-pressed={sourceFilter === value}
-								onClick={() => {
-									setSourceFilter(value);
-									setPage(1);
-									setFocusedIndex(-1);
-								}}
-								className={cn(
-									"rounded-md px-2 py-0.5 text-xs font-medium transition-colors",
-									sourceFilter === value
-										? "bg-accent/10 text-accent"
-										: "text-muted hover:text-foreground",
-								)}
-							>
-								{label}
-							</button>
-						))}
-					</div>
+					{showSourceFilter && (
+						<div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
+							{(
+								[
+									["all", "All runs"],
+									["test", "Test runs"],
+									["live", "Live runs"],
+								] as const
+							).map(([value, label]) => (
+								<button
+									key={value}
+									type="button"
+									aria-pressed={sourceFilter === value}
+									onClick={() => {
+										setSourceFilter(value);
+										setPage(1);
+										setFocusedIndex(-1);
+									}}
+									className={cn(
+										"rounded-md px-2 py-0.5 text-xs font-medium transition-colors",
+										sourceFilter === value
+											? "bg-accent/10 text-accent"
+											: "text-muted hover:text-foreground",
+									)}
+								>
+									{label}
+								</button>
+							))}
+						</div>
+					)}
 					<div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
 						<button
 							type="button"

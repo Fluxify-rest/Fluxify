@@ -69,6 +69,7 @@ export function ExecutionRecordings({
 					projectId={projectId}
 					target={target}
 					emptyHint={emptyHint}
+					showSourceFilter={target.type !== "sandbox"}
 					onOpen={(run) => setRunId(run.id)}
 				/>
 			</div>
