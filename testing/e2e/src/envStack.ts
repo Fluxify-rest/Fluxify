@@ -165,6 +165,10 @@ console.log(
 		},
 		// the admin's own Redis and NATS, for a queue trigger and a look in the artifact buckets
 		redisPort: Number(process.env.REDIS_PORT),
+		// the admin's own Postgres, to count rows a run must not write (#741), and the
+		// development worker's pid, to stop it and see what "no worker" looks like
+		adminDb: process.env.PG_URL,
+		devWorkerPid: children[1]!.pid,
 		nats: { servers: process.env.NATS_URL, token: process.env.NATS_TOKEN },
 		// a browser login, as the portal holds it
 		portalCookie: await signIn(s, creator.email),

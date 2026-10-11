@@ -165,7 +165,13 @@ export function sandboxRequest(
 	if (!compiled) return { status: 404 };
 	const devTokenHash = devTokenHashes.get(compiled.artifact.projectId);
 	if (!verifyDevToken({ devTokenHash }, devToken)) return { status: 401 };
-	const match = { ...routeDefinition(compiled.artifact), id, sandbox: true as const };
+	const match = {
+		...routeDefinition(compiled.artifact),
+		id,
+		sandbox: true as const,
+		// an ephemeral run (#741) records nothing, but its trace still goes back to the caller
+		...(compiled.artifact.ephemeral ? { debugSpans: true } : {}),
+	};
 	return { status: 200, path: `/${rest.join("/")}`, parser: { getRouteId: () => match } };
 }
 

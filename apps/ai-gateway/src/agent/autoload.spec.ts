@@ -121,7 +121,7 @@ describe("auto-load an unloaded advanced tool (#699)", () => {
 	});
 
 	it("a bad input to an unloaded tool is the normal input error", async () => {
-		const r = await run([["list_members", {}]]);
+		const r = await run([["list_members", { projectId: 5 }]]);
 		expect(r.fetched).toHaveLength(0);
 		expect(r.results.join()).toContain("list_members");
 	});

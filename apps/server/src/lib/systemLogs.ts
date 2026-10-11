@@ -1,5 +1,5 @@
 import { logger } from "@fluxify/common";
-import { and, desc, eq, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, lt, type SQL, sql } from "drizzle-orm";
 import { db } from "../db";
 import { sandboxesEntity, systemLogsEntity } from "../db/schema";
 
@@ -12,6 +12,11 @@ import { sandboxesEntity, systemLogsEntity } from "../db/schema";
 
 /** appended, never upserted */
 export const RUNTIME_LOG_TYPE = "runtime";
+/**
+ * One row per ephemeral run (#741), appended like `runtime`. It has no recording
+ * to hang off, so it carries its owner in `detail.userId` and is removed by age.
+ */
+export const EPHEMERAL_LOG_TYPE = "ephemeral";
 
 export type SystemLogLevel = (typeof systemLogsEntity.$inferInsert)["level"];
 
@@ -39,7 +44,7 @@ async function write(level: SystemLogLevel, entry: SystemLogEntry) {
 	const row = { ...entry, level, detail: entry.detail ?? null };
 	try {
 		const insert = db.insert(systemLogsEntity).values(row);
-		if (entry.type === RUNTIME_LOG_TYPE) await insert;
+		if (entry.type === RUNTIME_LOG_TYPE || entry.type === EPHEMERAL_LOG_TYPE) await insert;
 		else {
 			await insert.onConflictDoUpdate({
 				target: [systemLogsEntity.type, systemLogsEntity.resourceId, systemLogsEntity.resourceType],
@@ -59,6 +64,20 @@ export const systemLog = {
 	error: (entry: SystemLogEntry) => write("error", entry),
 };
 
+/**
+ * Retention for ephemeral runs' rows (#741): they have no recording to cascade
+ * from, so the recordings cleanup job removes them by age instead.
+ */
+export async function deleteExpiredEphemeralLogs(cutoff: Date) {
+	const rows = await db
+		.delete(systemLogsEntity)
+		.where(
+			and(eq(systemLogsEntity.type, EPHEMERAL_LOG_TYPE), lt(systemLogsEntity.updatedAt, cutoff)),
+		)
+		.returning({ id: systemLogsEntity.id });
+	return rows.length;
+}
+
 /** most recently written first */
 // ponytail: no paging; add a cursor when a project logs page needs more than `limit`
 export async function listSystemLogs(filter: SystemLogFilter, userId: string) {
@@ -66,6 +85,8 @@ export async function listSystemLogs(filter: SystemLogFilter, userId: string) {
 		eq(systemLogsEntity.projectId, filter.projectId),
 		// a sandbox's logs are its owner's alone (#735)
 		sql`(${systemLogsEntity.resourceType} <> 'sandbox' OR ${systemLogsEntity.resourceId} IN (SELECT ${sandboxesEntity.id} FROM ${sandboxesEntity} WHERE ${sandboxesEntity.userId} = ${userId}))`,
+		// so is an ephemeral run's (#741)
+		sql`(${systemLogsEntity.type} <> ${EPHEMERAL_LOG_TYPE} OR ${systemLogsEntity.detail}->>'userId' = ${userId})`,
 	];
 	if (filter.resourceType) where.push(eq(systemLogsEntity.resourceType, filter.resourceType));
 	if (filter.resourceId) where.push(eq(systemLogsEntity.resourceId, filter.resourceId));

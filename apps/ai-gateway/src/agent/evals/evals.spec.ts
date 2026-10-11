@@ -195,6 +195,22 @@ describe("tasks", () => {
 		]);
 	});
 
+	it("the ephemeral task wants run_blocks used and nothing left behind", async () => {
+		const task = pickTasks("ephemeral-run")[0];
+		expect(task.checks.map((c) => c.name)).toEqual([
+			"called run_blocks",
+			"left no sandbox behind",
+			"made no route",
+			"the run left one ephemeral system log",
+		]);
+		const tool = (name: string) =>
+			name === "get_system_logs" ? [{ type: "ephemeral" }] : name === "list_routes" ? { items: [] } : [];
+		const ctx = ctxWith(tool, [{ name: "run_blocks", input: {} }]);
+		for (const check of task.checks) expect((await runCheck(check, ctx)).pass).toBe(true);
+		const left = ctxWith(() => ({ items: [{}], length: 1, 0: {} }));
+		expect((await runCheck(task.checks[2], left)).pass).toBe(false);
+	});
+
 	it("the compaction task gets a small window and wants both exact messages asserted", async () => {
 		const task = pickTasks("suite-after-compaction")[0];
 		expect(task.limits?.maxContextTokens).toBeLessThan(30_000);

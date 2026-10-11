@@ -2,6 +2,7 @@ import { Spinner } from "@fluxify/components";
 import { useEffect, useState } from "react";
 import { TbBan, TbCheck, TbClock, TbX } from "react-icons/tb";
 import { type ToolPart, toolTitle } from "./agentMessages";
+import { CanvasTarget, canvasOf } from "./preview/CanvasTarget";
 import { docsInput } from "./preview/DocsPreview";
 import { oneLine } from "./preview/data";
 import { ToolBody } from "./preview/ToolBody";
@@ -23,6 +24,7 @@ export function ToolRow({
 	useEffect(() => {
 		if (asking) setOpen(true);
 	}, [asking]);
+	const canvas = canvasOf(tool);
 	const ms = tool.startedAt && tool.endedAt ? tool.endedAt - tool.startedAt : undefined;
 	return (
 		<details
@@ -46,7 +48,7 @@ export function ToolRow({
 				)}
 				<span className="font-medium text-foreground">{toolTitle(tool)}</span>
 				<span className="min-w-0 flex-1 truncate font-mono text-muted">
-					{docsInput(tool) ?? oneLine(tool.input)}
+					{canvas ? <CanvasTarget which={canvas} /> : (docsInput(tool) ?? oneLine(tool.input))}
 				</span>
 				{ms !== undefined && <span className="shrink-0 text-muted">{(ms / 1000).toFixed(1)}s</span>}
 			</summary>

@@ -70,7 +70,7 @@ export const sandboxTools: McpTool[] = [
 			method: z
 				.enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
 				.optional()
-				.describe("GET by default"),
+				.describe("POST when body is given, GET by default otherwise"),
 			path: z.string().optional().describe("After /_sandbox/<id>, e.g. /users/1. / by default"),
 			query: z.record(z.string(), z.string()).optional(),
 			headers: z.record(z.string(), z.string()).optional(),
@@ -89,6 +89,64 @@ export const sandboxTools: McpTool[] = [
 				body: truncate(result.body),
 				...(debugError && { error: withBlockKey(keys, debugError) }),
 				...(debugTrace && { trace: traceLines(keys, debugTrace) }),
+			};
+		},
+	},
+	{
+		name: "run_blocks",
+		title: "Run blocks",
+		description: `Try a few blocks in ONE call and leave nothing behind: no sandbox, no recording, no saved canvas. The blocks run once on a development worker with development data, so they can still write it. Give blocks as { ref, type, data } and edges as { from, to, handle? } (from may be "ref.handle"), the way edit_canvas names them, but by refs you choose. The entrypoint and error handler are added for you, and the entrypoint goes to the first block nothing points at. input is the request body the blocks read. Returns status, headers, body (cut at ${MAX_RESPONSE_CHARS} characters), durationMs, and the blocks that ran as trace. A bad graph is refused with the reasons; a failing block comes back as error with its ref, message and stack. It waits timeoutSeconds (1-30; the project's setting by default, 10), then gives up. The run is kept only as one system log (type ephemeral, id returned) that only you can read. Without a development worker it says how to start one. To keep what you build, use a sandbox or a real route.`,
+		role: "creator",
+		annotations: RUN,
+		input: {
+			projectId,
+			blocks: z
+				.array(
+					z.object({
+						ref: z.string().describe('Your name for the block: letters, digits, _ ("fetch_user")'),
+						type: z
+							.string()
+							.describe("Block type from get_block_schemas, or a custom block's name"),
+						data: z.record(z.string(), z.unknown()).optional().describe("The block's settings"),
+					}),
+				)
+				.min(1),
+			edges: z
+				.array(
+					z.object({
+						from: z.string().describe('A ref, or "ref.handle" such as "check.success"'),
+						to: z.string(),
+						handle: z
+							.string()
+							.optional()
+							.describe("Output handle on the from block; omit for its default"),
+					}),
+				)
+				.optional(),
+			input: z.unknown().optional().describe("The request body the blocks read"),
+			method: z
+				.enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
+				.optional()
+				.describe("POST when input is given, GET by default otherwise"),
+			path: z.string().optional().describe("The request path the blocks see. / by default"),
+			headers: z.record(z.string(), z.string()).optional(),
+			timeoutSeconds: z.number().optional().describe("Seconds to wait, 1-30"),
+		},
+		call: async ({ send }, { projectId: p, input, ...a }) => {
+			const { debugError, debugTrace, ...result } = await send(
+				"POST",
+				`/v1/projects/${p}/ephemeral-runs`,
+				{ ...a, body: input },
+			);
+			// the server answers with the refs the caller chose, so a key is the ref
+			const refs = new Map<string, string>(
+				(a.blocks as { ref: string }[]).map((b) => [b.ref, b.ref]),
+			);
+			return {
+				...result,
+				body: truncate(result.body),
+				...(debugError && { error: withBlockKey(refs, debugError) }),
+				...(debugTrace && { trace: traceLines(refs, debugTrace) }),
 			};
 		},
 	},

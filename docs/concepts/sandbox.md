@@ -145,6 +145,16 @@ and use sandboxes as you: `list_sandboxes`, `create_sandbox`, `get_canvas` and
 token; Fluxify adds it. See the recipe
 [Inspect data with DB Native in a sandbox](/agents/recipes/inspect-data-in-sandbox).
 
+### A quick try without a sandbox
+
+For a one-off check the agent does not need a sandbox at all. `run_blocks` takes
+the blocks and edges in one call, runs them once on a development worker, and
+answers with the result and the blocks that ran. Nothing is saved: no sandbox
+in your list, no canvas and no recording. The only trace is one `ephemeral`
+system log that only you can read, deleted after the same number of days as
+recordings. See
+[Try blocks with an ephemeral run](/agents/recipes/ephemeral-run).
+
 ## Deleting a sandbox
 
 Deleting a sandbox removes its canvas, its triggers and its recordings. Its

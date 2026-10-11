@@ -25,6 +25,8 @@ import {
 	LoadedToolsPreview,
 } from "./ToolListPreview";
 
+const SANDBOX_TOOLS = new Set(["create_sandbox", "run_sandbox", "delete_sandbox"]);
+
 /** Reads: the agent's `list` / `get`, and every get_* / list_* tool. */
 const isRead = (name: string) => /^(get|list)(_|$)/.test(name);
 
@@ -48,11 +50,14 @@ export function previewOf(tool: ToolPart, asking: boolean): ReactNode | null {
 	if (isDocsTool(name) && typeof tool.output === "string") return <DocsPreview tool={tool} />;
 	if (name === "test_integration_connection" && isRec(tool.output))
 		return <ConnectionPreview tool={tool} />;
-	if (name === "call_route") return <CallRoutePreview tool={tool} />;
+	if (name === "call_route" || name === "call_sandbox" || name === "run_blocks")
+		return <CallRoutePreview tool={tool} />;
 	if (name === "run_test_suite" || name === "get_test_runs") return <TestRunPreview tool={tool} />;
 	const res = resourceOf(name);
 	if (res?.verb === "save") return <ResourceCard tool={tool} asking={asking} />;
 	if (res?.verb === "delete") return <DeleteCard tool={tool} asking={asking} />;
-	if (isRead(name) && hasData(tool.output)) return <DataPreview tool={tool} />;
+	// the rest of the sandbox tools (create, run, delete) answer with plain fields
+	if ((isRead(name) || SANDBOX_TOOLS.has(name)) && hasData(tool.output))
+		return <DataPreview tool={tool} />;
 	return null;
 }

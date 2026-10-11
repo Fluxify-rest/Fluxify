@@ -9,7 +9,7 @@ import {
 } from "@fluxify/blocks";
 import { logger } from "@fluxify/common";
 import { and, eq, inArray, ne } from "drizzle-orm";
-import { db } from "../../db";
+import { type DbTransactionType, db } from "../../db";
 import { deleteArtifactEverywhere, putArtifactEverywhere } from "../../db/natsKv";
 import {
 	blocksEntity,
@@ -504,8 +504,8 @@ export async function publishAllProjectConfigs() {
  * now, not the last published artifact, so it compiles the graph itself rather
  * than reading the artifact store.
  */
-export async function loadGraph(parent: CanvasParent) {
-	const blockRows = await db
+export async function loadGraph(parent: CanvasParent, tx: DbTransactionType | typeof db = db) {
+	const blockRows = await tx
 		.select()
 		.from(blocksEntity)
 		.where(
@@ -515,16 +515,7 @@ export async function loadGraph(parent: CanvasParent) {
 			),
 		);
 
-	const blocks: BlockDTOType[] = blockRows
-		.filter((block) => block.type !== null)
-		.map((block) => ({
-			id: block.id,
-			type: block.type as string,
-			position: block.position as { x: number; y: number },
-			data: block.data,
-		}));
-
-	const edgeRows = await db
+	const edgeRows = await tx
 		.select({
 			id: edgesEntity.id,
 			from: edgesEntity.from,
@@ -534,6 +525,29 @@ export async function loadGraph(parent: CanvasParent) {
 		})
 		.from(edgesEntity)
 		.where(eq(parentColumn(edgesEntity, parent.type), parent.id));
+
+	return compilerGraph(blockRows, edgeRows);
+}
+
+/** Stored rows as the compiler takes them; an ephemeral run (#741) builds them without a canvas. */
+export function compilerGraph(
+	blockRows: { id: string; type: string | null; position: unknown; data: unknown }[],
+	edgeRows: {
+		id: string;
+		from: string | null;
+		to: string | null;
+		fromHandle: string | null;
+		toHandle: string | null;
+	}[],
+) {
+	const blocks: BlockDTOType[] = blockRows
+		.filter((block) => block.type !== null)
+		.map((block) => ({
+			id: block.id,
+			type: block.type as string,
+			position: block.position as { x: number; y: number },
+			data: block.data,
+		}));
 
 	// the loader swaps the handles; keep the compiler on the same convention
 	const edges = edgeRows.map((edge) => ({

@@ -11,26 +11,27 @@ import { mustOwn } from "./service";
 export const NO_DEV_WORKER = "start a worker with FLUXIFY_ENV=development";
 
 export const sandboxCallSchema = callBodySchema.omit({ params: true }).extend({
-	method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
+	method: z
+		.enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
+		.optional()
+		.describe("POST when body is given, GET by default otherwise"),
 	/** after `/_sandbox/<id>`; the sandbox's blocks see it as the request path */
 	path: z.string().default("/"),
 });
 
 /**
- * One request to a sandbox (#735), from the admin, the way call_route reaches a
- * route: over HTTP to `/_sandbox/<id>/<path>` on the development worker, with
- * the project's development token added here. The token never leaves this
+ * One request to `/_sandbox/<id>/<path>` on the development worker, with the
+ * project's development token added here. The token never leaves this
  * function: it is not in the answer, and the worker strips it before the
- * blocks run.
+ * blocks run. Shared by sandboxes (#735) and ephemeral runs (#741).
  */
-export async function callSandbox(
+export async function callDevWorker(
 	projectId: string,
 	id: string,
-	userId: string,
 	input: z.infer<typeof sandboxCallSchema>,
 	requestOrigin: string,
+	options: { timeoutSeconds?: number; abortAfterMs?: number } = {},
 ) {
-	await mustOwn(projectId, id, userId);
 	if (!(await devWorkerOnline(projectId))) throw new ConflictError(NO_DEV_WORKER);
 
 	// DEV_WORKER_URL, else the project's address, whose proxy sends /_sandbox to the development worker
@@ -39,12 +40,26 @@ export async function callSandbox(
 	const url = new URL(`/_sandbox/${id}${path}`, base);
 	for (const [k, v] of Object.entries(input.query ?? {})) url.searchParams.set(k, v);
 
+	const method = input.method ?? (input.body !== undefined ? "POST" : "GET");
 	const { token } = await readDevToken(projectId);
-	const result = await sendCall(url, input.method, input, {
+	return sendCall(url, method, input, {
 		target: { projectId, id },
-		timeoutSeconds: 30,
+		timeoutSeconds: options.timeoutSeconds ?? 30,
+		abortAfterMs: options.abortAfterMs,
 		headers: { [DEV_TOKEN_HEADER]: token },
 	});
+}
+
+/** One request to a sandbox of yours (#735), the way call_route reaches a route. */
+export async function callSandbox(
+	projectId: string,
+	id: string,
+	userId: string,
+	input: z.infer<typeof sandboxCallSchema>,
+	requestOrigin: string,
+) {
+	await mustOwn(projectId, id, userId);
+	const result = await callDevWorker(projectId, id, input, requestOrigin);
 	return {
 		...result,
 		...(result.runId && {
