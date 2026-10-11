@@ -39,18 +39,33 @@ function CallError({ error }: { error: unknown }) {
 	);
 }
 
-/** call_route: the request line, the answer, and the blocks that ran. Works before the call too (an approval): the request alone. */
+const LABEL: Record<string, string> = {
+	blocks: "Blocks sent",
+	edges: "Edges sent",
+	input: "Request body",
+};
+
+/**
+ * call_route, call_sandbox and run_blocks: the request line, the answer, and the blocks that ran.
+ * Works before the call too (an approval): the request alone. A sandbox or an ephemeral run
+ * has no route to look up, so its request line is the method and path it was given.
+ */
 export function CallRoutePreview({ tool }: { tool: ToolPart }) {
 	const input = rec(tool.input);
 	const out = rec(tool.output);
-	const { current: route } = useCurrent("call_route", input, true);
+	const isRoute = tool.name === "call_route";
+	const { current: route } = useCurrent("call_route", input, isRoute);
 	const status = typeof out.status === "number" ? out.status : undefined;
-	const request = [
-		str(route?.method) || "Route",
-		route?.path
-			? requestPath(str(route.path), rec(input.params), rec(input.query))
-			: str(input.routeId),
-	].join(" ");
+	const request = isRoute
+		? [
+				str(route?.method) || "Route",
+				route?.path
+					? requestPath(str(route.path), rec(input.params), rec(input.query))
+					: str(input.routeId),
+			].join(" ")
+		: `${str(input.method) || "GET"} ${str(input.path) || "/"}`;
+	const kind =
+		tool.name === "run_blocks" ? "Ephemeral run" : tool.name === "call_sandbox" ? "Sandbox" : "";
 	const trace = Array.isArray(out.trace) ? (out.trace as string[]) : [];
 	return (
 		<div className="flex flex-col gap-2">
@@ -61,18 +76,19 @@ export function CallRoutePreview({ tool }: { tool: ToolPart }) {
 						{status}
 					</span>
 				)}
+				{kind && <span className="text-xs text-muted">{kind}</span>}
 				<code className="font-mono text-foreground">{request}</code>
 				{typeof out.durationMs === "number" && (
 					<span className="text-xs text-muted">{out.durationMs}ms</span>
 				)}
 			</div>
-			{(["params", "query", "headers", "body"] as const)
+			{(["blocks", "edges", "params", "query", "headers", "body", "input"] as const)
 				.filter(
 					(k) =>
 						input[k] !== undefined && !(isRec(input[k]) && !Object.keys(input[k] as Data).length),
 				)
 				.map((k) => (
-					<JsonBlock key={k} label={`Request ${k}`} value={input[k]} />
+					<JsonBlock key={k} label={LABEL[k] ?? `Request ${k}`} value={input[k]} />
 				))}
 			{out.body !== undefined && <JsonBlock label="Response body" value={out.body} />}
 			{isRec(out.headers) && Object.keys(out.headers).length > 0 && (
