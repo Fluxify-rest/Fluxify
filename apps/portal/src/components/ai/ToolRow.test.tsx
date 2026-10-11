@@ -241,3 +241,24 @@ test("a canvas call's folded row names the canvas and links it; an ephemeral run
 	expect(run.getByText("Ephemeral run · 2 blocks")).toBeTruthy();
 	expect(run.container.querySelector("summary a")).toBeNull();
 });
+
+test("run_blocks draws the blocks it sent as a canvas under a fold", () => {
+	const view = row({
+		type: "tool",
+		id: "t5",
+		name: "run_blocks",
+		input: {
+			projectId: "p1",
+			blocks: [
+				{ ref: "a", type: "jsrunner", data: {} },
+				{ ref: "b", type: "response", data: {} },
+			],
+			edges: [{ from: "a", to: "b" }],
+		},
+		output: { status: 200 },
+		status: "done",
+	});
+	fireEvent.click(view.getByText("Run blocks"));
+	expect(view.getByText("Blocks sent (2)")).toBeTruthy();
+	expect(view.container.querySelectorAll("pre")).toHaveLength(0);
+});

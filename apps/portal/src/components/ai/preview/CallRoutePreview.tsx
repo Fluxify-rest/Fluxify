@@ -1,4 +1,5 @@
 import type { ToolPart } from "../agentMessages";
+import { BlocksCanvas } from "./BlocksCanvas";
 import { JsonBlock } from "./Collapsible";
 import { type Data, isRec, rec, str } from "./data";
 import { Notice } from "./Notice";
@@ -39,11 +40,7 @@ function CallError({ error }: { error: unknown }) {
 	);
 }
 
-const LABEL: Record<string, string> = {
-	blocks: "Blocks sent",
-	edges: "Edges sent",
-	input: "Request body",
-};
+const LABEL: Record<string, string> = { input: "Request body" };
 
 /**
  * call_route, call_sandbox and run_blocks: the request line, the answer, and the blocks that ran.
@@ -82,7 +79,8 @@ export function CallRoutePreview({ tool }: { tool: ToolPart }) {
 					<span className="text-xs text-muted">{out.durationMs}ms</span>
 				)}
 			</div>
-			{(["blocks", "edges", "params", "query", "headers", "body", "input"] as const)
+			{tool.name === "run_blocks" && <BlocksCanvas input={tool.input} />}
+			{(["params", "query", "headers", "body", "input"] as const)
 				.filter(
 					(k) =>
 						input[k] !== undefined && !(isRec(input[k]) && !Object.keys(input[k] as Data).length),
