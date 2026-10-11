@@ -34,7 +34,7 @@ const edgeSchema = z.object({
 	handle: z.string().optional().describe("Output handle on the from block; omit for its default"),
 });
 
-export const runBodySchema = sandboxCallSchema.omit({ debug: true }).extend({
+const runCallSchema = sandboxCallSchema.omit({ debug: true }).extend({
 	blocks: z.array(blockSchema).min(1).max(100),
 	edges: z.array(edgeSchema).max(300).default([]),
 	timeoutSeconds: z
@@ -45,6 +45,11 @@ export const runBodySchema = sandboxCallSchema.omit({ debug: true }).extend({
 			`Seconds to wait; clamped to ${MIN_TIMEOUT_SECONDS}-${MAX_TIMEOUT_SECONDS}. The project's setting when omitted`,
 		),
 });
+
+export const runBodySchema = runCallSchema.transform((data) => ({
+	...data,
+	method: data.method ?? (data.body !== undefined ? "POST" : "GET"),
+}));
 
 export type RunBody = z.infer<typeof runBodySchema>;
 

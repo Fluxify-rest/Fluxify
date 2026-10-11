@@ -11,7 +11,10 @@ import { mustOwn } from "./service";
 export const NO_DEV_WORKER = "start a worker with FLUXIFY_ENV=development";
 
 export const sandboxCallSchema = callBodySchema.omit({ params: true }).extend({
-	method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
+	method: z
+		.enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
+		.optional()
+		.describe("POST when body is given, GET by default otherwise"),
 	/** after `/_sandbox/<id>`; the sandbox's blocks see it as the request path */
 	path: z.string().default("/"),
 });
@@ -37,8 +40,9 @@ export async function callDevWorker(
 	const url = new URL(`/_sandbox/${id}${path}`, base);
 	for (const [k, v] of Object.entries(input.query ?? {})) url.searchParams.set(k, v);
 
+	const method = input.method ?? (input.body !== undefined ? "POST" : "GET");
 	const { token } = await readDevToken(projectId);
-	return sendCall(url, input.method, input, {
+	return sendCall(url, method, input, {
 		target: { projectId, id },
 		timeoutSeconds: options.timeoutSeconds ?? 30,
 		abortAfterMs: options.abortAfterMs,

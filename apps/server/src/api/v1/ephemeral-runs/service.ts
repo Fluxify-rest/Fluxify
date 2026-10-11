@@ -104,7 +104,9 @@ export async function runEphemeral(
 	// before the compile, which would otherwise be for nothing
 	if (!(await devWorkerOnline(projectId))) throw new ConflictError(NO_DEV_WORKER);
 
-	const { blocks, edges, warnings, names } = await buildEphemeralGraph(projectId, userId, body);
+	const method = body.method ?? (body.body !== undefined ? "POST" : "GET");
+	const runBody = { ...body, method };
+	const { blocks, edges, warnings, names } = await buildEphemeralGraph(projectId, userId, runBody);
 	const id = newEphemeralId();
 	const artifact = await compileEphemeral({ projectId, id, blocks, edges, timeoutSeconds });
 
@@ -113,7 +115,7 @@ export async function runEphemeral(
 	let result: Called;
 	try {
 		await publishEphemeral(artifact);
-		result = await callWhenLoaded(projectId, id, body, origin, deadline);
+		result = await callWhenLoaded(projectId, id, runBody, origin, deadline);
 	} finally {
 		await dropWithRetry(projectId, id);
 	}

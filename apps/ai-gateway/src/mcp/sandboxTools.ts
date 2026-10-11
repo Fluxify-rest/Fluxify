@@ -70,7 +70,7 @@ export const sandboxTools: McpTool[] = [
 			method: z
 				.enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
 				.optional()
-				.describe("GET by default"),
+				.describe("POST when body is given, GET by default otherwise"),
 			path: z.string().optional().describe("After /_sandbox/<id>, e.g. /users/1. / by default"),
 			query: z.record(z.string(), z.string()).optional(),
 			headers: z.record(z.string(), z.string()).optional(),
@@ -127,7 +127,7 @@ export const sandboxTools: McpTool[] = [
 			method: z
 				.enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
 				.optional()
-				.describe("GET by default"),
+				.describe("POST when input is given, GET by default otherwise"),
 			path: z.string().optional().describe("The request path the blocks see. / by default"),
 			headers: z.record(z.string(), z.string()).optional(),
 			timeoutSeconds: z.number().optional().describe("Seconds to wait, 1-30"),
