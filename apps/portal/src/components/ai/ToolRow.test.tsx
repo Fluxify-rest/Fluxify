@@ -206,3 +206,38 @@ test("Raw is today's JSON, unchanged; Preview is the default", async () => {
 	expect(pres).toEqual([JSON.stringify(tool.input, null, 2), JSON.stringify(tool.output, null, 2)]);
 	ask.mockRestore();
 });
+
+test("a canvas call's folded row names the canvas and links it; an ephemeral run has nothing to open", () => {
+	const view = row({ ...edit, output: { version: 8 }, status: "done" });
+	expect(view.getByText("Route")).toBeTruthy();
+	const link = view.getByText("r1").closest("a");
+	expect(link?.getAttribute("href")).toBe("/p1/canvas/r1");
+	cleanup();
+
+	const sandbox = row({
+		type: "tool",
+		id: "t2",
+		name: "get_canvas",
+		input: { target: { kind: "sandbox", id: "s1", projectId: "p2" } },
+	});
+	expect(sandbox.getByText("s1").closest("a")?.getAttribute("href")).toBe("/p2/sandbox-canvas/s1");
+	cleanup();
+
+	const call = row({
+		type: "tool",
+		id: "t4",
+		name: "call_sandbox",
+		input: { projectId: "p1", sandboxId: "s9" },
+	});
+	expect(call.getByText("s9").closest("a")?.getAttribute("href")).toBe("/p1/sandbox-canvas/s9");
+	cleanup();
+
+	const run = row({
+		type: "tool",
+		id: "t3",
+		name: "run_blocks",
+		input: { projectId: "p1", blocks: [{ ref: "a" }, { ref: "b" }] },
+	});
+	expect(run.getByText("Ephemeral run · 2 blocks")).toBeTruthy();
+	expect(run.container.querySelector("summary a")).toBeNull();
+});
