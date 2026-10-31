@@ -1,4 +1,4 @@
-import { Button, DeleteButton, toast } from "@fluxify/components";
+import { Button, DeleteButton, Tabs, toast } from "@fluxify/components";
 import { type ReactNode, useState } from "react";
 import { TbArrowLeft, TbRefresh } from "react-icons/tb";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -28,6 +28,14 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 		</section>
 	);
 }
+
+const TABS = [
+	{ id: "contents", label: "Contents" },
+	{ id: "permissions", label: "Permissions" },
+	{ id: "package", label: "Package" },
+	{ id: "installation", label: "Installation on workers" },
+	{ id: "used-by", label: "Used by" },
+];
 
 /**
  * One plugin: what it ships, what it may do, where it came from, how far the
@@ -117,32 +125,47 @@ export function PluginPage({
 				</p>
 			)}
 
-			<Section title="Blocks">
-				<PluginBlocks plugin={plugin} />
-			</Section>
-			{(manifestOf(plugin).triggers ?? []).length > 0 && (
-				<Section title="Triggers">
-					<PluginTriggerKinds plugin={plugin} />
-				</Section>
-			)}
-			{((plugin.integrations && plugin.integrations.length > 0) ||
-				(manifestOf(plugin) as any)?.integrations?.length > 0) && (
-				<Section title="Integrations">
-					<PluginIntegrations plugin={plugin} />
-				</Section>
-			)}
-			<Section title="Permissions">
-				<PluginPermissions plugin={plugin} />
-			</Section>
-			<Section title="Package">
-				<PluginProvenance plugin={plugin} />
-			</Section>
-			<Section title="Installation on workers">
-				<PluginInstallStatus projectId={projectId} name={plugin.name} />
-			</Section>
-			<Section title="Used by">
-				<PluginUsage projectId={projectId} name={plugin.name} />
-			</Section>
+			<Tabs variant="secondary">
+				{/* the secondary variant needs an indicator inside each tab */}
+				<Tabs.ListContainer>
+					<Tabs.List aria-label="Plugin details">
+						{TABS.map(({ id, label }) => (
+							<Tabs.Tab key={id} id={id}>
+								{label}
+								<Tabs.Indicator />
+							</Tabs.Tab>
+						))}
+					</Tabs.List>
+				</Tabs.ListContainer>
+				<Tabs.Panel id="contents" className="flex flex-col gap-6 pt-4">
+					<Section title="Blocks">
+						<PluginBlocks plugin={plugin} />
+					</Section>
+					{(manifestOf(plugin).triggers ?? []).length > 0 && (
+						<Section title="Triggers">
+							<PluginTriggerKinds plugin={plugin} />
+						</Section>
+					)}
+					{((plugin.integrations && plugin.integrations.length > 0) ||
+						(manifestOf(plugin) as any)?.integrations?.length > 0) && (
+						<Section title="Integrations">
+							<PluginIntegrations plugin={plugin} />
+						</Section>
+					)}
+				</Tabs.Panel>
+				<Tabs.Panel id="permissions" className="pt-4">
+					<PluginPermissions plugin={plugin} />
+				</Tabs.Panel>
+				<Tabs.Panel id="package" className="pt-4">
+					<PluginProvenance plugin={plugin} />
+				</Tabs.Panel>
+				<Tabs.Panel id="installation" className="pt-4">
+					<PluginInstallStatus projectId={projectId} name={plugin.name} />
+				</Tabs.Panel>
+				<Tabs.Panel id="used-by" className="pt-4">
+					<PluginUsage projectId={projectId} name={plugin.name} />
+				</Tabs.Panel>
+			</Tabs>
 
 			<ApprovalDialog
 				projectId={projectId}

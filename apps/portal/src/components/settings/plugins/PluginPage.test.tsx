@@ -12,7 +12,7 @@ mock.module("@tanstack/react-router", () => ({
 	Link: ({ children, ...rest }: { children: ReactNode }) => <a {...rest}>{children}</a>,
 }));
 
-const { act, cleanup, render } = await import("@testing-library/react");
+const { act, cleanup, fireEvent, render } = await import("@testing-library/react");
 const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
 const { PluginPage } = await import("./PluginPage");
 const { pluginsService } = await import("@/services/plugins");
@@ -92,6 +92,7 @@ test("the plugin page says the version ships a trigger, with its permissions", a
 
 test("used by lists the plugin's trigger rows and integrations, not only blocks", async () => {
 	const view = page();
+	fireEvent.click(view.getByRole("tab", { name: "Used by" }));
 	await until(() => expect(view.getByText("Poller")).toBeTruthy());
 	expect(view.getByText("Slack Prod")).toBeTruthy();
 	expect(view.getByText("kv/redis")).toBeTruthy();
