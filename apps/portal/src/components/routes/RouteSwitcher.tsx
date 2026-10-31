@@ -44,7 +44,7 @@ export function RouteSwitcher({ projectId, routeId }: { projectId: string; route
 			}
 			items={routes.map((route) => ({
 				id: route.id,
-				textValue: `${route.method} ${route.path}`,
+				textValue: [route.method, route.path, route.name].filter(Boolean).join(" "),
 				label: (
 					<span className="flex min-w-0 items-center gap-2">
 						<MethodTag method={route.method ?? "—"} />
