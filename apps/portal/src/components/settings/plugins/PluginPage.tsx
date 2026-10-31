@@ -33,7 +33,7 @@ const TABS = [
 	{ id: "contents", label: "Contents" },
 	{ id: "permissions", label: "Permissions" },
 	{ id: "package", label: "Package" },
-	{ id: "installation", label: "Installation on workers" },
+	{ id: "installation", label: "Installation" },
 	{ id: "used-by", label: "Used by" },
 ];
 
