@@ -2,7 +2,7 @@ import { Button, Checkbox, CloseButton, Modal, toast } from "@fluxify/components
 import { useState } from "react";
 import { showErrorNotification } from "@/lib/errorNotifier";
 import { type ResourceType, transferService } from "@/services/transfer";
-import { resourceOf } from "./resources";
+import { capitalize, resourceOf } from "./resources";
 import { bundleFilename, downloadBundle } from "./transferFile";
 
 type ExportModalProps = {
@@ -11,8 +11,6 @@ type ExportModalProps = {
 	resource: { id: string; name?: string | null } | null;
 	onClose: () => void;
 };
-
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Asks whether the tests go in the file, then downloads it. */
 export function ExportModal({ resourceType, resource, onClose }: ExportModalProps) {

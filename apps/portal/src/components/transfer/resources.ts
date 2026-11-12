@@ -24,6 +24,8 @@ export type TransferResource<B> = {
 	describeTaken(bundle: B, key: FieldKey): string;
 };
 
+export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 /** `Get users` → `Get users-copy` */
 export const copyName = (name: string) => `${name}-copy`;
 

@@ -58,3 +58,23 @@ test("words the dialog for a workflow", () => {
 	);
 	expect(screen().getByText("Export workflow")).toBeTruthy();
 });
+
+test("exports a workflow as .fluxworkflow", async () => {
+	spyOn(transferService, "export").mockResolvedValue({ kind: "fluxify.workflow" } as never);
+	const download = spyOn(await import("./transferFile"), "downloadBundle").mockImplementation(
+		() => {},
+	);
+	render(
+		<ExportModal
+			resourceType="workflow"
+			resource={{ id: "w1", name: "nightly" }}
+			onClose={() => {}}
+		/>,
+	);
+
+	expect(screen().queryByText(/response schemas/)).toBeNull();
+	fireEvent.click(screen().getByText("Export"));
+
+	await waitFor(() => expect(download).toHaveBeenCalled());
+	expect(String(download.mock.calls[0]?.[1])).toEndWith(".fluxworkflow");
+});

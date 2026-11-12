@@ -5,7 +5,7 @@ import { parseApiError, showErrorNotification } from "@/lib/errorNotifier";
 import { transferQuery } from "@/query/transferQuery";
 import { type ResourceType, transferService } from "@/services/transfer";
 import { BundlePreview } from "./BundlePreview";
-import { conflictNotice, type FieldKey, importDefaults, resourceOf } from "./resources";
+import { capitalize, conflictNotice, type FieldKey, importDefaults, resourceOf } from "./resources";
 import { pickBundleFile, readBundleFile } from "./transferFile";
 
 type Values = Partial<Record<FieldKey, string>>;
@@ -18,8 +18,6 @@ type Pending = {
 	notice?: string;
 	error?: string;
 };
-
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 type ImportButtonProps = {
 	resourceType: ResourceType;

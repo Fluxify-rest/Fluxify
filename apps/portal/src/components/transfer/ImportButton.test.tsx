@@ -18,9 +18,16 @@ const bundleJson = JSON.stringify({
 	route: { name: "Get Active Employees", path: "/employees/active", method: "GET" },
 	canvas: { blocks: [], edges: [] },
 });
+const workflowJson = JSON.stringify({
+	kind: "fluxify.workflow",
+	workflow: { name: "Nightly digest" },
+	canvas: { blocks: [], edges: [] },
+});
+// which file the picker hands back; workflow tests switch it
+let pickedFile = () => new File([bundleJson], "r.fluxroute");
 mock.module("./transferFile", () => ({
 	...actual,
-	pickBundleFile: async () => new File([bundleJson], "r.fluxroute"),
+	pickBundleFile: async () => pickedFile(),
 }));
 // the read-only canvas is ReactFlow, which this feature's tests have no need to draw
 const previewActual = { ...(await import("./BundlePreview")) };
@@ -28,6 +35,7 @@ mock.module("./BundlePreview", () => ({
 	BundlePreview: () => <div>canvas preview</div>,
 }));
 
+const realRouter = { ...router };
 const { AxiosError } = await import("axios");
 const { act, cleanup, fireEvent, render, waitFor, within } = await import("@testing-library/react");
 const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
@@ -40,26 +48,36 @@ afterAll(() => {
 	// the registry is process-wide: hand the real modules back to the files that run next
 	mock.module("./BundlePreview", () => previewActual);
 	mock.module("./transferFile", () => actual);
+	mock.module("@tanstack/react-router", () => realRouter);
 });
 beforeEach(() => {
 	mock.restore();
 	// nothing is taken unless a test says so
 	spyOn(transferService, "checkImport").mockResolvedValue({ taken: [] });
 	navigate.mockClear();
+	pickedFile = () => new File([bundleJson], "r.fluxroute");
 });
 
 // RTL stays bound to the first file's document in a shared test process, so the
 // dialog is looked up through the document the render itself landed in
 let body: HTMLElement = document.body;
 const screen = () => within(body);
-const renderButton = () => {
+const renderButton = (resourceType: "route" | "workflow" = "route") => {
 	const view = render(
 		<QueryClientProvider client={new QueryClient()}>
 			<ImportButton
-				resourceType="route"
+				resourceType={resourceType}
 				projectId="p1"
 				onOpen={(id) =>
-					navigate({ to: "/$projectId/canvas/$routeId", params: { projectId: "p1", routeId: id } })
+					resourceType === "workflow"
+						? navigate({
+								to: "/$projectId/workflow-canvas/$workflowId",
+								params: { projectId: "p1", workflowId: id },
+							})
+						: navigate({
+								to: "/$projectId/canvas/$routeId",
+								params: { projectId: "p1", routeId: id },
+							})
 				}
 			/>
 		</QueryClientProvider>,
@@ -239,4 +257,55 @@ test("refuses a workflow file on the routes page", async () => {
 	await expect(actual.readBundleFile(workflowFile, "route")).rejects.toThrow(
 		"That file isn't a Fluxify route export.",
 	);
+});
+
+const renderWorkflowButton = () => {
+	pickedFile = () => new File([workflowJson], "w.fluxworkflow");
+	return renderButton("workflow");
+};
+const toWorkflowCanvas = {
+	to: "/$projectId/workflow-canvas/$workflowId",
+	params: { projectId: "p1", workflowId: "wf1" },
+};
+
+test("imports a workflow and opens its canvas", async () => {
+	const importSpy = spyOn(transferService, "import").mockResolvedValue({
+		id: "wf1",
+		warnings: [],
+	});
+	renderWorkflowButton();
+
+	await pickFile();
+	await waitFor(() => expect(field("Name").value).toBe("Nightly digest"));
+	expect(screen().queryByLabelText("Path")).toBeNull();
+	await confirm();
+
+	await waitFor(() => expect(navigate).toHaveBeenCalledWith(toWorkflowCanvas));
+	expect(importSpy.mock.calls[0]?.[2]).toMatchObject({ workflow: { name: "Nightly digest" } });
+});
+
+test("prefills a taken workflow name as a copy", async () => {
+	spyOn(transferService, "checkImport").mockResolvedValue({ taken: ["name"] });
+	renderWorkflowButton();
+
+	await pickFile();
+	await waitFor(() => expect(field("Name").value).toBe("Nightly digest-copy"));
+	expect(screen().getByText(/a workflow named "Nightly digest" already exists/)).toBeTruthy();
+});
+
+test("keeps the workflow dialog open on a 409", async () => {
+	const clash = new AxiosError("Conflict", "ERR_BAD_REQUEST", undefined, undefined, {
+		status: 409,
+		data: { message: 'A workflow named "Nightly digest" already exists in this project.' },
+	} as never);
+	spyOn(transferService, "import").mockRejectedValue(clash);
+	renderWorkflowButton();
+
+	await pickFile();
+	await waitFor(() => expect(field("Name")).toBeTruthy());
+	await confirm();
+
+	await waitFor(() => expect(screen().getByText(/A workflow named/)).toBeTruthy());
+	expect(field("Name").value).toBe("Nightly digest");
+	expect(navigate).not.toHaveBeenCalled();
 });
