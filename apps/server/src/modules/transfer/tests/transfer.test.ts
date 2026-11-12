@@ -141,6 +141,8 @@ async function addSuite(routeId: string) {
 		VALUES (${suiteId}, 'returns 200', ${routeId},
 		${JSON.stringify([{ target: "status", operator: "eq", expectedValue: "200" }])}::text::jsonb,
 		${JSON.stringify({ "x-test": "1" })}::text::jsonb)`;
+	await sql`INSERT INTO test_suites (id, name, route_id, enabled)
+		VALUES (${`s${short()}`}, 'switched off', ${routeId}, false)`;
 	await sql`INSERT INTO test_suite_block_hooks (id, suite_id, block_id, on_before)
 		VALUES (${`h${short()}`}, ${suiteId}, ${block.id},
 		${JSON.stringify({ kind: "script", value: "t.log('hi')" })}::text::jsonb)`;
@@ -158,7 +160,7 @@ describe("route export and import", () => {
 		expect(bundle.canvas.blocks.map((b: { type: string }) => b.type).sort()).toEqual(
 			["entrypoint", "error_handler", "response"].sort(),
 		);
-		expect(bundle.suites).toHaveLength(1);
+		expect(bundle.suites).toHaveLength(2);
 
 		bundle.route.name = `copy-${short()}`;
 		bundle.route.path = `/${short()}`;
@@ -181,6 +183,13 @@ describe("route export and import", () => {
 		expect(hooks[0].block_id).not.toBe(sourceResponseId);
 		expect(hooks[0].name).toBe("returns 200");
 		expect(hooks[0].headers).toEqual({ "x-test": "1" });
+
+		// a suite that was switched off stays off
+		const enabled = await sql`SELECT name, enabled FROM test_suites WHERE route_id = ${res.body.id}`;
+		expect(Object.fromEntries(enabled.map((r: any) => [r.name, r.enabled]))).toEqual({
+			"returns 200": true,
+			"switched off": false,
+		});
 
 		// imported off in production, on in development
 		const [row] = await sql`SELECT active, dev_active FROM routes WHERE id = ${res.body.id}`;

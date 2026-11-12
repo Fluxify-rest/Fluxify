@@ -3,7 +3,8 @@ import { type DescribeRouteOptions, describeRoute, resolver, validator } from "h
 import { errorSchema } from "../../../../errors/customError";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
-import { importRouteBundle } from "../../../../modules/routeTransfer/import";
+import { parseEnvelope } from "../../../../modules/transfer/envelope";
+import { routeHandler } from "../../../../modules/transfer/handlers/route";
 import type { HonoServer } from "../../../../types";
 import { requireProjectAccess } from "../../../auth/middleware";
 import { requestBodySchema, responseSchema } from "./dto";
@@ -38,7 +39,10 @@ export default function (app: HonoServer) {
 		async (ctx) => {
 			const { projectId, bundle } = ctx.req.valid("json");
 			// same placeholder the create endpoint uses for the author
-			return ctx.json(await importRouteBundle(generateID(), projectId, bundle));
+			const parsed = parseEnvelope(bundle, routeHandler.spec);
+			return ctx.json(
+				await routeHandler.import({ userId: generateID(), acl: [] }, projectId, parsed),
+			);
 		},
 	);
 }

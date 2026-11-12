@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { BadRequestError } from "../../../errors/badRequestError";
-import { ROUTE_BUNDLE_KIND, ROUTE_BUNDLE_VERSION } from "../bundle";
-import { parseBundle } from "../import";
+import { parseEnvelope } from "../envelope";
+import { ROUTE_BUNDLE_KIND, ROUTE_BUNDLE_VERSION, routeHandler } from "../handlers/route";
+
+const parseBundle = (raw: unknown) => parseEnvelope(raw, routeHandler.spec);
 
 const valid = () => ({
 	kind: ROUTE_BUNDLE_KIND,
@@ -42,5 +44,15 @@ describe("parseBundle", () => {
 			suites: [{ name: "s", assertions: [{ target: "status", operator: "contains", expectedValue: "1" }] }],
 		};
 		expect(() => parseBundle(doc)).toThrow(BadRequestError);
+	});
+
+	it("keeps a disabled suite disabled", () => {
+		const doc = { ...valid(), suites: [{ name: "s", enabled: false }] };
+		expect(parseBundle(doc).suites?.[0]?.enabled).toBe(false);
+	});
+
+	it("reads a v1 route file without enabled as enabled", () => {
+		const doc = { ...valid(), suites: [{ name: "s" }] };
+		expect(parseBundle(doc).suites?.[0]?.enabled).toBe(true);
 	});
 });

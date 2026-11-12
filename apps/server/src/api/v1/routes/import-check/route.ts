@@ -1,7 +1,7 @@
 import { type DescribeRouteOptions, describeRoute, resolver, validator } from "hono-openapi";
 import { validationErrorSchema } from "../../../../errors/validationError";
 import zodErrorCallbackParser from "../../../../middlewares/zodErrorCallbackParser";
-import { importConflicts } from "../../../../modules/routeTransfer/conflicts";
+import { routeConflicts } from "../../../../modules/transfer/handlers/route";
 import type { HonoServer } from "../../../../types";
 import { requireProjectAccess } from "../../../auth/middleware";
 import { requestBodySchema, responseSchema } from "./dto";
@@ -31,7 +31,7 @@ export default function (app: HonoServer) {
 		validator("json", requestBodySchema, zodErrorCallbackParser),
 		async (ctx) => {
 			const { projectId, ...route } = ctx.req.valid("json");
-			return ctx.json(await importConflicts(projectId, route));
+			return ctx.json(await routeConflicts(projectId, route));
 		},
 	);
 }
