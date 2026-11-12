@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { BadRequestError } from "../../../errors/badRequestError";
 import { parseEnvelope } from "../envelope";
 import { ROUTE_BUNDLE_KIND, ROUTE_BUNDLE_VERSION, routeHandler } from "../handlers/route";
+import { WORKFLOW_BUNDLE_KIND, WORKFLOW_BUNDLE_VERSION, workflowHandler } from "../handlers/workflow";
 
 const parseBundle = (raw: unknown) => parseEnvelope(raw, routeHandler.spec);
 
@@ -54,5 +55,42 @@ describe("parseBundle", () => {
 	it("reads a v1 route file without enabled as enabled", () => {
 		const doc = { ...valid(), suites: [{ name: "s" }] };
 		expect(parseBundle(doc).suites?.[0]?.enabled).toBe(true);
+	});
+});
+
+describe("workflow bundle", () => {
+	const workflow = () => ({
+		kind: WORKFLOW_BUNDLE_KIND,
+		version: WORKFLOW_BUNDLE_VERSION,
+		exportedAt: new Date().toISOString(),
+		workflow: { name: "nightly sync" },
+		canvas: { blocks: [], edges: [] },
+	});
+	const parse = (raw: unknown) => parseEnvelope(raw, workflowHandler.spec);
+
+	it("accepts a valid workflow bundle and defaults the timeout", () => {
+		expect(parse(workflow()).workflow.timeoutSeconds).toBe(300);
+	});
+
+	it("ignores a triggers key", () => {
+		expect(parse({ ...workflow(), triggers: [{ type: "schedule" }] })).not.toHaveProperty("triggers");
+	});
+
+	it("rejects a route bundle", () => {
+		expect(() => parse(valid())).toThrow("That isn't a Fluxify workflow export.");
+	});
+
+	it("refuses a newer version", () => {
+		expect(() => parse({ ...workflow(), version: 2 })).toThrow(
+			"This workflow was exported by a newer version of Fluxify (v2). Update to import it.",
+		);
+	});
+
+	it("round-trips a loader block name on a suite input", () => {
+		const doc = {
+			...workflow(),
+			suites: [{ name: "s", input: { source: "loader", mode: "single", loaderBlock: "fetch-users" } }],
+		};
+		expect(parse(doc).suites?.[0]?.input?.loaderBlock).toBe("fetch-users");
 	});
 });

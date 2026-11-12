@@ -1,9 +1,10 @@
 import type { AuthACL } from "../../db/schema";
 import type { BundleSpec } from "./envelope";
 import { routeHandler } from "./handlers/route";
+import { workflowHandler } from "./handlers/workflow";
 
 /** Add a type by adding its handler below; no endpoint changes. */
-export const RESOURCE_TYPES = ["route"] as const;
+export const RESOURCE_TYPES = ["route", "workflow"] as const;
 export type ResourceType = (typeof RESOURCE_TYPES)[number];
 
 /** what an import would clash with in the project */
@@ -24,4 +25,5 @@ export interface TransferHandler<B = any> {
 
 export const transferHandlers: Record<ResourceType, TransferHandler> = {
 	route: routeHandler,
+	workflow: workflowHandler,
 };
