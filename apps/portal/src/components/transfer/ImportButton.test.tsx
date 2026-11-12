@@ -4,10 +4,8 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 // DOM only for this file; RTL reads `document` on import, so load it after.
 GlobalRegistrator.register();
 
-const navigate = mock((_: unknown) => {});
-const router = await import("@tanstack/react-router");
-// the button navigates to the new route
-mock.module("@tanstack/react-router", () => ({ ...router, useNavigate: () => navigate }));
+// the page owns navigation: the button only hands the new id to onOpen
+const onOpen = mock((_: string) => {});
 
 // no real file picker in a test process; the rest of the module stays real
 // copies: Bun patches a mocked module in place, so the namespace itself would turn into the stub
@@ -35,7 +33,6 @@ mock.module("./BundlePreview", () => ({
 	BundlePreview: () => <div>canvas preview</div>,
 }));
 
-const realRouter = { ...router };
 const { AxiosError } = await import("axios");
 const { act, cleanup, fireEvent, render, waitFor, within } = await import("@testing-library/react");
 const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
@@ -48,13 +45,12 @@ afterAll(() => {
 	// the registry is process-wide: hand the real modules back to the files that run next
 	mock.module("./BundlePreview", () => previewActual);
 	mock.module("./transferFile", () => actual);
-	mock.module("@tanstack/react-router", () => realRouter);
 });
 beforeEach(() => {
 	mock.restore();
 	// nothing is taken unless a test says so
 	spyOn(transferService, "checkImport").mockResolvedValue({ taken: [] });
-	navigate.mockClear();
+	onOpen.mockClear();
 	pickedFile = () => new File([bundleJson], "r.fluxroute");
 });
 
@@ -65,29 +61,11 @@ const screen = () => within(body);
 const renderButton = (resourceType: "route" | "workflow" = "route") => {
 	const view = render(
 		<QueryClientProvider client={new QueryClient()}>
-			<ImportButton
-				resourceType={resourceType}
-				projectId="p1"
-				onOpen={(id) =>
-					resourceType === "workflow"
-						? navigate({
-								to: "/$projectId/workflow-canvas/$workflowId",
-								params: { projectId: "p1", workflowId: id },
-							})
-						: navigate({
-								to: "/$projectId/canvas/$routeId",
-								params: { projectId: "p1", routeId: id },
-							})
-				}
-			/>
+			<ImportButton resourceType={resourceType} projectId="p1" onOpen={onOpen} />
 		</QueryClientProvider>,
 	);
 	body = view.baseElement.ownerDocument.body;
 	return view;
-};
-const toCanvas = {
-	to: "/$projectId/canvas/$routeId",
-	params: { projectId: "p1", routeId: "new1" },
 };
 
 // the file is read and the dialog opens after the click: flush both inside act
@@ -116,7 +94,7 @@ test("asks before importing, and shows what is in the route", async () => {
 	await waitFor(() => expect(screen().getByText("Import this route?")).toBeTruthy());
 	expect(screen().getByText("canvas preview")).toBeTruthy();
 	expect(importSpy).not.toHaveBeenCalled();
-	expect(navigate).not.toHaveBeenCalled();
+	expect(onOpen).not.toHaveBeenCalled();
 });
 
 test("keeps the name and path, with no warning, when nothing is taken", async () => {
@@ -132,7 +110,7 @@ test("keeps the name and path, with no warning, when nothing is taken", async ()
 	expect(screen().queryByText(/already exist/)).toBeNull();
 	await confirm();
 
-	await waitFor(() => expect(navigate).toHaveBeenCalledWith(toCanvas));
+	await waitFor(() => expect(onOpen).toHaveBeenCalledWith("new1"));
 	expect(imported(importSpy)).toMatchObject({
 		name: "Get Active Employees",
 		path: "/employees/active",
@@ -153,7 +131,7 @@ test("adds -copy to what is taken and warns about it when the dialog opens", asy
 	expect(screen().getByText(/already exist in this project.*imported as a copy/)).toBeTruthy();
 	await confirm();
 
-	await waitFor(() => expect(navigate).toHaveBeenCalledWith(toCanvas));
+	await waitFor(() => expect(onOpen).toHaveBeenCalledWith("new1"));
 	expect(imported(importSpy)).toMatchObject({
 		name: "Get Active Employees-copy",
 		path: "/employees/active-copy",
@@ -185,7 +163,7 @@ test("creates nothing when the user cancels", async () => {
 	fireEvent.click(screen().getByText("Cancel"));
 
 	expect(importSpy).not.toHaveBeenCalled();
-	expect(navigate).not.toHaveBeenCalled();
+	expect(onOpen).not.toHaveBeenCalled();
 });
 
 test("shows what was left out before opening the route", async () => {
@@ -200,9 +178,9 @@ test("shows what was left out before opening the route", async () => {
 	await confirm();
 
 	await waitFor(() => expect(screen().getByText(/Middleware "auth"/)).toBeTruthy());
-	expect(navigate).not.toHaveBeenCalled();
+	expect(onOpen).not.toHaveBeenCalled();
 	fireEvent.click(screen().getByText("Open route"));
-	expect(navigate).toHaveBeenCalledWith(toCanvas);
+	expect(onOpen).toHaveBeenCalledWith("new1");
 });
 
 test("keeps the dialog open on a name or path clash, so both can be changed", async () => {
@@ -219,13 +197,13 @@ test("keeps the dialog open on a name or path clash, so both can be changed", as
 	await waitFor(() => expect(field("Name")).toBeTruthy());
 	await confirm();
 	await waitFor(() => expect(screen().getByText(/already exists in this project/)).toBeTruthy());
-	expect(navigate).not.toHaveBeenCalled();
+	expect(onOpen).not.toHaveBeenCalled();
 
 	fireEvent.change(field("Name"), { target: { value: "Get Staff" } });
 	fireEvent.change(field("Path"), { target: { value: "/staff" } });
 	await confirm();
 
-	await waitFor(() => expect(navigate).toHaveBeenCalledWith(toCanvas));
+	await waitFor(() => expect(onOpen).toHaveBeenCalledWith("new1"));
 	expect(importSpy.mock.calls[1]?.[2]).toMatchObject({
 		route: { name: "Get Staff", path: "/staff" },
 	});
@@ -240,7 +218,7 @@ test("stays put when the server refuses the file", async () => {
 	await confirm();
 
 	await waitFor(() => expect(transferService.import).toHaveBeenCalled());
-	expect(navigate).not.toHaveBeenCalled();
+	expect(onOpen).not.toHaveBeenCalled();
 });
 
 test("refuses a workflow file on the routes page", async () => {
@@ -263,10 +241,6 @@ const renderWorkflowButton = () => {
 	pickedFile = () => new File([workflowJson], "w.fluxworkflow");
 	return renderButton("workflow");
 };
-const toWorkflowCanvas = {
-	to: "/$projectId/workflow-canvas/$workflowId",
-	params: { projectId: "p1", workflowId: "wf1" },
-};
 
 test("imports a workflow and opens its canvas", async () => {
 	const importSpy = spyOn(transferService, "import").mockResolvedValue({
@@ -280,7 +254,7 @@ test("imports a workflow and opens its canvas", async () => {
 	expect(screen().queryByLabelText("Path")).toBeNull();
 	await confirm();
 
-	await waitFor(() => expect(navigate).toHaveBeenCalledWith(toWorkflowCanvas));
+	await waitFor(() => expect(onOpen).toHaveBeenCalledWith("wf1"));
 	expect(importSpy.mock.calls[0]?.[2]).toMatchObject({ workflow: { name: "Nightly digest" } });
 });
 
@@ -307,5 +281,5 @@ test("keeps the workflow dialog open on a 409", async () => {
 
 	await waitFor(() => expect(screen().getByText(/A workflow named/)).toBeTruthy());
 	expect(field("Name").value).toBe("Nightly digest");
-	expect(navigate).not.toHaveBeenCalled();
+	expect(onOpen).not.toHaveBeenCalled();
 });
