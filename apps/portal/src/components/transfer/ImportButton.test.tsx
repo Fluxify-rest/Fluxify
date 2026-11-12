@@ -11,39 +11,40 @@ mock.module("@tanstack/react-router", () => ({ ...router, useNavigate: () => nav
 
 // no real file picker in a test process; the rest of the module stays real
 // copies: Bun patches a mocked module in place, so the namespace itself would turn into the stub
-const actual = { ...(await import("./routeFile")) };
-mock.module("./routeFile", () => ({
+// only the picker is replaced: it hands back a real bundle file, and the real reader parses it
+const actual = { ...(await import("./transferFile")) };
+const bundleJson = JSON.stringify({
+	kind: "fluxify.route",
+	route: { name: "Get Active Employees", path: "/employees/active", method: "GET" },
+	canvas: { blocks: [], edges: [] },
+});
+mock.module("./transferFile", () => ({
 	...actual,
-	pickRouteFile: async () => new File(["{}"], "r.fluxroute"),
-	readRouteFile: async () => ({
-		kind: "fluxify.route",
-		route: { name: "Get Active Employees", path: "/employees/active", method: "GET" },
-		canvas: { blocks: [], edges: [] },
-	}),
+	pickBundleFile: async () => new File([bundleJson], "r.fluxroute"),
 }));
 // the read-only canvas is ReactFlow, which this feature's tests have no need to draw
-const previewActual = { ...(await import("./RouteBundlePreview")) };
-mock.module("./RouteBundlePreview", () => ({
-	RouteBundlePreview: () => <div>canvas preview</div>,
+const previewActual = { ...(await import("./BundlePreview")) };
+mock.module("./BundlePreview", () => ({
+	BundlePreview: () => <div>canvas preview</div>,
 }));
 
 const { AxiosError } = await import("axios");
 const { act, cleanup, fireEvent, render, waitFor, within } = await import("@testing-library/react");
 const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
-const { ImportRouteButton } = await import("./ImportRouteButton");
-const { routesService } = await import("@/services/routes");
+const { ImportButton } = await import("./ImportButton");
+const { transferService } = await import("@/services/transfer");
 
 afterEach(cleanup);
 afterAll(() => {
 	GlobalRegistrator.unregister();
 	// the registry is process-wide: hand the real modules back to the files that run next
-	mock.module("./RouteBundlePreview", () => previewActual);
-	mock.module("./routeFile", () => actual);
+	mock.module("./BundlePreview", () => previewActual);
+	mock.module("./transferFile", () => actual);
 });
 beforeEach(() => {
 	mock.restore();
 	// nothing is taken unless a test says so
-	spyOn(routesService, "checkImport").mockResolvedValue({ nameTaken: false, pathTaken: false });
+	spyOn(transferService, "checkImport").mockResolvedValue({ taken: [] });
 	navigate.mockClear();
 });
 
@@ -54,7 +55,13 @@ const screen = () => within(body);
 const renderButton = () => {
 	const view = render(
 		<QueryClientProvider client={new QueryClient()}>
-			<ImportRouteButton projectId="p1" />
+			<ImportButton
+				resourceType="route"
+				projectId="p1"
+				onOpen={(id) =>
+					navigate({ to: "/$projectId/canvas/$routeId", params: { projectId: "p1", routeId: id } })
+				}
+			/>
 		</QueryClientProvider>,
 	);
 	body = view.baseElement.ownerDocument.body;
@@ -77,10 +84,13 @@ const confirm = () =>
 	});
 const field = (label: string) => screen().getByLabelText(label) as HTMLInputElement;
 const imported = (spy: ReturnType<typeof spyOn>) =>
-	(spy.mock.calls[0]?.[1] as { route: { name: string; path: string } }).route;
+	(spy.mock.calls[0]?.[2] as { route: { name: string; path: string } }).route;
 
 test("asks before importing, and shows what is in the route", async () => {
-	const importSpy = spyOn(routesService, "import").mockResolvedValue({ id: "new1", warnings: [] });
+	const importSpy = spyOn(transferService, "import").mockResolvedValue({
+		id: "new1",
+		warnings: [],
+	});
 	renderButton();
 
 	await pickFile();
@@ -92,7 +102,10 @@ test("asks before importing, and shows what is in the route", async () => {
 });
 
 test("keeps the name and path, with no warning, when nothing is taken", async () => {
-	const importSpy = spyOn(routesService, "import").mockResolvedValue({ id: "new1", warnings: [] });
+	const importSpy = spyOn(transferService, "import").mockResolvedValue({
+		id: "new1",
+		warnings: [],
+	});
 	renderButton();
 
 	await pickFile();
@@ -109,8 +122,11 @@ test("keeps the name and path, with no warning, when nothing is taken", async ()
 });
 
 test("adds -copy to what is taken and warns about it when the dialog opens", async () => {
-	spyOn(routesService, "checkImport").mockResolvedValue({ nameTaken: true, pathTaken: true });
-	const importSpy = spyOn(routesService, "import").mockResolvedValue({ id: "new1", warnings: [] });
+	spyOn(transferService, "checkImport").mockResolvedValue({ taken: ["name", "path"] });
+	const importSpy = spyOn(transferService, "import").mockResolvedValue({
+		id: "new1",
+		warnings: [],
+	});
 	renderButton();
 
 	await pickFile();
@@ -127,7 +143,7 @@ test("adds -copy to what is taken and warns about it when the dialog opens", asy
 });
 
 test("renames only the path when only the path is taken, and the warning goes once edited", async () => {
-	spyOn(routesService, "checkImport").mockResolvedValue({ nameTaken: false, pathTaken: true });
+	spyOn(transferService, "checkImport").mockResolvedValue({ taken: ["path"] });
 	renderButton();
 
 	await pickFile();
@@ -140,7 +156,10 @@ test("renames only the path when only the path is taken, and the warning goes on
 });
 
 test("creates nothing when the user cancels", async () => {
-	const importSpy = spyOn(routesService, "import").mockResolvedValue({ id: "new1", warnings: [] });
+	const importSpy = spyOn(transferService, "import").mockResolvedValue({
+		id: "new1",
+		warnings: [],
+	});
 	renderButton();
 
 	await pickFile();
@@ -152,7 +171,7 @@ test("creates nothing when the user cancels", async () => {
 });
 
 test("shows what was left out before opening the route", async () => {
-	spyOn(routesService, "import").mockResolvedValue({
+	spyOn(transferService, "import").mockResolvedValue({
 		id: "new1",
 		warnings: ['Middleware "auth" doesn\'t exist in this project and was not attached.'],
 	});
@@ -173,7 +192,7 @@ test("keeps the dialog open on a name or path clash, so both can be changed", as
 		status: 409,
 		data: { message: 'A route named "Get Active Employees" already exists in this project.' },
 	} as never);
-	const importSpy = spyOn(routesService, "import")
+	const importSpy = spyOn(transferService, "import")
 		.mockRejectedValueOnce(clash)
 		.mockResolvedValueOnce({ id: "new1", warnings: [] });
 	renderButton();
@@ -189,19 +208,35 @@ test("keeps the dialog open on a name or path clash, so both can be changed", as
 	await confirm();
 
 	await waitFor(() => expect(navigate).toHaveBeenCalledWith(toCanvas));
-	expect(importSpy.mock.calls[1]?.[1]).toMatchObject({
+	expect(importSpy.mock.calls[1]?.[2]).toMatchObject({
 		route: { name: "Get Staff", path: "/staff" },
 	});
 });
 
 test("stays put when the server refuses the file", async () => {
-	spyOn(routesService, "import").mockRejectedValue(new Error("not a route export"));
+	spyOn(transferService, "import").mockRejectedValue(new Error("not a route export"));
 	renderButton();
 
 	await pickFile();
 	await waitFor(() => expect(field("Name")).toBeTruthy());
 	await confirm();
 
-	await waitFor(() => expect(routesService.import).toHaveBeenCalled());
+	await waitFor(() => expect(transferService.import).toHaveBeenCalled());
 	expect(navigate).not.toHaveBeenCalled();
+});
+
+test("refuses a workflow file on the routes page", async () => {
+	const workflowFile = new File(
+		[
+			JSON.stringify({
+				kind: "fluxify.workflow",
+				workflow: { name: "w" },
+				canvas: { blocks: [], edges: [] },
+			}),
+		],
+		"w.fluxworkflow",
+	);
+	await expect(actual.readBundleFile(workflowFile, "route")).rejects.toThrow(
+		"That file isn't a Fluxify route export.",
+	);
 });

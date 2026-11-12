@@ -5,8 +5,8 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 GlobalRegistrator.register();
 
 const { cleanup, fireEvent, render, waitFor, within } = await import("@testing-library/react");
-const { ExportRouteModal } = await import("./ExportRouteModal");
-const { routesService } = await import("@/services/routes");
+const { ExportModal } = await import("./ExportModal");
+const { transferService } = await import("@/services/transfer");
 
 afterEach(cleanup);
 afterAll(() => GlobalRegistrator.unregister());
@@ -19,31 +19,42 @@ const route = { id: "r1", name: "list users" };
 const screen = () => within(document.body);
 
 test("exports with tests by default", async () => {
-	const exportRoute = spyOn(routesService, "export").mockResolvedValue(bundle);
+	const exportRoute = spyOn(transferService, "export").mockResolvedValue(bundle);
 	URL.createObjectURL = () => "blob:x";
 	const onClose = mock(() => {});
-	render(<ExportRouteModal route={route} onClose={onClose} />);
+	render(<ExportModal resourceType="route" resource={route} onClose={onClose} />);
 
 	fireEvent.click(screen().getByText("Export"));
 
 	await waitFor(() => expect(onClose).toHaveBeenCalled());
-	expect(exportRoute).toHaveBeenCalledWith("r1", true);
+	expect(exportRoute).toHaveBeenCalledWith("route", "r1", true);
 });
 
 test("leaves the tests out when the checkbox is cleared", async () => {
-	const exportRoute = spyOn(routesService, "export").mockResolvedValue(bundle);
+	const exportRoute = spyOn(transferService, "export").mockResolvedValue(bundle);
 	URL.createObjectURL = () => "blob:x";
 	const onClose = mock(() => {});
-	render(<ExportRouteModal route={route} onClose={onClose} />);
+	render(<ExportModal resourceType="route" resource={route} onClose={onClose} />);
 
 	fireEvent.click(screen().getByText("Include tests"));
 	fireEvent.click(screen().getByText("Export"));
 
 	await waitFor(() => expect(onClose).toHaveBeenCalled());
-	expect(exportRoute).toHaveBeenCalledWith("r1", false);
+	expect(exportRoute).toHaveBeenCalledWith("route", "r1", false);
 });
 
-test("stays closed without a route", () => {
-	render(<ExportRouteModal route={null} onClose={() => {}} />);
+test("stays closed without a resource", () => {
+	render(<ExportModal resourceType="route" resource={null} onClose={() => {}} />);
 	expect(screen().queryByText("Export route")).toBeNull();
+});
+
+test("words the dialog for a workflow", () => {
+	render(
+		<ExportModal
+			resourceType="workflow"
+			resource={{ id: "w1", name: "nightly" }}
+			onClose={() => {}}
+		/>,
+	);
+	expect(screen().getByText("Export workflow")).toBeTruthy();
 });
