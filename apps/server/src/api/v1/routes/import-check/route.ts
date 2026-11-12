@@ -8,9 +8,10 @@ import { requestBodySchema, responseSchema } from "./dto";
 
 const openapiRouteOptions: DescribeRouteOptions = {
 	description:
-		"Says whether a route about to be imported would clash with a route of the project by name or by method and path. Changes nothing.",
+		"Deprecated, use POST /v1/transfer/route/import/check. Says whether a route about to be imported would clash with a route of the project by name or by method and path. Changes nothing.",
 	operationId: "check-route-import",
 	tags: ["Routes"],
+	deprecated: true,
 	responses: {
 		200: {
 			description: "Successful",

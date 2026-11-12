@@ -13,6 +13,7 @@ import recordings from "./recordings/register";
 import routes from "./routes/register";
 import sandboxes from "./sandboxes/register";
 import testSuites from "./test-suites/register";
+import transfer from "./transfer/register";
 import triggers from "./triggers/register";
 import workflows from "./workflows/register";
 
@@ -48,5 +49,6 @@ export default {
 		middlewares.registerHandler(router);
 		plugins.registerHandler(router);
 		instanceSettings.registerHandler(router);
+		transfer.registerHandler(router);
 	},
 };

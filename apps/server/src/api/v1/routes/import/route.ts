@@ -11,9 +11,10 @@ import { requestBodySchema, responseSchema } from "./dto";
 
 const openapiRouteOptions: DescribeRouteOptions = {
 	description:
-		"Creates a route, its canvas and its test suites from an exported bundle. Middlewares, custom blocks and integrations are matched by name; what has no match is dropped and listed in warnings.",
+		"Deprecated, use POST /v1/transfer/route/import. Creates a route, its canvas and its test suites from an exported bundle. Middlewares, custom blocks and integrations are matched by name; what has no match is dropped and listed in warnings.",
 	operationId: "import-route",
 	tags: ["Routes"],
+	deprecated: true,
 	responses: {
 		200: {
 			description: "Successful",
