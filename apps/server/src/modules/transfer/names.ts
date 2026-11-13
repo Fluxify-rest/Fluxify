@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "../../db";
+import { type DbTransactionType, db } from "../../db";
 import type {
 	customBlocksListEntity,
 	integrationsEntity,
@@ -12,9 +12,13 @@ type NamedTable =
 	| typeof integrationsEntity;
 
 /** id → name for rows of `table`, so references can travel by name */
-export async function namesOf(table: NamedTable, ids: string[]) {
+export async function namesOf(
+	table: NamedTable,
+	ids: string[],
+	tx: DbTransactionType | typeof db = db,
+) {
 	if (ids.length === 0) return new Map<string, string>();
-	const rows = await db
+	const rows = await tx
 		.select({ id: table.id, name: table.name })
 		.from(table)
 		.where(inArray(table.id, ids));
