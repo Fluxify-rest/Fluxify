@@ -10,8 +10,7 @@ import {
 	type VersionSnapshot,
 } from "../../../db/schema";
 import { BadRequestError } from "../../../errors/badRequestError";
-import { routeBundleSchema } from "../../routeTransfer/bundle";
-import { exportSuites, writeSuites } from "../../routeTransfer/suites";
+import { bundleSuiteSchema, exportSuites, writeSuites } from "../../transfer/suites";
 import {
 	type BackupHistory,
 	backupHistorySchema,
@@ -34,7 +33,7 @@ import type { BackupModule, IdMap } from "../types";
  * copied as they are until #1100 restores integrations and remaps them.
  */
 
-const suiteSchema = routeBundleSchema.shape.suites.unwrap().element;
+const suiteSchema = bundleSuiteSchema;
 
 const routeSchema = z.object({
 	name: z.string().min(1),
@@ -134,12 +133,15 @@ export const routesModule: BackupModule<Section> = {
 					devTracingEnabled: row.devTracingEnabled,
 					devRecordExecution: row.devRecordExecution,
 					config: await readRouteConfig(row.id, tx),
-					suites: await exportSuites(row.id, {
-						tx,
-						integrationIds: true,
-						// never in a template: it keeps the keys only, as a `.fluxroute` export does
-						values: options.includeAppConfigValues,
-					}),
+					suites: await exportSuites(
+						{ routeId: row.id },
+						{
+							tx,
+							integrationIds: true,
+							// never in a template: it keeps the keys only, as a `.fluxroute` export does
+							values: options.includeAppConfigValues,
+						},
+					),
 					history: await exportHistory(
 						"route",
 						row.id,
@@ -174,7 +176,7 @@ export const routesModule: BackupModule<Section> = {
 
 			const canvas = new Set(history.working.blocks.map((b) => b.id));
 			await writeSuites(
-				target.id,
+				{ routeId: target.id },
 				suites,
 				{
 					block(name, role, suite) {
